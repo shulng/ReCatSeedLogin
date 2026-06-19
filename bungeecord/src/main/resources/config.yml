@@ -1,6 +1,0 @@
-# CatSeedLogin BungeeCord 配置文件
-proxy:
-  host: "127.0.0.1"
-  port: 2333
-  auth-key: ""
-  login-server-name: "lobby"
