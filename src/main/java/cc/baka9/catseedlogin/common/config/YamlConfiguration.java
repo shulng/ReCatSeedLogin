@@ -151,6 +151,7 @@ public class YamlConfiguration implements Configuration {
                 if (newValue.startsWith("[")) {
                     pendingListPath = fullPath;
                     pendingListIndent = indent + 2;
+                    pendingListInserts = parseInlineList(newValue);
                 }
             } else if (newValue != null) {
                 replacedPaths.add(fullPath);
@@ -244,6 +245,49 @@ public class YamlConfiguration implements Configuration {
                 result.put(path, val);
             }
         }
+    }
+
+    private static List<String> parseInlineList(String inline) {
+        List<String> items = new ArrayList<>();
+        if (!inline.startsWith("[") || !inline.endsWith("]")) {
+            return items;
+        }
+        String content = inline.substring(1, inline.length() - 1).trim();
+        if (content.isEmpty()) {
+            return items;
+        }
+        boolean inQuotes = false;
+        char quoteChar = 0;
+        StringBuilder current = new StringBuilder();
+        for (int i = 0; i < content.length(); i++) {
+            char c = content.charAt(i);
+            if (inQuotes) {
+                if (c == '\\' && i + 1 < content.length()) {
+                    current.append(content.charAt(i + 1));
+                    i++;
+                    continue;
+                }
+                if (c == quoteChar) {
+                    inQuotes = false;
+                    continue;
+                }
+                current.append(c);
+            } else {
+                if (c == '"' || c == '\'') {
+                    inQuotes = true;
+                    quoteChar = c;
+                } else if (c == ',') {
+                    items.add(current.toString().trim());
+                    current.setLength(0);
+                } else {
+                    current.append(c);
+                }
+            }
+        }
+        if (current.length() > 0) {
+            items.add(current.toString().trim());
+        }
+        return items;
     }
 
     private static String escapeYamlString(String s) {

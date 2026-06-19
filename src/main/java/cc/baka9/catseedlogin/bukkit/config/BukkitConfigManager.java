@@ -47,18 +47,28 @@ public class BukkitConfigManager extends BaseConfigManager {
         World defaultWorld = getDefaultWorld();
 
         if (locStr == null || locStr.isEmpty()) {
-            Location spawn = defaultWorld != null
-                    ? defaultWorld.getSpawnLocation()
-                    : Bukkit.getWorlds().get(0).getSpawnLocation();
+            Location spawn;
+            if (defaultWorld != null) {
+                spawn = defaultWorld.getSpawnLocation();
+            } else if (!Bukkit.getWorlds().isEmpty()) {
+                spawn = Bukkit.getWorlds().get(0).getSpawnLocation();
+            } else {
+                return null;
+            }
             setSpawnLocation(spawn);
             return spawn;
         }
 
         String[] parts = locStr.split(":");
         if (parts.length < 6) {
-            Location spawn = defaultWorld != null
-                    ? defaultWorld.getSpawnLocation()
-                    : Bukkit.getWorlds().get(0).getSpawnLocation();
+            Location spawn;
+            if (defaultWorld != null) {
+                spawn = defaultWorld.getSpawnLocation();
+            } else if (!Bukkit.getWorlds().isEmpty()) {
+                spawn = Bukkit.getWorlds().get(0).getSpawnLocation();
+            } else {
+                return null;
+            }
             setSpawnLocation(spawn);
             return spawn;
         }
@@ -68,7 +78,11 @@ public class BukkitConfigManager extends BaseConfigManager {
             world = defaultWorld;
         }
         if (world == null) {
-            world = Bukkit.getWorlds().get(0);
+            if (!Bukkit.getWorlds().isEmpty()) {
+                world = Bukkit.getWorlds().get(0);
+            } else {
+                return null;
+            }
         }
 
         try {
