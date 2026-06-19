@@ -340,11 +340,11 @@ Long lastLogin = CatSeedLoginAPI.getLastLoginTime(playerName);
 
 ---
 
+
 <div align="center">
 
-**Made with ❤️ by [CatSeed](https://github.com/CatSeed)**
-[shulng](https://github.com/shulng)**
+**Made with ❤️ by [CatSeed](https://github.com/CatSeed) & [shulng](https://github.com/shulng)**
 
-*如果这个插件对你有帮助，请考虑给项目点星支持！*
+*如果这个插件对你有帮助，欢迎给项目点个 ⭐ 支持一下！*
 
 </div>
