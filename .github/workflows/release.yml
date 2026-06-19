@@ -35,7 +35,7 @@ jobs:
       - name: 设置Java环境
         uses: actions/setup-java@v3
         with:
-          java-version: '21'
+          java-version: '25'
           distribution: 'temurin'
           cache: maven
 
