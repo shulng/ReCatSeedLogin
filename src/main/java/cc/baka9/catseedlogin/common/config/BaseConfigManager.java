@@ -64,12 +64,21 @@ public abstract class BaseConfigManager implements CoreConfig, DatabaseConfig, B
     }
 
     public void saveConfig(String name) {
-        YamlConfiguration config = getConfig(name);
-        if (config != null) {
+        String fileName = name.endsWith(".yml") ? name : name + ".yml";
+        if (mainConfig != null && mainConfig.getFile() != null && mainConfig.getFile().getName().equals(fileName)) {
             try {
-                config.save();
+                mainConfig.save();
             } catch (Exception e) {
                 // ignore
+            }
+        } else {
+            YamlConfiguration config = getConfig(name);
+            if (config != null) {
+                try {
+                    config.save();
+                } catch (Exception e) {
+                    // ignore
+                }
             }
         }
     }

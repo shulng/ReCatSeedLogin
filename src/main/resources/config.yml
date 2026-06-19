@@ -60,7 +60,8 @@ empty-backpack: true
 # 登录点设置
 spawn:
   # 格式: 世界名:x:y:z:yaw:pitch
-  location: "world:0:64:0:0:0"
+  # 留空则自动使用服务器默认世界的出生点
+  location: ""
 
 # 数据库设置
 database:

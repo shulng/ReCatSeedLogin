@@ -9,8 +9,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.Properties;
 
 public class BukkitConfigManager extends BaseConfigManager {
 
@@ -29,24 +32,76 @@ public class BukkitConfigManager extends BaseConfigManager {
 
     public void setSpawnLocation(Location location) {
         if (location.getWorld() == null) return;
-        String locStr = String.format("%s:%.2f:%.2f:%.2f:%.2f:%.2f",
-                location.getWorld().getName(),
-                location.getX(),
-                location.getY(),
-                location.getZ(),
-                location.getYaw(),
-                location.getPitch());
+        String locStr = location.getWorld().getName()
+                + ":" + location.getX()
+                + ":" + location.getY()
+                + ":" + location.getZ()
+                + ":" + location.getYaw()
+                + ":" + location.getPitch();
         mainConfig.set(ConfigConstants.Path.SPAWN_LOCATION, locStr);
         saveConfig("config.yml");
     }
 
     public Location getBukkitSpawnLocation() {
-        CoreConfig.SpawnLocation spawn = getSpawnLocation();
-        World world = Bukkit.getWorld(spawn.getWorld());
+        String locStr = mainConfig.getString(ConfigConstants.Path.SPAWN_LOCATION);
+        World defaultWorld = getDefaultWorld();
+
+        if (locStr == null || locStr.isEmpty()) {
+            Location spawn = defaultWorld != null
+                    ? defaultWorld.getSpawnLocation()
+                    : Bukkit.getWorlds().get(0).getSpawnLocation();
+            setSpawnLocation(spawn);
+            return spawn;
+        }
+
+        String[] parts = locStr.split(":");
+        if (parts.length < 6) {
+            Location spawn = defaultWorld != null
+                    ? defaultWorld.getSpawnLocation()
+                    : Bukkit.getWorlds().get(0).getSpawnLocation();
+            setSpawnLocation(spawn);
+            return spawn;
+        }
+
+        World world = Bukkit.getWorld(parts[0]);
+        if (world == null) {
+            world = defaultWorld;
+        }
         if (world == null) {
             world = Bukkit.getWorlds().get(0);
         }
-        return new Location(world, spawn.getX(), spawn.getY(), spawn.getZ(), spawn.getYaw(), spawn.getPitch());
+
+        try {
+            double x = Double.parseDouble(parts[1]);
+            double y = Double.parseDouble(parts[2]);
+            double z = Double.parseDouble(parts[3]);
+            float yaw = Float.parseFloat(parts[4]);
+            float pitch = Float.parseFloat(parts[5]);
+            return new Location(world, x, y, z, yaw, pitch);
+        } catch (NumberFormatException e) {
+            Location spawn = world.getSpawnLocation();
+            setSpawnLocation(spawn);
+            return spawn;
+        }
+    }
+
+    private World getDefaultWorld() {
+        File serverProps = new File("server.properties");
+        if (!serverProps.exists()) {
+            return Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0);
+        }
+        try (InputStream is = new BufferedInputStream(Files.newInputStream(serverProps.toPath()))) {
+            Properties props = new Properties();
+            props.load(is);
+            String worldName = props.getProperty("level-name");
+            if (worldName != null) {
+                World world = Bukkit.getWorld(worldName);
+                if (world != null) return world;
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("读取 server.properties 失败: " + e.getMessage());
+        }
+        return Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0);
     }
 
     public File getDataFolder() {

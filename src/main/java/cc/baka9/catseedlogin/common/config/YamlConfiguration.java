@@ -1,21 +1,15 @@
 package cc.baka9.catseedlogin.common.config;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Collections;
+import java.util.*;
 
 public class YamlConfiguration implements Configuration {
 
     private final org.yaml.snakeyaml.Yaml yaml = new org.yaml.snakeyaml.Yaml();
     private Map<String, Object> data = new HashMap<>();
     private final File file;
+    private List<String> originalLines = new ArrayList<>();
 
     public YamlConfiguration(File file) {
         this.file = file;
@@ -36,6 +30,13 @@ public class YamlConfiguration implements Configuration {
     @SuppressWarnings("unchecked")
     public void load() throws IOException {
         if (file != null && file.exists()) {
+            originalLines.clear();
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    originalLines.add(line);
+                }
+            }
             try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
                 Object loaded = yaml.load(new InputStreamReader(fis, StandardCharsets.UTF_8));
                 if (loaded instanceof Map) {
@@ -64,9 +65,189 @@ public class YamlConfiguration implements Configuration {
         if (file.getParentFile() != null && !file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
-        try (java.io.OutputStreamWriter writer = new OutputStreamWriter(new java.io.FileOutputStream(file), StandardCharsets.UTF_8)) {
-            yaml.dump(data, writer);
+
+        if (originalLines.isEmpty()) {
+            try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
+                yaml.dump(data, writer);
+            }
+            return;
         }
+
+        Map<String, String> flatData = new LinkedHashMap<>();
+        flattenData(data, "", flatData);
+
+        Deque<String> sectionStack = new ArrayDeque<>();
+        Set<String> replacedPaths = new LinkedHashSet<>();
+        List<String> output = new ArrayList<>();
+        List<String> pendingListInserts = null;
+        String pendingListPath = null;
+        int pendingListIndent = 0;
+
+        for (String line : originalLines) {
+            String trimmed = line.trim();
+
+            if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                output.add(line);
+                continue;
+            }
+
+            if (trimmed.startsWith("- ")) {
+                if (pendingListInserts != null) {
+                    continue;
+                }
+                output.add(line);
+                continue;
+            }
+
+            if (pendingListInserts != null) {
+                for (String newItem : pendingListInserts) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < pendingListIndent; i++) sb.append(' ');
+                    sb.append("- ").append(newItem);
+                    output.add(sb.toString());
+                }
+                pendingListInserts = null;
+                pendingListPath = null;
+            }
+
+            int indent = 0;
+            while (indent < line.length() && line.charAt(indent) == ' ') indent++;
+            int level = indent / 2;
+
+            while (sectionStack.size() > level) {
+                sectionStack.removeLast();
+            }
+
+            int colonIdx = trimmed.indexOf(':');
+            if (colonIdx <= 0) {
+                output.add(line);
+                continue;
+            }
+
+            String key = trimmed.substring(0, colonIdx).trim();
+            String valueStr = colonIdx < trimmed.length() - 1 ? trimmed.substring(colonIdx + 1).trim() : "";
+
+            StringBuilder pathBuilder = new StringBuilder();
+            for (String s : sectionStack) {
+                if (pathBuilder.length() > 0) pathBuilder.append(".");
+                pathBuilder.append(s);
+            }
+            if (pathBuilder.length() > 0) pathBuilder.append(".");
+            pathBuilder.append(key);
+            String fullPath = pathBuilder.toString();
+
+            if (valueStr.isEmpty()) {
+                sectionStack.addLast(key);
+                output.add(line);
+                continue;
+            }
+
+            String newValue = flatData.get(fullPath);
+            if (newValue != null && !formatRawValue(valueStr).equals(formatRawValue(newValue))) {
+                replacedPaths.add(fullPath);
+                String prefix = line.substring(0, indent + key.length() + 1);
+                output.add(prefix + " " + newValue);
+
+                if (newValue.startsWith("[")) {
+                    pendingListPath = fullPath;
+                    pendingListIndent = indent + 2;
+                }
+            } else if (newValue != null) {
+                replacedPaths.add(fullPath);
+                output.add(line);
+            } else {
+                output.add(line);
+            }
+        }
+
+        if (pendingListInserts != null) {
+            for (String newItem : pendingListInserts) {
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < pendingListIndent; i++) sb.append(' ');
+                sb.append("- ").append(newItem);
+                output.add(sb.toString());
+            }
+        }
+
+        List<Map.Entry<String, String>> unhandled = new ArrayList<>();
+        for (Map.Entry<String, String> entry : flatData.entrySet()) {
+            if (!replacedPaths.contains(entry.getKey())) {
+                unhandled.add(entry);
+            }
+        }
+
+        if (!unhandled.isEmpty()) {
+            output.add("");
+            output.add("# --- auto-generated settings ---");
+            for (Map.Entry<String, String> entry : unhandled) {
+                String[] parts = entry.getKey().split("\\.");
+                int depth = parts.length - 1;
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < depth * 2; i++) sb.append(' ');
+                sb.append(parts[parts.length - 1]).append(": ").append(entry.getValue());
+                output.add(sb.toString());
+            }
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
+            for (int i = 0; i < output.size(); i++) {
+                if (i > 0) writer.newLine();
+                writer.write(output.get(i));
+            }
+        }
+    }
+
+    private static String formatRawValue(String val) {
+        if (val == null) return "";
+        if ((val.startsWith("\"") && val.endsWith("\"")) || (val.startsWith("'") && val.endsWith("'"))) {
+            return val.substring(1, val.length() - 1);
+        }
+        return val;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void flattenData(Map<String, Object> map, String prefix, Map<String, String> result) {
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            String path = prefix.isEmpty() ? entry.getKey() : prefix + "." + entry.getKey();
+            if (entry.getValue() instanceof Map) {
+                flattenData((Map<String, Object>) entry.getValue(), path, result);
+            } else if (entry.getValue() instanceof List) {
+                List<?> list = (List<?>) entry.getValue();
+                boolean allSimple = true;
+                for (Object item : list) {
+                    if (item instanceof Map) { allSimple = false; break; }
+                }
+                if (allSimple && !list.isEmpty()) {
+                    StringBuilder sb = new StringBuilder("[");
+                    for (int i = 0; i < list.size(); i++) {
+                        if (i > 0) sb.append(", ");
+                        Object item = list.get(i);
+                        if (item instanceof String) {
+                            sb.append("\"").append(escapeYamlString((String) item)).append("\"");
+                        } else {
+                            sb.append(item);
+                        }
+                    }
+                    sb.append("]");
+                    result.put(path, sb.toString());
+                } else {
+                    result.put(path, "[]");
+                }
+            } else if (entry.getValue() != null) {
+                String val = String.valueOf(entry.getValue());
+                if (entry.getValue() instanceof String) {
+                    if (val.contains(":") || val.contains("#") || val.contains("{") || val.contains("[")
+                            || val.startsWith(" ") || val.endsWith(" ") || val.isEmpty()) {
+                        val = "\"" + escapeYamlString(val) + "\"";
+                    }
+                }
+                result.put(path, val);
+            }
+        }
+    }
+
+    private static String escapeYamlString(String s) {
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     public Map<String, Object> getDataMap() {

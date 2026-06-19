@@ -12,7 +12,7 @@ public class ConfigConstants {
     public static final int DEFAULT_PROXY_PORT = 2333;
     public static final int DEFAULT_MYSQL_PORT = 3306;
     public static final String DEFAULT_DATABASE_NAME = "catseedlogin";
-    public static final String DEFAULT_SPAWN_LOCATION = "world:0:64:0:0:0";
+    public static final String DEFAULT_SPAWN_LOCATION = "";
     public static final String DEFAULT_NAME_PATTERN = "^\\w+$";
     public static final int DEFAULT_IP_REGISTER_LIMIT = 2;
     public static final int DEFAULT_IP_LOGIN_LIMIT = 2;
