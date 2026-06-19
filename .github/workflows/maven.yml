@@ -3,12 +3,10 @@ name: Java CI with Maven
 on:
   push:
     branches:
-      - "*"
-    tags:
-      - "v*"
+      - "**"
   pull_request:
     branches:
-      - "*"
+      - "**"
   workflow_dispatch:
 
 permissions:
@@ -33,16 +31,4 @@ jobs:
         with:
           name: CatSeedLogin
           path: |
-            bukkit/target/CatSeedLogin-*.jar
-            bungeecord/target/CatSeedLogin-bungeecord-*.jar
-            velocity/target/CatSeedLogin-velocity-*.jar
-          exclude: |
-            */target/original-*
-      - name: Create Release and Upload Release Assets
-        uses: softprops/action-gh-release@v3
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: |
-            bukkit/target/CatSeedLogin-*.jar
-            bungeecord/target/CatSeedLogin-bungeecord-*.jar
-            velocity/target/CatSeedLogin-velocity-*.jar
+            target/*.jar
