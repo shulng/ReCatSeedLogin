@@ -40,7 +40,13 @@ public abstract class BaseConfigManager implements CoreConfig, DatabaseConfig, B
             if (defaultStream != null) {
                 YamlConfiguration defaultConfig = new YamlConfiguration(null);
                 defaultConfig.loadFromResource(defaultStream);
-                mergeDefaults(config, defaultConfig);
+                if (mergeDefaults(config, defaultConfig)) {
+                    try {
+                        config.save();
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                }
             }
         } catch (Exception e) {
             // ignore
@@ -83,15 +89,32 @@ public abstract class BaseConfigManager implements CoreConfig, DatabaseConfig, B
         }
     }
 
-    private void mergeDefaults(YamlConfiguration config, YamlConfiguration defaults) {
-        for (java.util.Map.Entry<String, Object> entry : defaults.getDataMap().entrySet()) {
-            if (!config.contains(entry.getKey())) {
-                config.set(entry.getKey(), entry.getValue());
+    @SuppressWarnings("unchecked")
+    private boolean mergeDefaults(YamlConfiguration config, YamlConfiguration defaults) {
+        return mergeMap(config.getDataMap(), defaults.getDataMap());
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean mergeMap(java.util.Map<String, Object> configMap, java.util.Map<String, Object> defaultMap) {
+        boolean changed = false;
+        for (java.util.Map.Entry<String, Object> entry : defaultMap.entrySet()) {
+            String key = entry.getKey();
+            Object defaultVal = entry.getValue();
+            Object configVal = configMap.get(key);
+            if (configVal == null) {
+                configMap.put(key, defaultVal);
+                changed = true;
+            } else if (defaultVal instanceof java.util.Map && configVal instanceof java.util.Map) {
+                if (mergeMap((java.util.Map<String, Object>) configVal, (java.util.Map<String, Object>) defaultVal)) {
+                    changed = true;
+                }
             }
         }
+        return changed;
     }
 
     public void reload() {
+        createDefaultConfig("config.yml");
         mainConfig = getConfig("config.yml");
         String language = mainConfig.getString(ConfigConstants.Path.LANGUAGE, ConfigConstants.DEFAULT_LANGUAGE);
         i18n.setLocale(language.replace("_", "-"));
