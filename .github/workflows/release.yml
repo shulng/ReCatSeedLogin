@@ -94,7 +94,7 @@ jobs:
           echo "date=$(date +'%Y年%m月%d日 %H时%M分%S秒')" >> $GITHUB_OUTPUT
 
       - name: 创建版本发布
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.project-info.outputs.version }}
           name: ${{ steps.project-info.outputs.name }}-v${{ steps.project-info.outputs.version }}
