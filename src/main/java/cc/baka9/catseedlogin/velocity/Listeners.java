@@ -49,20 +49,21 @@ public class Listeners {
         if (!(event.getCommandSource() instanceof Player)) {
             return;
         }
-        
+
         Player player = (Player) event.getCommandSource();
         String command = event.getCommand();
-        
-        if (isNotLoggedIn(player) && 
-            !command.toLowerCase().startsWith("login") && 
-            !command.toLowerCase().startsWith("register") &&
-            !command.toLowerCase().startsWith("l") &&
-            !command.toLowerCase().startsWith("reg") &&
-            !command.toLowerCase().startsWith("cslv")) {
-            
+
+        if (isNotLoggedIn(player) && !isCommandAllowed("/" + command)) {
             event.setResult(com.velocitypowered.api.event.command.CommandExecuteEvent.CommandResult.denied());
             handleLogin(player, "/" + command);
         }
+    }
+
+    private boolean isCommandAllowed(String input) {
+        for (java.util.regex.Pattern regex : configManager.getCommandWhiteList()) {
+            if (regex.matcher(input).find()) return true;
+        }
+        return false;
     }
 
     @Subscribe

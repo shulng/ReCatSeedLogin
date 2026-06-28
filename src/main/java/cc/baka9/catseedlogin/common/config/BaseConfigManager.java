@@ -9,10 +9,13 @@ import cc.baka9.catseedlogin.common.i18n.I18n;
 import java.io.File;
 import java.io.InputStream;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 public abstract class BaseConfigManager implements CoreConfig, DatabaseConfig, BungeeCordConfig, EmailConfig {
 
+    private static final Logger LOGGER = Logger.getLogger(BaseConfigManager.class.getName());
     protected File dataFolder;
     protected I18n i18n;
     protected YamlConfiguration mainConfig;
@@ -44,12 +47,12 @@ public abstract class BaseConfigManager implements CoreConfig, DatabaseConfig, B
                     try {
                         config.save();
                     } catch (Exception e) {
-                        // ignore
+                        LOGGER.log(Level.WARNING, "Failed to save merged config: " + name, e);
                     }
                 }
             }
         } catch (Exception e) {
-            // ignore
+            LOGGER.log(Level.WARNING, "Failed to load default config: " + name, e);
         }
 
         return config;
@@ -64,7 +67,7 @@ public abstract class BaseConfigManager implements CoreConfig, DatabaseConfig, B
                     java.nio.file.Files.copy(in, file.toPath());
                 }
             } catch (Exception e) {
-                // ignore
+                LOGGER.log(Level.WARNING, "Failed to create default config: " + name, e);
             }
         }
     }
@@ -75,7 +78,7 @@ public abstract class BaseConfigManager implements CoreConfig, DatabaseConfig, B
             try {
                 mainConfig.save();
             } catch (Exception e) {
-                // ignore
+                LOGGER.log(Level.WARNING, "Failed to save config: " + name, e);
             }
         } else {
             YamlConfiguration config = getConfig(name);
@@ -83,7 +86,7 @@ public abstract class BaseConfigManager implements CoreConfig, DatabaseConfig, B
                 try {
                     config.save();
                 } catch (Exception e) {
-                    // ignore
+                    LOGGER.log(Level.WARNING, "Failed to save config: " + name, e);
                 }
             }
         }

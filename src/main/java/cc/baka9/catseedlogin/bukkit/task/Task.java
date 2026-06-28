@@ -8,7 +8,6 @@ import space.arim.morepaperlib.scheduling.ScheduledTask;
 
 public abstract class Task implements Runnable {
     private static final List<ScheduledTask> scheduledTasks = new CopyOnWriteArrayList<>();
-    private static final CatSeedLogin plugin = CatSeedLogin.instance;
     private static TaskAutoKick taskAutoKick;
     private static TaskSendLoginMessage taskSendLoginMessage;
 
@@ -36,7 +35,7 @@ public abstract class Task implements Runnable {
         try {
             scheduledTasks.add(CatScheduler.runTaskTimer(runnable, 0, delay));
         } catch (Exception e) {
-            plugin.getLogger().severe(e.getMessage());
+            CatSeedLogin.instance.getLogger().severe(e.getMessage());
         }
     }
 }

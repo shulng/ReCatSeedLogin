@@ -58,9 +58,12 @@ public class LoginPlayerHelper {
     }
 
     public static boolean isLogin(String name) {
+        return canBypassLogin(name) || loginPlayers.containsKey(name);
+    }
+
+    private static boolean canBypassLogin(String name) {
         return (Config.Settings.BedrockLoginBypass && isFloodgatePlayer(name)) ||
-                (Config.Settings.LoginwiththesameIP && recordCurrentIP(name)) ||
-                loginPlayers.containsKey(name);
+                (Config.Settings.LoginwiththesameIP && recordCurrentIP(name));
     }
 
     public static boolean isRegister(String name) {

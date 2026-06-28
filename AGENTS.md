@@ -3,7 +3,7 @@
 ## Build & Verify
 
 ```bash
-# Build all modules (produces shaded JARs in each module's target/)
+# Build (produces shaded JAR in target/)
 mvn -B clean package --no-transfer-progress
 
 # Build with verbose output
@@ -14,39 +14,35 @@ No lint/typecheck/test commands exist. The repo has no test source (`src/test/` 
 
 ## Architecture
 
-Multi-module Maven project (4 modules under a parent POM). Three platform entry points share a `common` module:
+Single-module Maven project. Three platform entry points and shared common code coexist in one module under `src/main/java/cc/baka9/catseedlogin/`:
 
 ```
 CatSeedLogin-v2/
-├── pom.xml                  (parent POM, packaging=pom)
-├── common/                  (CatSeedLogin-common)
-│   └── src/main/java/cc/baka9/catseedlogin/common/
-│       ├── api/             → PlatformAdapter, CoreConfig, DatabaseConfig, EmailConfig, BungeeCordConfig
-│       ├── communication/   → BaseCommunication
-│       ├── config/          → BaseConfigManager, YamlConfiguration, ConfigConstants, ConfigHelper
-│       ├── database/        → BaseDatabaseConnection
-│       ├── i18n/            → I18n, MessageKey
-│       ├── model/           → LoginPlayer
-│       └── util/            → Crypt, ValidationUtil, CommunicationAuth, DateUtil
-├── bukkit/                  (CatSeedLogin-bukkit) — shades common + FoliaLib + MorePaperLib
-│   └── src/main/java/cc/baka9/catseedlogin/bukkit/
-│       ├── CatSeedLogin.java       → Bukkit plugin main class (JavaPlugin)
-│       ├── command/                → CommandLogin, CommandRegister, CommandChangePassword, etc.
-│       ├── config/                 → BukkitConfigManager, BukkitPlatformAdapter
-│       ├── database/               → SQL, SQLite, MySQL, BufferStatement
-│       ├── event/                  → CatSeedPlayerLoginEvent, CatSeedPlayerRegisterEvent
-│       ├── object/                 → LoginPlayerHelper, EmailCode
-│       ├── task/                   → Task, TaskAutoKick, TaskSendLoginMessage
-│       └── util/                   → EmailSender
-├── bungeecord/              (CatSeedLogin-bungeecord) — shades common
-│   └── src/main/java/cc/baka9/catseedlogin/bungee/
-│       ├── PluginMain.java         → BungeeCord plugin main class
-│       ├── config/                 → BungeeConfigManager, BungeePlatformAdapter
-│       ├── BungeeCommunication.java
-│       ├── BungeeCommands.java
-│       └── Listeners.java
-└── velocity/                (CatSeedLogin-velocity) — shades common
-    └── src/main/java/cc/baka9/catseedlogin/velocity/
+├── pom.xml                  (packaging=jar, single shaded JAR)
+└── src/main/java/cc/baka9/catseedlogin/
+    ├── common/              (shared code across platforms)
+    │   ├── api/             → PlatformAdapter, CoreConfig, DatabaseConfig, EmailConfig, BungeeCordConfig
+    │   ├── communication/   → BaseCommunication
+    │   ├── config/          → BaseConfigManager, YamlConfiguration, ConfigConstants, ConfigHelper
+    │   ├── i18n/            → I18n, MessageKey
+    │   ├── model/           → LoginPlayer
+    │   └── util/            → Crypt, ValidationUtil, CommunicationAuth, DateUtil
+    ├── bukkit/              (Bukkit platform code)
+    │   ├── CatSeedLogin.java       → Bukkit plugin main class (JavaPlugin)
+    │   ├── command/                → CommandLogin, CommandRegister, CommandChangePassword, etc.
+    │   ├── config/                 → BukkitConfigManager, BukkitPlatformAdapter
+    │   ├── database/               → SQL, SQLite, MySQL, BufferStatement
+    │   ├── event/                  → CatSeedPlayerLoginEvent, CatSeedPlayerRegisterEvent
+    │   ├── object/                 → LoginPlayerHelper, EmailCode
+    │   ├── task/                   → Task, TaskAutoKick, TaskSendLoginMessage
+    │   └── util/                   → EmailSender
+    ├── bungee/              (BungeeCord platform code)
+    │   ├── PluginMain.java         → BungeeCord plugin main class
+    │   ├── config/                 → BungeeConfigManager, BungeePlatformAdapter
+    │   ├── BungeeCommunication.java
+    │   ├── BungeeCommands.java
+    │   └── Listeners.java
+    └── velocity/            (Velocity platform code)
         ├── PluginMain.java         → Velocity plugin main class
         ├── config/                 → VelocityConfigManager, VelocityPlatformAdapter
         ├── VelocityCommunication.java
@@ -65,7 +61,7 @@ CatSeedLogin-v2/
 
 **Config flow**: Each platform has its own `ConfigManager` (e.g., `BukkitConfigManager`) extending `BaseConfigManager`. All platforms read from a single `config.yml` at runtime.
 
-**Database**: `common/database/BaseDatabaseConnection` → `bukkit/database/SQLite.java` or `MySQL.java`. Uses raw JDBC, no ORM.
+**Database**: `bukkit/database/SQL.java` (abstract) → `SQLite.java` or `MySQL.java`. Uses raw JDBC, no ORM.
 
 ## Key Conventions
 
