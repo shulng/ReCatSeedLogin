@@ -20,7 +20,7 @@
         <java.version>8</java.version>
         <version>${project.version}</version>
 
-        <paper.version>26.1.2.build.72-stable</paper.version>
+        <paper.version>26.1.2.build.74-stable</paper.version>
         <lombok.version>1.18.46</lombok.version>
         <protocollib.version>5.4.0</protocollib.version>
         <bungeecord.version>1.21-R0.4</bungeecord.version>
