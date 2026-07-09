@@ -45,3 +45,5 @@ hs_err_pid*
 src/test/
 */src/test/
 CatSeedLogin-master
+.mimocode
+.codegraph
