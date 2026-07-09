@@ -1,0 +1,9 @@
+{
+    "id": "catseedlogin",
+    "name": "CatSeedLogin",
+    "version": "${version}",
+    "description": "A comprehensive login plugin for Minecraft servers",
+    "authors": ["CatSeed"],
+    "main": "cc.baka9.catseedlogin.velocity.PluginMain",
+    "dependencies": []
+}
