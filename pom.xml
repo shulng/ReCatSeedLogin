@@ -40,7 +40,7 @@
         <folialib.version>1.3.2</folialib.version>
         <floodgate.version>2.0-SNAPSHOT</floodgate.version>
         <morepaperlib.version>0.4.4</morepaperlib.version>
-        <bouncycastle.version>1.80</bouncycastle.version>
+        <bouncycastle.version>1.84</bouncycastle.version>
 
         <shade.version>3.6.2</shade.version>
         <compiler.version>3.15.0</compiler.version>
