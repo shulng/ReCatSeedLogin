@@ -35,7 +35,7 @@ public class CommandChangePassword implements CommandExecutor {
             sender.sendMessage(Config.Language.CHANGEPASSWORD_NOLOGIN);
             return true;
         }
-        if (!Objects.equals(Crypt.encrypt(name, args[0]), lp.getPassword().trim())) {
+        if (!Crypt.match(name, args[0], lp.getPassword().trim())) {
             sender.sendMessage(Config.Language.CHANGEPASSWORD_OLDPASSWORD_INCORRECT);
             return true;
         }

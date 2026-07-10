@@ -13,6 +13,7 @@ import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerLoginEvent;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.common.util.Crypt;
+import cc.baka9.catseedlogin.bukkit.PluginContext;
 
 public class CommandLogin implements CommandExecutor {
     @Override
@@ -30,11 +31,14 @@ public class CommandLogin implements CommandExecutor {
             sender.sendMessage(Config.Language.LOGIN_NOREGISTER);
             return true;
         }
-        if (!Objects.equals(Crypt.encrypt(name, args[0]), lp.getPassword().trim())) {
+        if (!Crypt.match(name, args[0], lp.getPassword().trim())) {
             handleLoginFail(sender, player, lp);
             return true;
         }
         handleLoginSuccess(player, lp);
+        if (!Crypt.isArgon2(lp.getPassword().trim())) {
+            upgradeToArgon2(lp, args[0]);
+        }
         return true;
     }
 
@@ -48,6 +52,20 @@ public class CommandLogin implements CommandExecutor {
         if (Config.Settings.AfterLoginBack && Config.Settings.CanTpSpawnLocation) {
             Config.getOfflineLocation(player).ifPresent(location -> CatScheduler.teleport(player, location));
         }
+    }
+
+    private void upgradeToArgon2(LoginPlayer lp, String rawPassword) {
+        CatScheduler.runTaskAsync(() -> {
+            try {
+                LoginPlayer copy = lp.copy();
+                copy.setPassword(rawPassword);
+                copy.crypt();
+                PluginContext.getSql().edit(copy);
+                Cache.refresh(copy.getName());
+            } catch (Exception e) {
+                // Migration failure is non-critical; user can still log in next time
+            }
+        });
     }
 
     private void handleLoginFail(CommandSender sender, Player player, LoginPlayer lp) {
