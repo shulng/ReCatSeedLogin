@@ -1,6 +1,5 @@
 package cc.baka9.catseedlogin.bukkit.command;
 
-import java.util.Objects;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

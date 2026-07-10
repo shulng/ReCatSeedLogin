@@ -1,6 +1,5 @@
 package cc.baka9.catseedlogin.bukkit.command;
 
-import java.util.Objects;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -63,7 +62,7 @@ public class CommandLogin implements CommandExecutor {
                 PluginContext.getSql().edit(copy);
                 Cache.refresh(copy.getName());
             } catch (Exception e) {
-                // Migration failure is non-critical; user can still log in next time
+                PluginContext.getLogger().warning("Failed to upgrade password hash to Argon2id for " + lp.getName());
             }
         });
     }
