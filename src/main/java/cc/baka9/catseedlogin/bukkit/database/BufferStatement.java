@@ -8,12 +8,10 @@ import java.util.Arrays;
 public class BufferStatement {
     private final Object[] values;
     private final String query;
-    private final Exception stacktrace;
 
     public BufferStatement(String query, Object... values) {
         this.query = query;
         this.values = values;
-        this.stacktrace = new Exception();
     }
 
     public PreparedStatement prepareStatement(Connection con) throws SQLException {
@@ -24,12 +22,8 @@ public class BufferStatement {
         return ps;
     }
 
-    public StackTraceElement[] getStackTrace() {
-        return stacktrace.getStackTrace();
-    }
-
     @Override
     public String toString() {
-        return "Query: " + query + ", values: " + Arrays.toString(values);
+        return "BufferStatement{query='" + query + "'}";
     }
 }

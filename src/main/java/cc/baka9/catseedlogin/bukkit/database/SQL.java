@@ -38,7 +38,14 @@ public abstract class SQL {
         addColumnIfMissing("location");
     }
 
+    private static final java.util.Set<String> ALLOWED_COLUMNS = java.util.Collections.unmodifiableSet(
+            new java.util.HashSet<>(java.util.Arrays.asList("email", "ips", "location")));
+
     private void addColumnIfMissing(String columnName) {
+        if (!ALLOWED_COLUMNS.contains(columnName)) {
+            logger.warning("Refused to add disallowed column: " + columnName);
+            return;
+        }
         if (columnExists("accounts", columnName)) {
             return;
         }
@@ -50,8 +57,11 @@ public abstract class SQL {
     }
 
     private boolean columnExists(String tableName, String columnName) {
-        try (ResultSet rs = getConnection().getMetaData().getColumns(null, null, tableName, columnName)) {
-            return rs.next();
+        try {
+            Connection conn = getConnection();
+            try (ResultSet rs = conn.getMetaData().getColumns(null, null, tableName, columnName)) {
+                return rs.next();
+            }
         } catch (SQLException e) {
             return false;
         }

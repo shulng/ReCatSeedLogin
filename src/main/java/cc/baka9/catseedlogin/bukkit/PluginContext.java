@@ -8,7 +8,7 @@ public class PluginContext {
     private static volatile PluginContext instance;
 
     private final CatSeedLogin plugin;
-    private SQL sql;
+    private volatile SQL sql;
     private boolean loadProtocolLib;
 
     private PluginContext(CatSeedLogin plugin, SQL sql, boolean loadProtocolLib) {
@@ -32,7 +32,7 @@ public class PluginContext {
         return get().sql;
     }
 
-    public static void setSql(SQL sql) {
+    public static synchronized void setSql(SQL sql) {
         get().sql = sql;
         get().plugin.sql = sql;
     }

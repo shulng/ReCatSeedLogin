@@ -19,6 +19,7 @@ import cc.baka9.catseedlogin.bukkit.PluginContext;
 import cc.baka9.catseedlogin.bukkit.Cache;
 import cc.baka9.catseedlogin.bukkit.database.MySQL;
 import cc.baka9.catseedlogin.bukkit.database.SQLite;
+import cc.baka9.catseedlogin.bukkit.object.EmailCode;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
@@ -33,7 +34,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
                 || setIpCountLimit(sender, args)
                 || limitChineseID(sender, args)
                 || bedrockLoginBypass(sender, args)
-                || LoginwiththesameIP(sender, args)
+                || loginWithTheSameIP(sender, args)
                 || setIdLength(sender, args)
                 || beforeLoginNoDamage(sender, args)
                 || setReenterInterval(sender, args)
@@ -120,7 +121,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
                         "基岩版玩家登录跳过"));
     }
 
-    private boolean LoginwiththesameIP(CommandSender sender, String[] args) {
+    private boolean loginWithTheSameIP(CommandSender sender, String[] args) {
         return toggle(sender, args, "LoginwiththesameIP",
                 new BoolSetting(() -> Config.Settings.LoginwiththesameIP,
                         v -> Config.Settings.LoginwiththesameIP = v,
@@ -262,6 +263,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
     private boolean reload(CommandSender sender, String[] args) {
         if (args.length == 0 || !args[0].equalsIgnoreCase("reload")) return false;
         Config.reload();
+        EmailCode.clearAll();
         try {
             PluginContext.getSql().closeConnection();
         } catch (Exception e) {

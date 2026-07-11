@@ -19,11 +19,20 @@ public class MySQL extends SQL {
             return this.connection;
         }
         closeConnection();
+        String host = Config.MySQL.Host;
+        String port = Config.MySQL.Port;
+        String database = Config.MySQL.Database;
+        String user = Config.MySQL.User;
+        String password = Config.MySQL.Password;
+        if (host == null || host.isEmpty() || port == null || port.isEmpty()
+                || database == null || database.isEmpty()) {
+            throw new SQLException("MySQL configuration is incomplete: host, port, and database must be set");
+        }
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             this.connection = DriverManager.getConnection(
-                "jdbc:mysql://" + Config.MySQL.Host + ":" + Config.MySQL.Port + "/" + Config.MySQL.Database + "?characterEncoding=UTF-8",
-                Config.MySQL.User, Config.MySQL.Password
+                "jdbc:mysql://" + host + ":" + port + "/" + database + "?characterEncoding=UTF-8",
+                user, password
             );
             return this.connection;
         } catch (ClassNotFoundException | SQLException e) {
@@ -50,7 +59,7 @@ public class MySQL extends SQL {
                 this.connection.close();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.warning("Error closing MySQL connection: " + e.getMessage());
         }
         this.connection = null;
     }

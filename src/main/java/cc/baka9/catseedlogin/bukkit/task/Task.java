@@ -8,17 +8,35 @@ import space.arim.morepaperlib.scheduling.ScheduledTask;
 
 public abstract class Task implements Runnable {
     private static final List<ScheduledTask> scheduledTasks = new CopyOnWriteArrayList<>();
-    private static TaskAutoKick taskAutoKick;
-    private static TaskSendLoginMessage taskSendLoginMessage;
+    private static volatile TaskAutoKick taskAutoKick;
+    private static volatile TaskSendLoginMessage taskSendLoginMessage;
 
     protected Task() {}
 
     public static TaskAutoKick getTaskAutoKick() {
-        return taskAutoKick == null ? (taskAutoKick = new TaskAutoKick()) : taskAutoKick;
+        TaskAutoKick result = taskAutoKick;
+        if (result == null) {
+            synchronized (Task.class) {
+                result = taskAutoKick;
+                if (result == null) {
+                    taskAutoKick = result = new TaskAutoKick();
+                }
+            }
+        }
+        return result;
     }
 
     public static TaskSendLoginMessage getTaskSendLoginMessage() {
-        return taskSendLoginMessage == null ? (taskSendLoginMessage = new TaskSendLoginMessage()) : taskSendLoginMessage;
+        TaskSendLoginMessage result = taskSendLoginMessage;
+        if (result == null) {
+            synchronized (Task.class) {
+                result = taskSendLoginMessage;
+                if (result == null) {
+                    taskSendLoginMessage = result = new TaskSendLoginMessage();
+                }
+            }
+        }
+        return result;
     }
 
     public static void runAll() {

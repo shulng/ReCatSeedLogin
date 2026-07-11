@@ -49,12 +49,28 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
-    public void onPlayerLogin(AsyncPlayerPreLoginEvent event) {
+    public void onPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
+        String name = event.getName();
+
+        // Name validation
+        if (Config.Settings.LimitChineseID && !name.matches(Config.Settings.NamePattern)) {
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.INVALID_NAME_PATTERN.get());
+            return;
+        }
+        if (checkFloodgatePrefixProtect(event, name)) return;
+        if (name.length() < Config.Settings.MinLengthID) {
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.NAME_TOO_SHORT.get(Config.Settings.MinLengthID));
+            return;
+        } else if (name.length() > Config.Settings.MaxLengthID) {
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.NAME_TOO_LONG.get(Config.Settings.MaxLengthID));
+            return;
+        }
+
+        // Cache and IP validation
         if (!Cache.isLoaded) {
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.CACHE_NOT_INITIALIZED.get());
             return;
         }
-        String name = event.getName();
         LoginPlayer lp = Cache.getIgnoreCase(name);
         if (lp == null) return;
         if (!lp.getName().equals(name)) {
@@ -225,22 +241,6 @@ public class Listeners implements Listener {
         Config.getOfflineLocation(player).ifPresent(location ->
                 CatScheduler.runTaskLater(() -> CatScheduler.teleport(player, location), 1L)
         );
-    }
-
-    //id只能下划线字母数字
-    @EventHandler
-    public void onPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
-        String name = event.getName();
-        if (Config.Settings.LimitChineseID && !name.matches(Config.Settings.NamePattern)) {
-            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.INVALID_NAME_PATTERN.get());
-            return;
-        }
-        if (checkFloodgatePrefixProtect(event, name)) return;
-        if (name.length() < Config.Settings.MinLengthID) {
-            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.NAME_TOO_SHORT.get(Config.Settings.MinLengthID));
-        } else if (name.length() > Config.Settings.MaxLengthID) {
-            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.NAME_TOO_LONG.get(Config.Settings.MaxLengthID));
-        }
     }
 
     private boolean checkFloodgatePrefixProtect(AsyncPlayerPreLoginEvent event, String name) {

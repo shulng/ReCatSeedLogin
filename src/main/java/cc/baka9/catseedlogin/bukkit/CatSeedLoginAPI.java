@@ -14,6 +14,7 @@ public class CatSeedLoginAPI {
      *
      * @param name 玩家名
      * @return true 是
+     * @since 2.0.0
      */
     public static boolean isLogin(String name) {
         return LoginPlayerHelper.isLogin(name);
@@ -24,6 +25,7 @@ public class CatSeedLoginAPI {
      *
      * @param name 玩家名
      * @return true 注册
+     * @since 2.0.0
      */
     public static boolean isRegister(String name) {
         return LoginPlayerHelper.isRegister(name);

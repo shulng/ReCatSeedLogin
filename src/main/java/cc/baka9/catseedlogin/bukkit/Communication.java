@@ -15,6 +15,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.MessageDigest;
 
 public class Communication extends BaseCommunication {
     private static ServerSocket serverSocket;
@@ -84,7 +85,8 @@ public class Communication extends BaseCommunication {
         if (playerName == null || time == null || sign == null) return;
         String expectedSign = CommunicationAuth.encryption(
                 playerName, time, PluginContext.getConfigManager().getAuthKey());
-        if (!sign.equals(expectedSign)) return;
+        if (!MessageDigest.isEqual(sign.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                expectedSign.getBytes(java.nio.charset.StandardCharsets.UTF_8))) return;
 
         CatScheduler.runTask(() -> {
             LoginPlayer lp = Cache.getIgnoreCase(playerName);

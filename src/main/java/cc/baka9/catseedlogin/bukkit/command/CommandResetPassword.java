@@ -1,6 +1,7 @@
 package cc.baka9.catseedlogin.bukkit.command;
 
 import java.util.Optional;
+import java.security.MessageDigest;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -123,7 +124,8 @@ public class CommandResetPassword implements CommandExecutor {
                 sender.sendMessage(Config.Language.RESETPASSWORD_FAIL);
                 return true;
             }
-            if (!optional.get().getCode().equals(code)) {
+            if (!MessageDigest.isEqual(optional.get().getCode().getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                    code.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
                 sender.sendMessage(Config.Language.RESETPASSWORD_EMAILCODE_INCORRECT);
                 return true;
             }

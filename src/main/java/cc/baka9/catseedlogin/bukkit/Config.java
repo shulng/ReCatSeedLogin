@@ -69,7 +69,7 @@ public class Config {
         public static volatile long ReenterInterval;
         public static volatile boolean AfterLoginBack;
         public static volatile boolean CanTpSpawnLocation;
-        public static volatile List<Pattern> CommandWhiteList = new java.util.ArrayList<>();
+        public static volatile List<Pattern> CommandWhiteList = new java.util.concurrent.CopyOnWriteArrayList<>();
         public static volatile int AutoKick;
         public static volatile String NamePattern;
         public static volatile boolean DeathStateQuitRecordLocation;
@@ -130,37 +130,37 @@ public class Config {
     }
 
     public static class Language {
-        public static String LOGIN_REQUEST;
-        public static String REGISTER_REQUEST;
-        public static String LOGIN_NOREGISTER;
-        public static String LOGIN_REPEAT;
-        public static String LOGIN_SUCCESS;
-        public static String LOGIN_FAIL;
-        public static String LOGIN_FAIL_IF_FORGET;
-        public static String REGISTER_SUCCESS;
-        public static String REGISTER_BEFORE_LOGIN_ALREADY;
-        public static String REGISTER_AFTER_LOGIN_ALREADY;
-        public static String REGISTER_PASSWORD_CONFIRM_FAIL;
-        public static String COMMON_PASSWORD_SO_SIMPLE;
-        public static String RESETPASSWORD_NOREGISTER;
-        public static String RESETPASSWORD_EMAIL_DISABLE;
-        public static String RESETPASSWORD_EMAIL_NO_SET;
-        public static String RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE;
-        public static String RESETPASSWORD_EMAIL_SENDING_MESSAGE;
-        public static String RESETPASSWORD_EMAIL_SENT_MESSAGE;
-        public static String RESETPASSWORD_EMAIL_WARN;
-        public static String RESETPASSWORD_SUCCESS;
-        public static String RESETPASSWORD_EMAILCODE_INCORRECT;
-        public static String RESETPASSWORD_FAIL;
-        public static String CHANGEPASSWORD_NOREGISTER;
-        public static String CHANGEPASSWORD_NOLOGIN;
-        public static String CHANGEPASSWORD_OLDPASSWORD_INCORRECT;
-        public static String CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL;
-        public static String CHANGEPASSWORD_SUCCESS;
-        public static String AUTO_KICK;
-        public static String REGISTER_MORE;
-        public static String BEDROCK_LOGIN_BYPASS;
-        public static String LOGIN_WITH_THE_SAME_IP;
+        public static volatile String LOGIN_REQUEST;
+        public static volatile String REGISTER_REQUEST;
+        public static volatile String LOGIN_NOREGISTER;
+        public static volatile String LOGIN_REPEAT;
+        public static volatile String LOGIN_SUCCESS;
+        public static volatile String LOGIN_FAIL;
+        public static volatile String LOGIN_FAIL_IF_FORGET;
+        public static volatile String REGISTER_SUCCESS;
+        public static volatile String REGISTER_BEFORE_LOGIN_ALREADY;
+        public static volatile String REGISTER_AFTER_LOGIN_ALREADY;
+        public static volatile String REGISTER_PASSWORD_CONFIRM_FAIL;
+        public static volatile String COMMON_PASSWORD_SO_SIMPLE;
+        public static volatile String RESETPASSWORD_NOREGISTER;
+        public static volatile String RESETPASSWORD_EMAIL_DISABLE;
+        public static volatile String RESETPASSWORD_EMAIL_NO_SET;
+        public static volatile String RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE;
+        public static volatile String RESETPASSWORD_EMAIL_SENDING_MESSAGE;
+        public static volatile String RESETPASSWORD_EMAIL_SENT_MESSAGE;
+        public static volatile String RESETPASSWORD_EMAIL_WARN;
+        public static volatile String RESETPASSWORD_SUCCESS;
+        public static volatile String RESETPASSWORD_EMAILCODE_INCORRECT;
+        public static volatile String RESETPASSWORD_FAIL;
+        public static volatile String CHANGEPASSWORD_NOREGISTER;
+        public static volatile String CHANGEPASSWORD_NOLOGIN;
+        public static volatile String CHANGEPASSWORD_OLDPASSWORD_INCORRECT;
+        public static volatile String CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL;
+        public static volatile String CHANGEPASSWORD_SUCCESS;
+        public static volatile String AUTO_KICK;
+        public static volatile String REGISTER_MORE;
+        public static volatile String BEDROCK_LOGIN_BYPASS;
+        public static volatile String LOGIN_WITH_THE_SAME_IP;
 
         public static void load(){
             LOGIN_REQUEST = MessageKey.LOGIN_REQUEST.get();
@@ -324,7 +324,24 @@ public class Config {
         }
     }
 
+    private static volatile World cachedDefaultWorld;
+    private static volatile boolean defaultWorldCached = false;
+
     private static World getDefaultWorld() {
+        if (defaultWorldCached) {
+            return cachedDefaultWorld;
+        }
+        synchronized (Config.class) {
+            if (defaultWorldCached) {
+                return cachedDefaultWorld;
+            }
+            cachedDefaultWorld = resolveDefaultWorld();
+            defaultWorldCached = true;
+            return cachedDefaultWorld;
+        }
+    }
+
+    private static World resolveDefaultWorld() {
         if (Bukkit.getWorlds().isEmpty()) {
             return null;
         }

@@ -58,12 +58,33 @@ public class LoginPlayerHelper {
     }
 
     public static boolean isLogin(String name) {
-        return canBypassLogin(name) || loginPlayers.containsKey(name);
+        return loginPlayers.containsKey(name) || shouldBypassLogin(name);
     }
 
-    private static boolean canBypassLogin(String name) {
+    public static boolean shouldBypassLogin(String name) {
         return (Config.Settings.BedrockLoginBypass && isFloodgatePlayer(name)) ||
-                (Config.Settings.LoginwiththesameIP && recordCurrentIP(name));
+                (Config.Settings.LoginwiththesameIP && checkCurrentIPMatch(name));
+    }
+
+    private static boolean checkCurrentIPMatch(String name) {
+        Player player = Bukkit.getPlayerExact(name);
+        if (player == null) return false;
+        return checkCurrentIPMatch(player);
+    }
+
+    private static boolean checkCurrentIPMatch(Player player) {
+        String currentIP = getPlayerIP(player);
+        if (currentIP == null) return false;
+        if (ValidationUtil.isLoopbackAddress(currentIP)) return false;
+
+        LoginPlayer storedPlayer = Cache.getIgnoreCase(player.getName());
+        if (storedPlayer == null) return false;
+
+        List<String> storedIPs = getStoredIPs(storedPlayer);
+        Long exitTime = playerExitTimes.get(player.getName());
+
+        return Config.Settings.IPTimeout == 0 ? storedIPs.contains(currentIP) :
+               exitTime != null && storedIPs.contains(currentIP) && (System.currentTimeMillis() - exitTime) <= (long) Config.Settings.IPTimeout * 60 * 1000L;
     }
 
     public static boolean isRegister(String name) {

@@ -55,11 +55,7 @@ public class I18n {
         String fileName = locale.toLanguageTag() + ".yml";
         File languagesFolder = new File(dataFolder, LANGUAGES_FOLDER);
 
-        File customFile = new File(languagesFolder, fileName);
-        if (customFile.exists()) {
-            loadFromFile(customFile, localeMessages);
-        }
-
+        // Load bundled defaults first (lower priority)
         String resourcePath = LANGUAGES_FOLDER + "/" + fileName;
         try (InputStream defaultStream = resourceProvider.getResource(resourcePath)) {
             if (defaultStream != null) {
@@ -69,6 +65,7 @@ public class I18n {
             e.printStackTrace();
         }
 
+        // Load fallback locale if current locale is empty
         if (localeMessages.isEmpty()) {
             try (InputStream fallbackStream = resourceProvider.getResource("languages/zh-CN.yml")) {
                 if (fallbackStream != null) {
@@ -77,6 +74,12 @@ public class I18n {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+
+        // Load custom file overrides (higher priority)
+        File customFile = new File(languagesFolder, fileName);
+        if (customFile.exists()) {
+            loadFromFile(customFile, localeMessages);
         }
 
         try {
