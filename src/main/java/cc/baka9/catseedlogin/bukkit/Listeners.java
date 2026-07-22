@@ -210,6 +210,10 @@ public class Listeners implements Listener {
             return;
         }
         if (Config.Settings.LoginwiththesameIP && LoginPlayerHelper.recordCurrentIP(player)) {
+            LoginPlayer lp = Cache.getIgnoreCase(player.getName());
+            if (lp != null) {
+                LoginPlayerHelper.add(lp);
+            }
             player.sendMessage(Config.Language.LOGIN_WITH_THE_SAME_IP);
             teleportToLastLocation(player);
             return;
