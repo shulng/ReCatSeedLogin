@@ -86,7 +86,7 @@ public class LoginPlayerHelper {
 
             if (ValidationUtil.isLoopbackAddress(currentIP)) return false;
             return Config.Settings.IPTimeout == 0 ? storedIPs.contains(currentIP) :
-                   exitTime != null && storedIPs.contains(currentIP) && (System.currentTimeMillis() - exitTime) <= (long) Config.Settings.IPTimeout * 60 * 1000L;
+                   exitTime != null && storedIPs.contains(currentIP) && (System.currentTimeMillis() - exitTime) <= (long) Config.Settings.IPTimeout * 60 * 1000;
         }
 
         return false;
