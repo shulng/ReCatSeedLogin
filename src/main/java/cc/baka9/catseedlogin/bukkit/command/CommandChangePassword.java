@@ -1,19 +1,19 @@
 package cc.baka9.catseedlogin.bukkit.command;
 
+import cc.baka9.catseedlogin.bukkit.Cache;
+import cc.baka9.catseedlogin.bukkit.CatScheduler;
+import cc.baka9.catseedlogin.bukkit.Config;
+import cc.baka9.catseedlogin.bukkit.PluginContext;
+import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.common.i18n.MessageKey;
+import cc.baka9.catseedlogin.common.model.LoginPlayer;
+import cc.baka9.catseedlogin.common.util.Crypt;
+import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.common.i18n.MessageKey;
-import cc.baka9.catseedlogin.common.model.LoginPlayer;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
-import cc.baka9.catseedlogin.common.util.Crypt;
-import cc.baka9.catseedlogin.common.util.ValidationUtil;
 
 public class CommandChangePassword implements CommandExecutor {
   @Override

@@ -1,29 +1,25 @@
 package cc.baka9.catseedlogin.bukkit.object;
 
+import cc.baka9.catseedlogin.bukkit.Cache;
+import cc.baka9.catseedlogin.bukkit.CatScheduler;
+import cc.baka9.catseedlogin.bukkit.Config;
+import cc.baka9.catseedlogin.bukkit.PluginContext;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
-
-import java.net.InetAddress;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.geysermc.floodgate.api.FloodgateApi;
-
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.reflect.StructureModifier;
-
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
+import java.net.InetAddress;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.geysermc.floodgate.api.FloodgateApi;
 
 public class LoginPlayerHelper {
   private static final Map<String, LoginPlayer> loginPlayers = new ConcurrentHashMap<>();

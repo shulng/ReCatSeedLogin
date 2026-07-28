@@ -1,10 +1,10 @@
 package cc.baka9.catseedlogin.bukkit.task;
 
+import cc.baka9.catseedlogin.bukkit.Cache;
+import cc.baka9.catseedlogin.bukkit.Config;
+import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 
 public class TaskSendLoginMessage extends Task {
   @Override

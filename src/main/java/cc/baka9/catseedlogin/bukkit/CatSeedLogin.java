@@ -1,16 +1,5 @@
 package cc.baka9.catseedlogin.bukkit;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-
-import org.bukkit.Bukkit;
-import org.bukkit.command.PluginCommand;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.java.JavaPlugin;
-
 import cc.baka9.catseedlogin.bukkit.command.*;
 import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
 import cc.baka9.catseedlogin.bukkit.config.BukkitPlatformAdapter;
@@ -19,6 +8,15 @@ import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.bukkit.task.Task;
 import cc.baka9.catseedlogin.common.i18n.I18n;
 import cn.handyplus.lib.adapter.HandySchedulerUtil;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import org.bukkit.Bukkit;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.java.JavaPlugin;
 import space.arim.morepaperlib.MorePaperLib;
 
 public class CatSeedLogin extends JavaPlugin implements Listener {

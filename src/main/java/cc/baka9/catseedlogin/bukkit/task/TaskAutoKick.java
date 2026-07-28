@@ -1,12 +1,12 @@
 package cc.baka9.catseedlogin.bukkit.task;
 
+import cc.baka9.catseedlogin.bukkit.Cache;
+import cc.baka9.catseedlogin.bukkit.Config;
+import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 
 public class TaskAutoKick extends Task {
   private final Map<String, Long> playerJoinTime = new ConcurrentHashMap<>();

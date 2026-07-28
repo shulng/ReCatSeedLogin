@@ -2,7 +2,6 @@ package cc.baka9.catseedlogin.common.communication;
 
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.util.CommunicationAuth;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;

@@ -1,19 +1,17 @@
 package cc.baka9.catseedlogin.bukkit;
 
-import cc.baka9.catseedlogin.common.util.CommunicationAuth;
+import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.common.communication.BaseCommunication;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
-
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-
+import cc.baka9.catseedlogin.common.util.CommunicationAuth;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 public class Communication extends BaseCommunication {
   private static ServerSocket serverSocket;

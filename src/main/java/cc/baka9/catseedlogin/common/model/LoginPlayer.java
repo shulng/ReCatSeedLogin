@@ -1,14 +1,13 @@
 package cc.baka9.catseedlogin.common.model;
 
 import cc.baka9.catseedlogin.common.util.Crypt;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 @ToString
 @Getter

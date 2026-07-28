@@ -1,10 +1,9 @@
 package cc.baka9.catseedlogin.bungee;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import cc.baka9.catseedlogin.bungee.config.BungeeConfigManager;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;

@@ -1,11 +1,10 @@
 package cc.baka9.catseedlogin.common.config;
 
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 
 public class YamlConfiguration implements Configuration {
 

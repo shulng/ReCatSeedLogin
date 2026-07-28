@@ -3,16 +3,14 @@ package cc.baka9.catseedlogin.bukkit.config;
 import cc.baka9.catseedlogin.bukkit.CatSeedLogin;
 import cc.baka9.catseedlogin.common.config.BaseConfigManager;
 import cc.baka9.catseedlogin.common.config.ConfigConstants;
-
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Properties;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
 
 public class BukkitConfigManager extends BaseConfigManager {
 

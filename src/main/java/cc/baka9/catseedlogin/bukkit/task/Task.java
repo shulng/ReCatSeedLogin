@@ -1,9 +1,9 @@
 package cc.baka9.catseedlogin.bukkit.task;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import cc.baka9.catseedlogin.bukkit.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.CatSeedLogin;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import space.arim.morepaperlib.scheduling.ScheduledTask;
 
 public abstract class Task implements Runnable {

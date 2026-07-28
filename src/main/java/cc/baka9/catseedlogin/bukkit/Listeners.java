@@ -1,13 +1,17 @@
 package cc.baka9.catseedlogin.bukkit;
 
+import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.task.Task;
+import cc.baka9.catseedlogin.bukkit.task.TaskAutoKick;
+import cc.baka9.catseedlogin.common.i18n.MessageKey;
+import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import java.util.regex.Pattern;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
@@ -23,12 +27,6 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.geysermc.floodgate.api.FloodgateApi;
-
-import cc.baka9.catseedlogin.bukkit.task.Task;
-import cc.baka9.catseedlogin.bukkit.task.TaskAutoKick;
-import cc.baka9.catseedlogin.common.i18n.MessageKey;
-import cc.baka9.catseedlogin.common.model.LoginPlayer;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 
 public class Listeners implements Listener {
 

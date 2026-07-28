@@ -1,8 +1,7 @@
 package cc.baka9.catseedlogin.velocity.config;
 
-import cc.baka9.catseedlogin.velocity.PluginMain;
 import cc.baka9.catseedlogin.common.config.BaseConfigManager;
-
+import cc.baka9.catseedlogin.velocity.PluginMain;
 import java.io.File;
 import java.io.InputStream;
 

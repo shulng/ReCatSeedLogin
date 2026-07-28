@@ -1,13 +1,11 @@
 package cc.baka9.catseedlogin.velocity.config;
 
-import cc.baka9.catseedlogin.velocity.PluginMain;
 import cc.baka9.catseedlogin.common.Version;
 import cc.baka9.catseedlogin.common.api.PlatformAdapter;
 import cc.baka9.catseedlogin.common.i18n.I18n;
-
+import cc.baka9.catseedlogin.velocity.PluginMain;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-
 import java.util.concurrent.TimeUnit;
 
 public class VelocityPlatformAdapter implements PlatformAdapter {

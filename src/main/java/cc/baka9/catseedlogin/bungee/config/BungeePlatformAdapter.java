@@ -4,7 +4,6 @@ import cc.baka9.catseedlogin.bungee.PluginMain;
 import cc.baka9.catseedlogin.common.Version;
 import cc.baka9.catseedlogin.common.api.PlatformAdapter;
 import cc.baka9.catseedlogin.common.i18n.I18n;
-
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 

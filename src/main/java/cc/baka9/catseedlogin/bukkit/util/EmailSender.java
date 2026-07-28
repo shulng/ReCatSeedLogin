@@ -2,8 +2,8 @@ package cc.baka9.catseedlogin.bukkit.util;
 
 import cc.baka9.catseedlogin.bukkit.Config;
 import org.apache.commons.mail.DefaultAuthenticator;
-import org.apache.commons.mail.HtmlEmail;
 import org.apache.commons.mail.EmailException;
+import org.apache.commons.mail.HtmlEmail;
 
 public final class EmailSender {
   private EmailSender() {}

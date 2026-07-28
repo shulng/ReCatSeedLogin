@@ -1,7 +1,6 @@
 package cc.baka9.catseedlogin.bukkit;
 
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

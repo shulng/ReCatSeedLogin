@@ -2,8 +2,8 @@ package cc.baka9.catseedlogin.bukkit.database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class SQLite extends SQL {

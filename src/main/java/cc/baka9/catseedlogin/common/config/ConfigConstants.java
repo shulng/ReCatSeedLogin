@@ -1,9 +1,9 @@
 package cc.baka9.catseedlogin.common.config;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.List;
-import java.util.ArrayList;
 
 public class ConfigConstants {
 

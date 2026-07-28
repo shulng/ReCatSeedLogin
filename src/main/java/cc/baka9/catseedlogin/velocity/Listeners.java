@@ -1,7 +1,7 @@
 package cc.baka9.catseedlogin.velocity;
 
-import cc.baka9.catseedlogin.velocity.config.VelocityConfigManager;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
+import cc.baka9.catseedlogin.velocity.config.VelocityConfigManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
@@ -10,12 +10,11 @@ import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import net.kyori.adventure.text.Component;
-import org.slf4j.Logger;
-
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import net.kyori.adventure.text.Component;
+import org.slf4j.Logger;
 
 public class Listeners {
 

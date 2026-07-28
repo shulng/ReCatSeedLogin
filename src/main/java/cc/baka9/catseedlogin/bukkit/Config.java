@@ -1,19 +1,17 @@
 package cc.baka9.catseedlogin.bukkit;
 
-import cc.baka9.catseedlogin.common.config.ConfigConstants;
 import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
+import cc.baka9.catseedlogin.common.config.ConfigConstants;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
-
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.entity.Player;
-
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
 
 public class Config {
   private static CatSeedLogin plugin;

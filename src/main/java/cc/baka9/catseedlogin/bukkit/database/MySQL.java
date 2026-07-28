@@ -1,10 +1,10 @@
 package cc.baka9.catseedlogin.bukkit.database;
 
+import cc.baka9.catseedlogin.bukkit.Config;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import org.bukkit.plugin.java.JavaPlugin;
-import cc.baka9.catseedlogin.bukkit.Config;
 
 public class MySQL extends SQL {
   private Connection connection;

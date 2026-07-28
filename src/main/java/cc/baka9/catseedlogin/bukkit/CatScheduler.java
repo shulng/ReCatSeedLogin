@@ -2,10 +2,8 @@ package cc.baka9.catseedlogin.bukkit;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-
 import space.arim.morepaperlib.MorePaperLib;
 import space.arim.morepaperlib.scheduling.ScheduledTask;
 
