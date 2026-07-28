@@ -4,7 +4,7 @@
   "name": "CatSeedLogin",
   "version": "${version}",
   "description": "CatSeedLogin的Velocity适配版本，提供跨服登录验证功能",
-  "url": "https://github.com/shulng/CatSeedLogin-v2",
+  "url": "https://github.com/shulng/ReCatSeedLogin",
   "authors": [
     "shulng"
   ]

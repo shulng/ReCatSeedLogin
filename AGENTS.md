@@ -17,7 +17,7 @@ No lint/typecheck/test commands exist. The repo has no test source (`src/test/` 
 Single-module Maven project. Three platform entry points and shared common code coexist in one module under `src/main/java/cc/baka9/catseedlogin/`:
 
 ```
-CatSeedLogin-v2/
+ReCatSeedLogin/
 ├── pom.xml                  (packaging=jar, single shaded JAR)
 └── src/main/java/cc/baka9/catseedlogin/
     ├── common/              (shared code across platforms)

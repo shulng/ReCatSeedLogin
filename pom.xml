@@ -11,7 +11,7 @@
 
     <name>CatSeedLogin</name>
     <description>A comprehensive login plugin for Minecraft servers supporting Bukkit, BungeeCord, and Velocity</description>
-    <url>https://github.com/shulng/CatSeedLogin-v2</url>
+    <url>https://github.com/shulng/ReCatSeedLogin</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

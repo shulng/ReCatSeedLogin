@@ -2,10 +2,10 @@
 
 <div align="center">
 
-[![Build Status](https://github.com/shulng/CatSeedLogin-v2/actions/workflows/maven.yml/badge.svg)](https://github.com/shulng/CatSeedLogin-v2/actions/workflows/maven.yml)
-[![Release](https://img.shields.io/github/v/release/shulng/CatSeedLogin-v2)](https://github.com/shulng/CatSeedLogin-v2/releases/latest)
-[![License](https://img.shields.io/github/license/shulng/CatSeedLogin-v2)](LICENSE)
-[![Downloads](https://img.shields.io/github/downloads/shulng/CatSeedLogin-v2/total)](https://github.com/shulng/CatSeedLogin-v2/releases)
+[![Build Status](https://github.com/shulng/ReCatSeedLogin/actions/workflows/maven.yml/badge.svg)](https://github.com/shulng/ReCatSeedLogin/actions/workflows/maven.yml)
+[![Release](https://img.shields.io/github/v/release/shulng/ReCatSeedLogin)](https://github.com/shulng/ReCatSeedLogin/releases/latest)
+[![License](https://img.shields.io/github/license/shulng/ReCatSeedLogin)](LICENSE)
+[![Downloads](https://img.shields.io/github/downloads/shulng/ReCatSeedLogin/total)](https://github.com/shulng/ReCatSeedLogin/releases)
 
 **🚀 高性能Minecraft登录插件 | 支持Bukkit/Spigot/Paper/Folia/BungeeCord/Velocity**
 
@@ -80,7 +80,7 @@
 插件采用单模块Maven架构，编译为一个JAR包，同时支持Bukkit/BungeeCord/Velocity三个平台：
 
 ```
-CatSeedLogin-v2/
+ReCatSeedLogin/
 ├── pom.xml                      (Maven构建配置，输出单个Shaded JAR)
 ├── src/main/java/cc/baka9/catseedlogin/
 │   ├── bukkit/                  → Bukkit/Spigot/Paper/Folia 服务端实现
@@ -133,8 +133,8 @@ CatSeedLogin-v2/
 ### 📦 下载地址
 | 版本类型 | 下载链接 |
 |---------|----------|
-| 🔥 **最新稳定版** | [GitHub Releases](https://github.com/shulng/CatSeedLogin-v2/releases/latest) |
-| 🔄 **自动构建版** | [GitHub Actions](https://github.com/shulng/CatSeedLogin-v2/actions/workflows/maven.yml) |
+| 🔥 **最新稳定版** | [GitHub Releases](https://github.com/shulng/ReCatSeedLogin/releases/latest) |
+| 🔄 **自动构建版** | [GitHub Actions](https://github.com/shulng/ReCatSeedLogin/actions/workflows/maven.yml) |
 
 ### 🚀 安装步骤
 
@@ -425,9 +425,9 @@ Long lastLogin = CatSeedLoginAPI.getLastLoginTime(playerName);
 [![QQ交流群](https://img.shields.io/badge/QQ%E4%BA%A4%E6%B5%81%E7%BE%A4-839815243-blue?style=flat-square&logo=tencent-qq)](http://shang.qq.com/wpa/qunwpa?idkey=91199801a9406f659c7add6fb87b03ca071b199b36687c62a3ac51bec2f258a3)
 
 ### 📊 项目统计
-- ⭐ **给项目点星**：[GitHub仓库](https://github.com/shulng/CatSeedLogin-v2)
-- 🐛 **提交Issue**：[问题反馈](https://github.com/shulng/CatSeedLogin-v2/issues)
-- 📖 **贡献代码**：[Pull Request](https://github.com/shulng/CatSeedLogin-v2/pulls)
+- ⭐ **给项目点星**：[GitHub仓库](https://github.com/shulng/ReCatSeedLogin)
+- 🐛 **提交Issue**：[问题反馈](https://github.com/shulng/ReCatSeedLogin/issues)
+- 📖 **贡献代码**：[Pull Request](https://github.com/shulng/ReCatSeedLogin/pulls)
 
 ---
 
