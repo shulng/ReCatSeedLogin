@@ -17,4 +17,4 @@ jobs:
       - name: Google Java Format
         uses: axel-op/googlejavaformat-action@v4
         with:
-          args: "--skip-sorting-imports --replace"
+          args: "--replace"
