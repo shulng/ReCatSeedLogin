@@ -16,73 +16,76 @@ import cc.baka9.catseedlogin.common.util.Crypt;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 
 public class CommandChangePassword implements CommandExecutor {
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String lable, String[] args) {
-        if (args.length != 3 || !(sender instanceof Player)) return false;
+  @Override
+  public boolean onCommand(CommandSender sender, Command command, String lable, String[] args) {
+    if (args.length != 3 || !(sender instanceof Player)) return false;
 
-        Player player = (Player) sender;
-        String name = player.getName();
+    Player player = (Player) sender;
+    String name = player.getName();
 
-        if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player)) return true;
+    if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
+      return true;
 
-        LoginPlayer lp = Cache.getIgnoreCase(name);
-        if (lp == null) {
-            sender.sendMessage(Config.Language.CHANGEPASSWORD_NOREGISTER);
-            return true;
-        }
-        if (!LoginPlayerHelper.isLogin(name)) {
-            sender.sendMessage(Config.Language.CHANGEPASSWORD_NOLOGIN);
-            return true;
-        }
-        if (!Crypt.match(name, args[0], lp.getPassword().trim())) {
-            sender.sendMessage(Config.Language.CHANGEPASSWORD_OLDPASSWORD_INCORRECT);
-            return true;
-        }
-        if (!args[1].equals(args[2])) {
-            sender.sendMessage(Config.Language.CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL);
-            return true;
-        }
-        if (ValidationUtil.isPasswordTooSimple(args[1])) {
-            sender.sendMessage(Config.Language.COMMON_PASSWORD_SO_SIMPLE);
-            return true;
-        }
-        if (!Cache.isLoaded) return true;
-
-        sender.sendMessage(MessageKey.CHANGING_PASSWORD.get());
-        changePasswordAsync(sender, player, lp, args[1]);
-        return true;
+    LoginPlayer lp = Cache.getIgnoreCase(name);
+    if (lp == null) {
+      sender.sendMessage(Config.Language.CHANGEPASSWORD_NOREGISTER);
+      return true;
     }
-
-    private void changePasswordAsync(CommandSender sender, Player player, LoginPlayer lp, String newPwd) {
-        CatScheduler.runTaskAsync(() -> executePasswordChange(sender, player, lp, newPwd));
+    if (!LoginPlayerHelper.isLogin(name)) {
+      sender.sendMessage(Config.Language.CHANGEPASSWORD_NOLOGIN);
+      return true;
     }
-
-    private void executePasswordChange(CommandSender sender, Player player, LoginPlayer lp, String newPwd) {
-        try {
-            LoginPlayer copy = lp.copy();
-            copy.setPassword(newPwd);
-            copy.crypt();
-            PluginContext.getSql().edit(copy);
-            Cache.refresh(copy.getName());
-            LoginPlayerHelper.remove(lp);
-            CatScheduler.runTask(() -> notifyChangeSuccess(sender, player));
-        } catch (Exception e) {
-            e.printStackTrace();
-            sender.sendMessage(MessageKey.INTERNAL_ERROR.get());
-        }
+    if (!Crypt.match(name, args[0], lp.getPassword().trim())) {
+      sender.sendMessage(Config.Language.CHANGEPASSWORD_OLDPASSWORD_INCORRECT);
+      return true;
     }
-
-    private void notifyChangeSuccess(CommandSender sender, Player player) {
-        Player online = Bukkit.getPlayer(player.getUniqueId());
-        if (online == null || !online.isOnline()) return;
-
-        online.sendMessage(Config.Language.CHANGEPASSWORD_SUCCESS);
-        Config.setOfflineLocation(online);
-        if (!Config.Settings.CanTpSpawnLocation) return;
-
-        CatScheduler.teleport(online, Config.Settings.SpawnLocation);
-        if (PluginContext.isLoadProtocolLib()) {
-            LoginPlayerHelper.sendBlankInventoryPacket(online);
-        }
+    if (!args[1].equals(args[2])) {
+      sender.sendMessage(Config.Language.CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL);
+      return true;
     }
+    if (ValidationUtil.isPasswordTooSimple(args[1])) {
+      sender.sendMessage(Config.Language.COMMON_PASSWORD_SO_SIMPLE);
+      return true;
+    }
+    if (!Cache.isLoaded) return true;
+
+    sender.sendMessage(MessageKey.CHANGING_PASSWORD.get());
+    changePasswordAsync(sender, player, lp, args[1]);
+    return true;
+  }
+
+  private void changePasswordAsync(
+      CommandSender sender, Player player, LoginPlayer lp, String newPwd) {
+    CatScheduler.runTaskAsync(() -> executePasswordChange(sender, player, lp, newPwd));
+  }
+
+  private void executePasswordChange(
+      CommandSender sender, Player player, LoginPlayer lp, String newPwd) {
+    try {
+      LoginPlayer copy = lp.copy();
+      copy.setPassword(newPwd);
+      copy.crypt();
+      PluginContext.getSql().edit(copy);
+      Cache.refresh(copy.getName());
+      LoginPlayerHelper.remove(lp);
+      CatScheduler.runTask(() -> notifyChangeSuccess(sender, player));
+    } catch (Exception e) {
+      e.printStackTrace();
+      sender.sendMessage(MessageKey.INTERNAL_ERROR.get());
+    }
+  }
+
+  private void notifyChangeSuccess(CommandSender sender, Player player) {
+    Player online = Bukkit.getPlayer(player.getUniqueId());
+    if (online == null || !online.isOnline()) return;
+
+    online.sendMessage(Config.Language.CHANGEPASSWORD_SUCCESS);
+    Config.setOfflineLocation(online);
+    if (!Config.Settings.CanTpSpawnLocation) return;
+
+    CatScheduler.teleport(online, Config.Settings.SpawnLocation);
+    if (PluginContext.isLoadProtocolLib()) {
+      LoginPlayerHelper.sendBlankInventoryPacket(online);
+    }
+  }
 }

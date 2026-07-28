@@ -6,36 +6,36 @@ import org.slf4j.Logger;
 
 public class VelocityCommunication extends BaseCommunication {
 
-    private final VelocityConfigManager configManager;
-    private final Logger logger;
+  private final VelocityConfigManager configManager;
+  private final Logger logger;
 
-    public VelocityCommunication(VelocityConfigManager configManager, Logger logger) {
-        this.configManager = configManager;
-        this.logger = logger;
-    }
+  public VelocityCommunication(VelocityConfigManager configManager, Logger logger) {
+    this.configManager = configManager;
+    this.logger = logger;
+  }
 
-    @Override
-    protected String getProxyHost() {
-        return configManager.getProxyHost();
-    }
+  @Override
+  protected String getProxyHost() {
+    return configManager.getProxyHost();
+  }
 
-    @Override
-    protected int getProxyPort() {
-        return configManager.getProxyPort();
-    }
+  @Override
+  protected int getProxyPort() {
+    return configManager.getProxyPort();
+  }
 
-    @Override
-    protected void logError(String message, Exception e) {
-        logger.error(message, e);
-    }
+  @Override
+  protected void logError(String message, Exception e) {
+    logger.error(message, e);
+  }
 
-    @Override
-    protected void logWarning(String message) {
-        logger.warn(message);
-    }
+  @Override
+  protected void logWarning(String message) {
+    logger.warn(message);
+  }
 
-    @Override
-    protected String getAuthKey() {
-        return configManager.getAuthKey();
-    }
+  @Override
+  protected String getAuthKey() {
+    return configManager.getAuthKey();
+  }
 }

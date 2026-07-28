@@ -1,0 +1,20 @@
+name: Google Java Format
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: 25
+          distribution: "temurin"
+      - name: Google Java Format
+        uses: axel-op/googlejavaformat-action@v4
+        with:
+          args: "--skip-sorting-imports --replace"

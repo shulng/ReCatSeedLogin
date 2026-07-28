@@ -8,31 +8,33 @@ import org.bukkit.event.HandlerList;
 import java.util.Optional;
 
 public class CatSeedPlayerLoginEvent extends Event {
-    private static final HandlerList handlers = new HandlerList();
-    @Getter private final Player player;
-    private final String email;
-    @Getter private final Result result;
+  private static final HandlerList handlers = new HandlerList();
+  @Getter private final Player player;
+  private final String email;
+  @Getter private final Result result;
 
-    public CatSeedPlayerLoginEvent(Player player, String email, Result result) {
-        this.player = player;
-        this.email = email;
-        this.result = result;
-    }
+  public CatSeedPlayerLoginEvent(Player player, String email, Result result) {
+    this.player = player;
+    this.email = email;
+    this.result = result;
+  }
 
-    public HandlerList getHandlers() {
-        return handlers;
-    }
+  public HandlerList getHandlers() {
+    return handlers;
+  }
 
-    public static HandlerList getHandlerList() {
-        return handlers;
-    }
+  public static HandlerList getHandlerList() {
+    return handlers;
+  }
 
-    public Optional<String> getEmail() {
-        return Optional.ofNullable(email);
-    }
+  public Optional<String> getEmail() {
+    return Optional.ofNullable(email);
+  }
 
-    public enum Result {
-        SUCCESS, FAIL;
-        Result() {}
-    }
+  public enum Result {
+    SUCCESS,
+    FAIL;
+
+    Result() {}
+  }
 }

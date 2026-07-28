@@ -11,24 +11,26 @@ import com.comphenix.protocol.events.PacketEvent;
 import org.bukkit.entity.Player;
 
 public class ProtocolLibListeners extends PacketAdapter {
-    public static void enable() {
-        ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
-        protocolManager.addPacketListener(new ProtocolLibListeners());
-    }
+  public static void enable() {
+    ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
+    protocolManager.addPacketListener(new ProtocolLibListeners());
+  }
 
-    public ProtocolLibListeners() {
-        super(CatSeedLogin.instance, ListenerPriority.HIGHEST,
-                PacketType.Play.Server.SET_SLOT,
-                PacketType.Play.Server.WINDOW_ITEMS);
-    }
+  public ProtocolLibListeners() {
+    super(
+        CatSeedLogin.instance,
+        ListenerPriority.HIGHEST,
+        PacketType.Play.Server.SET_SLOT,
+        PacketType.Play.Server.WINDOW_ITEMS);
+  }
 
-    @Override
-    public void onPacketSending(PacketEvent event) {
-        Player player = event.getPlayer();
-        PacketContainer packet = event.getPacket();
-        int windowId = packet.getIntegers().read(0);
-        if (windowId == 0 && !LoginPlayerHelper.isLogin(player.getName())) {
-            event.setCancelled(true);
-        }
+  @Override
+  public void onPacketSending(PacketEvent event) {
+    Player player = event.getPlayer();
+    PacketContainer packet = event.getPacket();
+    int windowId = packet.getIntegers().read(0);
+    if (windowId == 0 && !LoginPlayerHelper.isLogin(player.getName())) {
+      event.setCancelled(true);
     }
+  }
 }

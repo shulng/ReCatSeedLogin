@@ -4,13 +4,11 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.logging.Logger;
 
-/**
- * 平台无关的插件上下文接口，用于打破 BungeeConfigManager 与 PluginMain 之间的循环依赖。
- */
+/** 平台无关的插件上下文接口，用于打破 BungeeConfigManager 与 PluginMain 之间的循环依赖。 */
 public interface PluginContext {
-    File getDataFolder();
+  File getDataFolder();
 
-    InputStream getResourceAsStream(String name);
+  InputStream getResourceAsStream(String name);
 
-    Logger getLogger();
+  Logger getLogger();
 }

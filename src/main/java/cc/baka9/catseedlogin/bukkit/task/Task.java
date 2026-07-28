@@ -7,35 +7,37 @@ import cc.baka9.catseedlogin.bukkit.CatSeedLogin;
 import space.arim.morepaperlib.scheduling.ScheduledTask;
 
 public abstract class Task implements Runnable {
-    private static final List<ScheduledTask> scheduledTasks = new CopyOnWriteArrayList<>();
-    private static TaskAutoKick taskAutoKick;
-    private static TaskSendLoginMessage taskSendLoginMessage;
+  private static final List<ScheduledTask> scheduledTasks = new CopyOnWriteArrayList<>();
+  private static TaskAutoKick taskAutoKick;
+  private static TaskSendLoginMessage taskSendLoginMessage;
 
-    protected Task() {}
+  protected Task() {}
 
-    public static TaskAutoKick getTaskAutoKick() {
-        return taskAutoKick == null ? (taskAutoKick = new TaskAutoKick()) : taskAutoKick;
+  public static TaskAutoKick getTaskAutoKick() {
+    return taskAutoKick == null ? (taskAutoKick = new TaskAutoKick()) : taskAutoKick;
+  }
+
+  public static TaskSendLoginMessage getTaskSendLoginMessage() {
+    return taskSendLoginMessage == null
+        ? (taskSendLoginMessage = new TaskSendLoginMessage())
+        : taskSendLoginMessage;
+  }
+
+  public static void runAll() {
+    runTaskTimer(getTaskSendLoginMessage(), 20 * 5);
+    runTaskTimer(getTaskAutoKick(), 20 * 5);
+  }
+
+  public static void cancelAll() {
+    scheduledTasks.forEach(ScheduledTask::cancel);
+    scheduledTasks.clear();
+  }
+
+  public static void runTaskTimer(Runnable runnable, long delay) {
+    try {
+      scheduledTasks.add(CatScheduler.runTaskTimer(runnable, 0, delay));
+    } catch (Exception e) {
+      CatSeedLogin.instance.getLogger().severe(e.getMessage());
     }
-
-    public static TaskSendLoginMessage getTaskSendLoginMessage() {
-        return taskSendLoginMessage == null ? (taskSendLoginMessage = new TaskSendLoginMessage()) : taskSendLoginMessage;
-    }
-
-    public static void runAll() {
-        runTaskTimer(getTaskSendLoginMessage(), 20 * 5);
-        runTaskTimer(getTaskAutoKick(), 20 * 5);
-    }
-
-    public static void cancelAll() {
-        scheduledTasks.forEach(ScheduledTask::cancel);
-        scheduledTasks.clear();
-    }
-
-    public static void runTaskTimer(Runnable runnable, long delay) {
-        try {
-            scheduledTasks.add(CatScheduler.runTaskTimer(runnable, 0, delay));
-        } catch (Exception e) {
-            CatSeedLogin.instance.getLogger().severe(e.getMessage());
-        }
-    }
+  }
 }

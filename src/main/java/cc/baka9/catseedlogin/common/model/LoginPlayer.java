@@ -14,38 +14,39 @@ import java.util.Objects;
 @Getter
 @Setter
 public class LoginPlayer {
-    private String name, password, email, ips;
-    private long lastAction;
-    private String location;
+  private String name, password, email, ips;
+  private long lastAction;
+  private String location;
 
-    public LoginPlayer(String name, String password) {
-        this.name = name; this.password = password;
-    }
+  public LoginPlayer(String name, String password) {
+    this.name = name;
+    this.password = password;
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        return this == o || (o instanceof LoginPlayer && Objects.equals(name, ((LoginPlayer) o).name));
-    }
+  @Override
+  public boolean equals(Object o) {
+    return this == o || (o instanceof LoginPlayer && Objects.equals(name, ((LoginPlayer) o).name));
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(name);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(name);
+  }
 
-    public List<String> getIpsList() {
-        return (ips != null) ? new ArrayList<>(Arrays.asList(ips.split(";"))) : new ArrayList<>();
-    }
+  public List<String> getIpsList() {
+    return (ips != null) ? new ArrayList<>(Arrays.asList(ips.split(";"))) : new ArrayList<>();
+  }
 
-    public void crypt() {
-        password = Crypt.encrypt(name, password);
-    }
+  public void crypt() {
+    password = Crypt.encrypt(name, password);
+  }
 
-    public LoginPlayer copy() {
-        LoginPlayer copy = new LoginPlayer(name, password);
-        copy.email = this.email;
-        copy.ips = this.ips;
-        copy.lastAction = this.lastAction;
-        copy.location = this.location;
-        return copy;
-    }
+  public LoginPlayer copy() {
+    LoginPlayer copy = new LoginPlayer(name, password);
+    copy.email = this.email;
+    copy.ips = this.ips;
+    copy.lastAction = this.lastAction;
+    copy.location = this.location;
+    return copy;
+  }
 }

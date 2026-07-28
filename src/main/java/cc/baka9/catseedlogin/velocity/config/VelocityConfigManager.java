@@ -8,20 +8,20 @@ import java.io.InputStream;
 
 public class VelocityConfigManager extends BaseConfigManager {
 
-    private final PluginMain plugin;
+  private final PluginMain plugin;
 
-    public VelocityConfigManager(PluginMain plugin) {
-        super();
-        this.plugin = plugin;
-        initConfig(plugin.getDataDirectory().toFile(), "config.yml");
-    }
+  public VelocityConfigManager(PluginMain plugin) {
+    super();
+    this.plugin = plugin;
+    initConfig(plugin.getDataDirectory().toFile(), "config.yml");
+  }
 
-    @Override
-    public InputStream getResource(String name) {
-        return getClass().getClassLoader().getResourceAsStream(name);
-    }
+  @Override
+  public InputStream getResource(String name) {
+    return getClass().getClassLoader().getResourceAsStream(name);
+  }
 
-    public File getDataFolder() {
-        return dataFolder;
-    }
+  public File getDataFolder() {
+    return dataFolder;
+  }
 }
