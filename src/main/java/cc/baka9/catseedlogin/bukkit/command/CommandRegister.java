@@ -8,6 +8,7 @@ import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerRegisterEvent;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
+import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import java.util.List;
 import org.bukkit.Bukkit;
@@ -90,8 +91,7 @@ public class CommandRegister implements CommandExecutor {
       return;
     }
 
-    LoginPlayer lp = new LoginPlayer(name, password);
-    lp.crypt();
+    LoginPlayer lp = PasswordHelper.registerNewPlayer(name, password);
     PluginContext.getSql().add(lp);
     Cache.refresh(lp.getName());
     LoginPlayerHelper.add(lp);
