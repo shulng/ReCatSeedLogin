@@ -8,6 +8,7 @@ import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.Crypt;
+import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -62,9 +63,7 @@ public class CommandChangePassword implements CommandExecutor {
   private void executePasswordChange(
       CommandSender sender, Player player, LoginPlayer lp, String newPwd) {
     try {
-      LoginPlayer copy = lp.copy();
-      copy.setPassword(newPwd);
-      copy.crypt();
+      LoginPlayer copy = PasswordHelper.updatePassword(lp, newPwd);
       PluginContext.getSql().edit(copy);
       Cache.refresh(copy.getName());
       LoginPlayerHelper.remove(lp);

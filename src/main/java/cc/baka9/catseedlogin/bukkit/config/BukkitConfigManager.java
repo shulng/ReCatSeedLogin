@@ -1,13 +1,10 @@
 package cc.baka9.catseedlogin.bukkit.config;
 
 import cc.baka9.catseedlogin.bukkit.CatSeedLogin;
+import cc.baka9.catseedlogin.bukkit.util.WorldUtil;
 import cc.baka9.catseedlogin.common.config.BaseConfigManager;
 import cc.baka9.catseedlogin.common.config.ConfigConstants;
-import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.util.Properties;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -47,7 +44,7 @@ public class BukkitConfigManager extends BaseConfigManager {
 
   public Location getBukkitSpawnLocation() {
     String locStr = mainConfig.getString(ConfigConstants.Path.SPAWN_LOCATION);
-    World defaultWorld = getDefaultWorld();
+    World defaultWorld = WorldUtil.getDefaultWorld(plugin.getLogger());
 
     if (locStr == null || locStr.isEmpty()) {
       Location spawn;
@@ -102,26 +99,4 @@ public class BukkitConfigManager extends BaseConfigManager {
     }
   }
 
-  private World getDefaultWorld() {
-    File serverProps = new File("server.properties");
-    if (!serverProps.exists()) {
-      return Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0);
-    }
-    try (InputStream is = new BufferedInputStream(Files.newInputStream(serverProps.toPath()))) {
-      Properties props = new Properties();
-      props.load(is);
-      String worldName = props.getProperty("level-name");
-      if (worldName != null) {
-        World world = Bukkit.getWorld(worldName);
-        if (world != null) return world;
-      }
-    } catch (Exception e) {
-      plugin.getLogger().warning("读取 server.properties 失败: " + e.getMessage());
-    }
-    return Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0);
-  }
-
-  public File getDataFolder() {
-    return dataFolder;
-  }
 }

@@ -9,6 +9,7 @@ import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.bukkit.util.EmailSender;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
+import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import java.util.Optional;
 import org.bukkit.Bukkit;
@@ -166,9 +167,7 @@ public class CommandResetPassword implements CommandExecutor {
 
   private void executePasswordReset(String name, LoginPlayer lp, String pwd, CommandSender sender) {
     try {
-      LoginPlayer copy = lp.copy();
-      copy.setPassword(pwd);
-      copy.crypt();
+      LoginPlayer copy = PasswordHelper.updatePassword(lp, pwd);
       PluginContext.getSql().edit(copy);
       Cache.refresh(name);
       LoginPlayerHelper.remove(lp);

@@ -20,7 +20,4 @@ public class BungeeConfigManager extends BaseConfigManager {
     return plugin.getResourceAsStream(name);
   }
 
-  public File getDataFolder() {
-    return dataFolder;
-  }
 }

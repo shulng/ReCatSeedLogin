@@ -8,6 +8,7 @@ import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerLoginEvent;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.Crypt;
+import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -60,9 +61,7 @@ public class CommandLogin implements CommandExecutor {
     CatScheduler.runTaskAsync(
         () -> {
           try {
-            LoginPlayer copy = lp.copy();
-            copy.setPassword(rawPassword);
-            copy.crypt();
+            LoginPlayer copy = PasswordHelper.updatePassword(lp, rawPassword);
             PluginContext.getSql().edit(copy);
             Cache.refresh(copy.getName());
           } catch (Exception e) {
