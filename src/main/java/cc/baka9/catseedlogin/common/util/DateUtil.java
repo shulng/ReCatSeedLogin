@@ -1,29 +1,12 @@
 package cc.baka9.catseedlogin.common.util;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class DateUtil {
 
-  private static final SimpleDateFormat DEFAULT_FORMAT =
-      new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   private static final String VERIFICATION_CODE_CHARS =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   private static final int DEFAULT_CODE_LENGTH = 10;
-
-  public static String formatTime(long timeMillis) {
-    synchronized (DEFAULT_FORMAT) {
-      return DEFAULT_FORMAT.format(new Date(timeMillis));
-    }
-  }
-
-  public static String formatTime(long timeMillis, String pattern) {
-    SimpleDateFormat sdf = new SimpleDateFormat(pattern);
-    synchronized (sdf) {
-      return sdf.format(new Date(timeMillis));
-    }
-  }
 
   public static String generateVerificationCode() {
     return generateVerificationCode(DEFAULT_CODE_LENGTH);
