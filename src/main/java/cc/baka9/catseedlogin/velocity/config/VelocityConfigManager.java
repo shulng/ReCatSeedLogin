@@ -20,7 +20,4 @@ public class VelocityConfigManager extends BaseConfigManager {
     return getClass().getClassLoader().getResourceAsStream(name);
   }
 
-  public File getDataFolder() {
-    return dataFolder;
-  }
 }

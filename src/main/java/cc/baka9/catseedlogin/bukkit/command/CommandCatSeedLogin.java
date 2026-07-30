@@ -10,6 +10,7 @@ import cc.baka9.catseedlogin.bukkit.database.SQLite;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
+import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -395,8 +396,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
 
   private void setPwdRegisterNew(CommandSender sender, String name, String pwd) {
     try {
-      LoginPlayer lp = new LoginPlayer(name, pwd);
-      lp.crypt();
+      LoginPlayer lp = PasswordHelper.registerNewPlayer(name, pwd);
       PluginContext.getSql().add(lp);
       Cache.refresh(lp.getName());
       sender.sendMessage(MessageKey.ACCOUNT_NOT_EXISTS_REGISTERED.get());
@@ -408,9 +408,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
 
   private void setPwdUpdateExisting(CommandSender sender, LoginPlayer lp, String pwd) {
     try {
-      LoginPlayer copy = lp.copy();
-      copy.setPassword(pwd);
-      copy.crypt();
+      LoginPlayer copy = PasswordHelper.updatePassword(lp, pwd);
       PluginContext.getSql().edit(copy);
       Cache.refresh(copy.getName());
       LoginPlayerHelper.remove(lp);

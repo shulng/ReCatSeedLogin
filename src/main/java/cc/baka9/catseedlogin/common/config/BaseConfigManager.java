@@ -131,6 +131,10 @@ public abstract class BaseConfigManager
     i18n.reload();
   }
 
+  public File getDataFolder() {
+    return dataFolder;
+  }
+
   public I18n getI18n() {
     return i18n;
   }

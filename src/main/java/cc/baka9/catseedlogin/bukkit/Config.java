@@ -1,6 +1,7 @@
 package cc.baka9.catseedlogin.bukkit;
 
 import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
+import cc.baka9.catseedlogin.bukkit.util.WorldUtil;
 import cc.baka9.catseedlogin.common.config.ConfigConstants;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import java.io.File;
@@ -281,7 +282,7 @@ public class Config {
       }
       World world = Bukkit.getWorld(locStrs[0]);
       if (world == null) {
-        world = getDefaultWorld();
+        world = WorldUtil.getDefaultWorld(plugin.getLogger());
       }
       if (world == null) {
         return getDefaultSpawnLocation();
@@ -298,7 +299,7 @@ public class Config {
   }
 
   private static Location getDefaultSpawnLocation() {
-    World world = getDefaultWorld();
+    World world = WorldUtil.getDefaultWorld(plugin.getLogger());
     return world != null ? world.getSpawnLocation() : Bukkit.getWorlds().get(0).getSpawnLocation();
   }
 
@@ -314,7 +315,7 @@ public class Config {
           loc.getPitch());
     } catch (Exception e) {
       e.printStackTrace();
-      Location defaultLoc = getDefaultWorld().getSpawnLocation();
+      Location defaultLoc = WorldUtil.getDefaultWorld(plugin.getLogger()).getSpawnLocation();
       return String.format(
           "%s:%.2f:%.2f:%.2f:%.2f:%.2f",
           defaultLoc.getWorld().getName(),
@@ -324,32 +325,5 @@ public class Config {
           defaultLoc.getYaw(),
           defaultLoc.getPitch());
     }
-  }
-
-  private static World getDefaultWorld() {
-    if (Bukkit.getWorlds().isEmpty()) {
-      return null;
-    }
-
-    File serverPropertiesFile = new File("server.properties");
-    if (!serverPropertiesFile.exists()) {
-      return Bukkit.getWorlds().get(0);
-    }
-
-    try (java.io.InputStream is =
-        new java.io.BufferedInputStream(
-            java.nio.file.Files.newInputStream(serverPropertiesFile.toPath()))) {
-      java.util.Properties properties = new java.util.Properties();
-      properties.load(is);
-      String worldName = properties.getProperty("level-name");
-      World world = Bukkit.getWorld(worldName);
-      if (world != null) {
-        return world;
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    return Bukkit.getWorlds().get(0);
   }
 }
