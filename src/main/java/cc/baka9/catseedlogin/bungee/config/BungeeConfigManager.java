@@ -2,7 +2,6 @@ package cc.baka9.catseedlogin.bungee.config;
 
 import cc.baka9.catseedlogin.common.config.BaseConfigManager;
 import cc.baka9.catseedlogin.common.config.PluginContext;
-import java.io.File;
 import java.io.InputStream;
 
 public class BungeeConfigManager extends BaseConfigManager {
@@ -19,5 +18,4 @@ public class BungeeConfigManager extends BaseConfigManager {
   public InputStream getResource(String name) {
     return plugin.getResourceAsStream(name);
   }
-
 }

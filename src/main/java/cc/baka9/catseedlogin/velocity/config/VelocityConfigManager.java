@@ -2,7 +2,6 @@ package cc.baka9.catseedlogin.velocity.config;
 
 import cc.baka9.catseedlogin.common.config.BaseConfigManager;
 import cc.baka9.catseedlogin.velocity.PluginMain;
-import java.io.File;
 import java.io.InputStream;
 
 public class VelocityConfigManager extends BaseConfigManager {
@@ -19,5 +18,4 @@ public class VelocityConfigManager extends BaseConfigManager {
   public InputStream getResource(String name) {
     return getClass().getClassLoader().getResourceAsStream(name);
   }
-
 }

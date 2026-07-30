@@ -98,5 +98,4 @@ public class BukkitConfigManager extends BaseConfigManager {
       return spawn;
     }
   }
-
 }

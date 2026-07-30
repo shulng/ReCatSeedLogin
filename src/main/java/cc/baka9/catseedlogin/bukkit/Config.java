@@ -4,7 +4,6 @@ import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
 import cc.baka9.catseedlogin.bukkit.util.WorldUtil;
 import cc.baka9.catseedlogin.common.config.ConfigConstants;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
-import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
