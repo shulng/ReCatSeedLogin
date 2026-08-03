@@ -19,7 +19,7 @@ public abstract class SQL {
   }
 
   /** 初始化数据库表结构。 */
-  public void init() throws SQLException {
+  public synchronized void init() throws SQLException {
     try {
       flush(
           new BufferStatement(
@@ -61,7 +61,7 @@ public abstract class SQL {
    *
    * @param lp 登录玩家对象
    */
-  public void add(LoginPlayer lp) {
+  public synchronized void add(LoginPlayer lp) {
     try {
       flush(
           new BufferStatement(
@@ -84,7 +84,7 @@ public abstract class SQL {
    *
    * @param name 玩家名称
    */
-  public void del(String name) {
+  public synchronized void del(String name) {
     try {
       flush(new BufferStatement("DELETE FROM accounts WHERE name = ?", name));
     } catch (SQLException e) {
@@ -98,7 +98,7 @@ public abstract class SQL {
    *
    * @param lp 登录玩家对象
    */
-  public void edit(LoginPlayer lp) {
+  public synchronized void edit(LoginPlayer lp) {
     try {
       flush(
           new BufferStatement(
@@ -122,7 +122,7 @@ public abstract class SQL {
    * @param name 玩家名称
    * @param location 位置字符串
    */
-  public void updateLocation(String name, String location) {
+  public synchronized void updateLocation(String name, String location) {
     try {
       flush(new BufferStatement("UPDATE accounts SET location = ? WHERE name = ?", location, name));
     } catch (SQLException e) {
@@ -137,7 +137,7 @@ public abstract class SQL {
    * @param name 玩家名称
    * @return 位置字符串，未找到时返回 null
    */
-  public String getLocation(String name) {
+  public synchronized String getLocation(String name) {
     try {
       return queryForString("SELECT location FROM accounts WHERE name = ?", name);
     } catch (Exception e) {
@@ -152,7 +152,7 @@ public abstract class SQL {
    * @param name 玩家名称
    * @return LoginPlayer 对象，未找到时返回 null
    */
-  public LoginPlayer get(String name) {
+  public synchronized LoginPlayer get(String name) {
     String sql = "SELECT * FROM accounts WHERE name = ?";
     try (PreparedStatement ps = new BufferStatement(sql, name).prepareStatement(getConnection());
         ResultSet resultSet = ps.executeQuery()) {
@@ -192,7 +192,7 @@ public abstract class SQL {
    *
    * @return 登录玩家列表
    */
-  public List<LoginPlayer> getAll() {
+  public synchronized List<LoginPlayer> getAll() {
     try (PreparedStatement ps =
             new BufferStatement("SELECT * FROM accounts").prepareStatement(getConnection());
         ResultSet resultSet = ps.executeQuery()) {
@@ -213,7 +213,7 @@ public abstract class SQL {
    * @param ip IP 地址
    * @return 匹配的登录玩家列表
    */
-  public List<LoginPlayer> getLikeByIp(String ip) {
+  public synchronized List<LoginPlayer> getLikeByIp(String ip) {
     String likePattern = "%" + ip + "%";
     try (PreparedStatement ps =
             new BufferStatement("SELECT * FROM accounts WHERE ips LIKE ?", likePattern)
@@ -255,7 +255,7 @@ public abstract class SQL {
    *
    * @param bufferStatement 缓冲 SQL 语句
    */
-  public void flush(BufferStatement bufferStatement) throws SQLException {
+  public synchronized void flush(BufferStatement bufferStatement) throws SQLException {
     try (PreparedStatement ps = bufferStatement.prepareStatement(getConnection())) {
       ps.executeUpdate();
     } catch (SQLException e) {
