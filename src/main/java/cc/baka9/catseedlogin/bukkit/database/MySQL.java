@@ -14,7 +14,7 @@ public class MySQL extends SQL {
   }
 
   @Override
-  public synchronized Connection getConnection() throws SQLException {
+  public Connection getConnection() throws SQLException {
     if (isConnectionValid()) {
       return this.connection;
     }
@@ -51,7 +51,7 @@ public class MySQL extends SQL {
   }
 
   @Override
-  public synchronized void closeConnection() {
+  public void closeConnection() {
     try {
       if (this.connection != null && !this.connection.isClosed()) {
         this.connection.close();
