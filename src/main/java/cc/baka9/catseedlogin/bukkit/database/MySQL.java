@@ -51,7 +51,7 @@ public class MySQL extends SQL {
   }
 
   @Override
-  public void closeConnection() {
+  public synchronized void closeConnection() {
     try {
       if (this.connection != null && !this.connection.isClosed()) {
         this.connection.close();
