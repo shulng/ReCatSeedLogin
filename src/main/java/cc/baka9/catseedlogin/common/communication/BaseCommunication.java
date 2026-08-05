@@ -37,7 +37,7 @@ public abstract class BaseCommunication {
       writeLine(writer, playerName);
       String time = String.valueOf(System.currentTimeMillis());
       writeLine(writer, time);
-      String sign = CommunicationAuth.encryption(playerName, time, getAuthKey());
+      String sign = CommunicationAuth.encryption(getAuthKey(), playerName, time);
       writeLine(writer, sign);
       writer.flush();
     } catch (IOException e) {

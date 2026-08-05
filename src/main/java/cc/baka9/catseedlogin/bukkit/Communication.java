@@ -82,7 +82,7 @@ public class Communication extends BaseCommunication {
     if (playerName == null || time == null || sign == null) return;
     String expectedSign =
         CommunicationAuth.encryption(
-            playerName, time, PluginContext.getConfigManager().getAuthKey());
+            PluginContext.getConfigManager().getAuthKey(), playerName, time);
     if (!sign.equals(expectedSign)) return;
 
     CatScheduler.runTask(
