@@ -33,7 +33,7 @@ public class CommunicationAuth {
     if (key == null || key.isEmpty()) {
       throw new IllegalArgumentException("HMAC key must not be null or empty");
     }
-    String message = String.join("", data);
+    String message = String.join(":", data);
     Mac mac = MAC.get();
     try {
       mac.init(new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), HMAC_SHA256));
