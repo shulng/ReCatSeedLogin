@@ -38,7 +38,7 @@
         <argon2.version>2.12</argon2.version>
 
         <shade.version>3.6.2</shade.version>
-        <compiler.version>3.15.0</compiler.version>
+        <compiler.version>3.16.0</compiler.version>
         <resources.version>3.5.0</resources.version>
     </properties>
 
