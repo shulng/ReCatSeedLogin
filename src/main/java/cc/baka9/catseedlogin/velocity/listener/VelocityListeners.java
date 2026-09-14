@@ -1,6 +1,7 @@
 package cc.baka9.catseedlogin.velocity.listener;
 
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
+import cc.baka9.catseedlogin.common.proxy.ProxyLoginTracker;
 import cc.baka9.catseedlogin.velocity.PluginMain;
 import cc.baka9.catseedlogin.velocity.config.VelocityConfigManager;
 import cc.baka9.catseedlogin.velocity.net.VelocityCommunication;
@@ -13,16 +14,14 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 
 public class VelocityListeners {
 
-  private final List<String> loggedInPlayerList = new CopyOnWriteArrayList<>();
+  private final ProxyLoginTracker tracker;
   private final VelocityConfigManager configManager;
-  private final VelocityCommunication communication;
   private final ProxyServer proxyServer;
   private final Logger logger;
 
@@ -32,7 +31,7 @@ public class VelocityListeners {
       ProxyServer proxyServer,
       Logger logger) {
     this.configManager = configManager;
-    this.communication = communication;
+    this.tracker = new ProxyLoginTracker(communication);
     this.proxyServer = proxyServer;
     this.logger = logger;
   }
@@ -81,7 +80,7 @@ public class VelocityListeners {
     String playerName = player.getUsername();
     String loginServerName = configManager.getLoginServerName();
 
-    if (loggedInPlayerList.contains(playerName)) return;
+    if (tracker.isLoggedIn(playerName)) return;
 
     String targetName = target.getServerInfo().getName();
     if (targetName.equals(loginServerName)) {
@@ -95,9 +94,7 @@ public class VelocityListeners {
   private void checkLoginSync(
       Player player, String playerName, String loginServerName, ServerPreConnectEvent event) {
     try {
-      if (communication.sendConnectRequest(playerName) == 1) {
-        loggedInPlayerList.add(playerName);
-      } else {
+      if (!tracker.markLoggedIn(playerName)) {
         redirectToLoginServer(loginServerName, event);
       }
     } catch (Exception e) {
@@ -119,10 +116,10 @@ public class VelocityListeners {
     String serverName = event.getServer().getServerInfo().getName();
     String loginServerName = configManager.getLoginServerName();
 
-    if (serverName.equals(loginServerName) && loggedInPlayerList.contains(player.getUsername())) {
+    if (serverName.equals(loginServerName) && tracker.isLoggedIn(player.getUsername())) {
       PluginMain.runAsyncDelayed(
           () -> {
-            communication.sendKeepLoggedInRequest(player.getUsername());
+            tracker.sendKeepLoggedInRequest(player.getUsername());
           },
           1,
           TimeUnit.SECONDS);
@@ -133,11 +130,7 @@ public class VelocityListeners {
   public void onPlayerDisconnect(DisconnectEvent event) {
     Player player = event.getPlayer();
     if (player != null) {
-      try {
-        loggedInPlayerList.remove(player.getUsername());
-      } catch (Exception e) {
-        logger.warn("Failed to remove player from logged-in list: " + player.getUsername());
-      }
+      tracker.markLoggedOut(player.getUsername());
     }
   }
 
@@ -146,8 +139,7 @@ public class VelocityListeners {
     String playerName = event.getUsername();
 
     try {
-      if (loggedInPlayerList.contains(playerName)
-          && (communication.sendConnectRequest(playerName) == 1)) {
+      if (tracker.isAlreadyLoggedInElsewhere(playerName)) {
         event.setResult(
             PreLoginEvent.PreLoginComponentResult.denied(
                 Component.text(MessageKey.ALREADY_LOGGED_IN_PROXY.get())));
@@ -160,7 +152,7 @@ public class VelocityListeners {
   }
 
   private boolean isNotLoggedIn(Player player) {
-    return !loggedInPlayerList.contains(player.getUsername());
+    return !tracker.isLoggedIn(player.getUsername());
   }
 
   private void handleLogin(Player player, String message) {
@@ -170,10 +162,9 @@ public class VelocityListeners {
 
   private void handleLoginAsync(Player player, String playerName, String message) {
     try {
-      if (communication.sendConnectRequest(playerName) != 1) return;
-
-      loggedInPlayerList.add(playerName);
-      executeQueuedCommand(player, message);
+      if (tracker.markLoggedIn(playerName)) {
+        executeQueuedCommand(player, message);
+      }
     } catch (Exception e) {
       logger.error("Error handling login for player: " + playerName, e);
     }
@@ -185,6 +176,6 @@ public class VelocityListeners {
   }
 
   public List<String> getLoggedInPlayers() {
-    return loggedInPlayerList;
+    return tracker.getLoggedInPlayers();
   }
 }

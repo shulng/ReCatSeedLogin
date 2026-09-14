@@ -12,18 +12,17 @@ import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import java.util.Optional;
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class CommandBindEmail implements CommandExecutor {
+public class CommandBindEmail extends AbstractCommandSupport {
 
   @Override
-  public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
-    if (args.length == 0 || !(sender instanceof Player)) return false;
+  protected boolean onPlayerCommand(Player player, String[] args) {
+    if (args.length == 0) return false;
 
-    String name = sender.getName();
+    CommandSender sender = player;
+    String name = player.getName();
 
     if (!canBindEmail(sender, name)) return true;
 
@@ -38,11 +37,6 @@ public class CommandBindEmail implements CommandExecutor {
   }
 
   private boolean canBindEmail(CommandSender sender, String name) {
-    Player player = (Player) sender;
-
-    if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
-      return false;
-
     LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) {
       sender.sendMessage(MessageKey.NOT_REGISTERED.get());

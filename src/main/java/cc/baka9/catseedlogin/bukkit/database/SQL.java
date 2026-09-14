@@ -10,9 +10,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
-/** 抽象数据库操作类，提供通用的 CRUD 方法。 子类需实现 getConnection() 和 closeConnection() 以提供具体连接。 */
+/** 抽象数据库操作类，提供通用的 CRUD、连接获取/校验/关闭方法。 子类仅需实现 createConnection() 返回具体连接。 */
 public abstract class SQL {
   protected Logger logger;
+  private Connection connection;
 
   public SQL(Logger logger) {
     this.logger = logger;
@@ -241,14 +242,46 @@ public abstract class SQL {
   }
 
   /**
-   * 获取数据库连接。
+   * 获取数据库连接；若当前连接无效则自动重建。
    *
    * @return Connection 对象
    */
-  public abstract Connection getConnection() throws SQLException;
+  public synchronized Connection getConnection() throws SQLException {
+    if (isConnectionValid()) {
+      return connection;
+    }
+    closeConnection();
+    connection = createConnection();
+    return connection;
+  }
+
+  /** 校验当前连接是否可用。 */
+  private boolean isConnectionValid() throws SQLException {
+    if (connection == null || connection.isClosed()) {
+      return false;
+    }
+    try (PreparedStatement ps = connection.prepareStatement("SELECT 1")) {
+      ps.executeQuery();
+      return true;
+    } catch (SQLException e) {
+      return false;
+    }
+  }
+
+  /** 创建具体数据库连接，由子类实现。 */
+  protected abstract Connection createConnection() throws SQLException;
 
   /** 关闭数据库连接。 */
-  public abstract void closeConnection();
+  public synchronized void closeConnection() {
+    try {
+      if (connection != null && !connection.isClosed()) {
+        connection.close();
+      }
+    } catch (SQLException e) {
+      logger.warning("关闭数据库连接时出错: " + e.getMessage());
+    }
+    connection = null;
+  }
 
   /**
    * 执行缓冲语句。

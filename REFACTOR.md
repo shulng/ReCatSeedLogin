@@ -24,5 +24,11 @@
 - 验证：`mvn -o compile` → BUILD SUCCESS（仅存既有 deprecation 警告）。
 - 入口类 `bukkit.CatSeedLogin` / `bungee.PluginMain` / `velocity.PluginMain` FQCN 未变。
 
-### 阶段 2：类层次优化
+### 阶段 2：类层次优化（Commit 2）✅ 完成
+1. **SQL 基类**：`getConnection()/isConnectionValid()/closeConnection()` 上提至基类 `SQL`，新增抽象 `createConnection()`；`SQLite`/`MySQL` 仅实现建连差异，消除两处 `isConnectionValid` 重复与连接重建样板。
+2. **AbstractCommandSupport（bukkit 命令基类）**：新增基类统一处理「非玩家守卫 + Floodgate 跳过」，子类实现 `onPlayerCommand(player,args)`；`CommandLogin/Register/ChangePassword/ResetPassword/BindEmail` 5 个玩家命令接入，`CommandCatSeedLogin`（控制台可用）不继承。
+3. **ProxyLoginTracker（common/proxy）**：封装登录态列表与 `sendConnectRequest / sendKeepLoggedInRequest` 流程，`BungeeListeners`/`VelocityListeners` 改委托该组件，移除重复的 `CopyOnWriteArrayList` 管理逻辑。
+- 验证：`mvn -o compile` → BUILD SUCCESS。
+
+### 阶段 3：重复代码提取
 （待实现）

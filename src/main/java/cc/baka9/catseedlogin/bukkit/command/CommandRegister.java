@@ -12,19 +12,17 @@ import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import java.util.List;
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class CommandRegister implements CommandExecutor {
+public class CommandRegister extends AbstractCommandSupport {
   @Override
-  public boolean onCommand(CommandSender sender, Command command, String lable, String[] args) {
-    if (args.length != 2 || !(sender instanceof Player)) return false;
-    Player player = (Player) sender;
-    String name = sender.getName();
+  protected boolean onPlayerCommand(Player player, String[] args) {
+    if (args.length != 2) return false;
+    CommandSender sender = player;
+    String name = player.getName();
 
-    if (!canRegister(player, name)) {
+    if (!canRegister(sender, name)) {
       return true;
     }
     if (!args[0].equals(args[1])) {
@@ -42,15 +40,13 @@ public class CommandRegister implements CommandExecutor {
     return true;
   }
 
-  private boolean canRegister(Player player, String name) {
-    if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
-      return false;
+  private boolean canRegister(CommandSender sender, String name) {
     if (LoginPlayerHelper.isLogin(name)) {
-      player.sendMessage(Config.Language.REGISTER_AFTER_LOGIN_ALREADY);
+      sender.sendMessage(Config.Language.REGISTER_AFTER_LOGIN_ALREADY);
       return false;
     }
     if (LoginPlayerHelper.isRegister(name)) {
-      player.sendMessage(Config.Language.REGISTER_BEFORE_LOGIN_ALREADY);
+      sender.sendMessage(Config.Language.REGISTER_BEFORE_LOGIN_ALREADY);
       return false;
     }
     return true;

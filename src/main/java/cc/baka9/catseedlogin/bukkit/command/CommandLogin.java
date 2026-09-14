@@ -10,30 +10,25 @@ import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.Crypt;
 import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class CommandLogin implements CommandExecutor {
+public class CommandLogin extends AbstractCommandSupport {
   @Override
-  public boolean onCommand(CommandSender sender, Command command, String lable, String[] args) {
-    if (args.length == 0 || !(sender instanceof Player)) return false;
-    Player player = (Player) sender;
+  protected boolean onPlayerCommand(Player player, String[] args) {
+    if (args.length == 0) return false;
     String name = player.getName();
-    if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
-      return true;
     if (LoginPlayerHelper.isLogin(name)) {
-      sender.sendMessage(Config.Language.LOGIN_REPEAT);
+      player.sendMessage(Config.Language.LOGIN_REPEAT);
       return true;
     }
     LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) {
-      sender.sendMessage(Config.Language.LOGIN_NOREGISTER);
+      player.sendMessage(Config.Language.LOGIN_NOREGISTER);
       return true;
     }
     if (!Crypt.match(name, args[0], lp.getPassword().trim())) {
-      handleLoginFail(sender, player, lp);
+      handleLoginFail(player, player, lp);
       return true;
     }
     handleLoginSuccess(player, lp);

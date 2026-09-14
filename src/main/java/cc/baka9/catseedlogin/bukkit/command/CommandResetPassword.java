@@ -13,23 +13,18 @@ import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import java.util.Optional;
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class CommandResetPassword implements CommandExecutor {
+public class CommandResetPassword extends AbstractCommandSupport {
   private static final long EMAIL_CODE_DURATION = 1000 * 60 * 5;
 
   @Override
-  public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
-    if (args.length == 0 || !(sender instanceof Player)) return false;
+  protected boolean onPlayerCommand(Player player, String[] args) {
+    if (args.length == 0) return false;
 
-    Player player = (Player) sender;
+    CommandSender sender = player;
     String name = player.getName();
-
-    if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
-      return true;
 
     LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) {
