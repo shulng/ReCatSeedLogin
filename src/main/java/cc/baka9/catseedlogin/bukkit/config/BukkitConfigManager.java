@@ -8,6 +8,7 @@ import java.io.InputStream;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.jspecify.annotations.NonNull;
 
 public class BukkitConfigManager extends BaseConfigManager {
 
@@ -86,16 +87,21 @@ public class BukkitConfigManager extends BaseConfigManager {
     }
 
     try {
-      double x = Double.parseDouble(parts[1]);
-      double y = Double.parseDouble(parts[2]);
-      double z = Double.parseDouble(parts[3]);
-      float yaw = Float.parseFloat(parts[4]);
-      float pitch = Float.parseFloat(parts[5]);
-      return new Location(world, x, y, z, yaw, pitch);
+      return getLocation(parts, world);
     } catch (NumberFormatException e) {
       Location spawn = world.getSpawnLocation();
       setSpawnLocation(spawn);
       return spawn;
     }
+  }
+
+  @NonNull
+  public static Location getLocation(String[] parts, World world) {
+    double x = Double.parseDouble(parts[1]);
+    double y = Double.parseDouble(parts[2]);
+    double z = Double.parseDouble(parts[3]);
+    float yaw = Float.parseFloat(parts[4]);
+    float pitch = Float.parseFloat(parts[5]);
+    return new Location(world, x, y, z, yaw, pitch);
   }
 }

@@ -66,28 +66,28 @@ public class CatScheduler {
         .runAtFixedRate(runnable, delay == 0 ? 1 : delay, period);
   }
 
-  public static ScheduledTask runTask(Runnable runnable) {
-    return morePaperLib.scheduling().globalRegionalScheduler().run(runnable);
+  public static void runTask(Runnable runnable) {
+    morePaperLib.scheduling().globalRegionalScheduler().run(runnable);
   }
 
-  public static ScheduledTask runTaskLater(Runnable runnable, long delay) {
-    return morePaperLib.scheduling().globalRegionalScheduler().runDelayed(runnable, delay);
+  public static void runTaskLater(Runnable runnable, long delay) {
+    morePaperLib.scheduling().globalRegionalScheduler().runDelayed(runnable, delay);
   }
 
-  public static ScheduledTask runTaskLaterAsync(Runnable runnable, long delay) {
-    return morePaperLib
-        .scheduling()
-        .asyncScheduler()
-        .runDelayed(runnable, java.time.Duration.ofMillis(delay * 50));
+  public static void runTaskLaterAsync(Runnable runnable, long delay) {
+    morePaperLib
+            .scheduling()
+            .asyncScheduler()
+            .runDelayed(runnable, java.time.Duration.ofMillis(delay * 50));
   }
 
-  public static ScheduledTask runTaskTimerAsync(Runnable runnable, long delay, long period) {
-    return morePaperLib
-        .scheduling()
-        .asyncScheduler()
-        .runAtFixedRate(
-            runnable,
-            java.time.Duration.ofMillis(delay * 50),
-            java.time.Duration.ofMillis(period * 50));
+  public static void runTaskTimerAsync(Runnable runnable, long delay, long period) {
+    morePaperLib
+            .scheduling()
+            .asyncScheduler()
+            .runAtFixedRate(
+                    runnable,
+                    java.time.Duration.ofMillis(delay * 50),
+                    java.time.Duration.ofMillis(period * 50));
   }
 }

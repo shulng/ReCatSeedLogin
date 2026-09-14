@@ -5,6 +5,7 @@ import cc.baka9.catseedlogin.bukkit.util.WorldUtil;
 import cc.baka9.catseedlogin.common.config.ConfigConstants;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -12,6 +13,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+
+import static cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager.getLocation;
 
 public class Config {
   private static CatSeedLogin plugin;
@@ -286,12 +289,7 @@ public class Config {
       if (world == null) {
         return getDefaultSpawnLocation();
       }
-      double x = Double.parseDouble(locStrs[1]);
-      double y = Double.parseDouble(locStrs[2]);
-      double z = Double.parseDouble(locStrs[3]);
-      float yaw = Float.parseFloat(locStrs[4]);
-      float pitch = Float.parseFloat(locStrs[5]);
-      return new Location(world, x, y, z, yaw, pitch);
+      return getLocation(locStrs, world);
     } catch (NumberFormatException ignored) {
       return getDefaultSpawnLocation();
     }
@@ -314,7 +312,7 @@ public class Config {
           loc.getPitch());
     } catch (Exception e) {
       e.printStackTrace();
-      Location defaultLoc = WorldUtil.getDefaultWorld(plugin.getLogger()).getSpawnLocation();
+      Location defaultLoc = Objects.requireNonNull(WorldUtil.getDefaultWorld(plugin.getLogger())).getSpawnLocation();
       return String.format(
           "%s:%.2f:%.2f:%.2f:%.2f:%.2f",
           defaultLoc.getWorld().getName(),
