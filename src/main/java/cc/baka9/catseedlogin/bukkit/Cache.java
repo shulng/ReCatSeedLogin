@@ -20,8 +20,7 @@ public class Cache {
 
   public static void refreshAll() {
     isLoaded = false;
-    CatSeedLogin.instance.runTaskAsync(
-            Cache::refresh);
+    CatSeedLogin.instance.runTaskAsync(Cache::refresh);
   }
 
   private static void refresh() {
