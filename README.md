@@ -85,34 +85,40 @@ ReCatSeedLogin/
 ├── src/main/java/cc/baka9/catseedlogin/
 │   ├── bukkit/                  → Bukkit/Spigot/Paper/Folia 服务端实现
 │   │   ├── CatSeedLogin.java    → 服务端插件主类
-│   │   ├── CatSeedLoginAPI.java → 开发者API
-│   │   ├── command/             → 指令实现（登录/注册/改密/邮箱/管理）
+│   │   ├── api/                 → 开发者API（CatSeedLoginAPI）
+│   │   ├── cache/               → 登录缓存（PlayerCache）
+│   │   ├── command/             → 指令实现（基类 + 登录/注册/改密/邮箱/管理）
+│   │   ├── communication/       → Bukkit端Socket通信服务器
 │   │   ├── config/              → Bukkit配置管理
-│   │   ├── database/            → 数据库实现（SQLite/MySQL）
+│   │   ├── database/            → 数据库实现（SQLite/MySQL，共享连接骨架）
 │   │   ├── event/               → 自定义事件
-│   │   ├── object/              → 登录状态管理、邮箱验证码
+│   │   ├── listener/            → 事件监听（PlayerListener、ProtocolLibListener）
+│   │   ├── object/              → 登录状态管理（LoginPlayerHelper）、邮箱验证码（EmailCode）
+│   │   ├── platform/            → 平台上下文（PluginContext）
+│   │   ├── scheduler/           → 调度器（CatScheduler）
 │   │   ├── task/                → 定时任务（自动踢出、登录提示）
-│   │   └── util/                → 邮件发送工具
+│   │   └── util/                → 邮件发送工具（EmailSender）
 │   ├── bungee/                  → BungeeCord 代理端实现
 │   │   ├── PluginMain.java      → BungeeCord插件主类
-│   │   ├── BungeeCommunication.java → Socket通信客户端
-│   │   ├── BungeeCommands.java  → 代理端指令
-│   │   ├── Listeners.java       → 代理端事件监听
-│   │   └── config/              → BungeeCord配置管理
+│   │   ├── command/             → 代理端指令（BungeeCommands）
+│   │   ├── config/              → BungeeCord配置管理
+│   │   ├── listener/            → 代理端事件监听（BungeeListeners）
+│   │   └── net/                 → Socket通信客户端（BungeeCommunication）
 │   ├── velocity/                → Velocity 代理端实现
 │   │   ├── PluginMain.java      → Velocity插件主类
-│   │   ├── VelocityCommunication.java → Socket通信客户端
-│   │   ├── Commands.java        → 代理端指令
-│   │   ├── Listeners.java       → 代理端事件监听
-│   │   └── config/              → Velocity配置管理
-│   └── common/                  → 跨平台共享代码
+│   │   ├── command/             → 代理端指令（Commands）
+│   │   ├── config/              → Velocity配置管理
+│   │   ├── listener/            → 代理端事件监听（VelocityListeners）
+│   │   └── net/                 → Socket通信客户端（VelocityCommunication）
+│   └── common/                  → 跨平台共享核心
 │       ├── api/                 → 平台抽象接口（PlatformAdapter、配置接口）
-│       ├── communication/       → Socket通信基类
+│       ├── communication/       → Socket通信基类（BaseCommunication）
 │       ├── config/              → 配置管理基类、YAML解析
-│       ├── database/            → 数据库连接抽象
 │       ├── i18n/                → 国际化引擎（I18n、MessageKey）
 │       ├── model/               → 数据模型（LoginPlayer）
-│       └── util/                → 加密、验证、日期工具类
+│       ├── platform/            → 平台上下文（PluginContext）
+│       ├── proxy/               → 代理端登录态追踪（ProxyLoginTracker）
+│       └── util/                → 加密、验证、口令、日期工具类
 └── src/main/resources/
     ├── plugin.yml               → Bukkit插件描述文件
     ├── bungee.yml               → BungeeCord插件描述文件

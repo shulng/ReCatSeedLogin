@@ -36,5 +36,45 @@
 3. **邮件发送编排**：`EmailSender.sendEmailAsync(to, subject, content, onSuccess, onFailure)` 统一异步发送+主线程回调；`EmailCode.DEFAULT_CODE_DURATION` 统一 `1000*60*5` 常量；ResetPassword/BindEmail 的发送与成功/失败通知改用该辅助，删除冗余的 `runTaskAsync/runTask` 样板。
 - 验证：`mvn -o compile` → BUILD SUCCESS。
 
-### 阶段 4：文档与收尾
-（待实现）
+### 阶段 4：文档与收尾（Commit 4）
+- 生成 `REFACTOR.md` 阶段记录（本文件）。
+- 更新 `README.md`「项目架构」目录树为重构后的目标结构。
+- 最终 `mvn -o compile` → BUILD SUCCESS；三平台入口 FQCN 与 `plugin.yml`/`bungee.yml`/`velocity-plugin.json` 均未改动。
+
+---
+
+## 重构前后结构对照（摘要）
+
+| 原位置 | 现位置 | 说明 |
+| --- | --- | --- |
+| `bukkit.Cache` | `bukkit.cache.PlayerCache` | 更名以明确职责 |
+| `bukkit.Config` | `bukkit.config.Config` | 归入 config 包 |
+| `bukkit.Listeners` | `bukkit.listener.PlayerListener` | 更名 |
+| `bukkit.ProtocolLibListeners` | `bukkit.listener.ProtocolLibListener` | 更名 |
+| `bukkit.PluginContext` | `bukkit.platform.PluginContext` | 归入 platform 包 |
+| `bukkit.CatScheduler` | `bukkit.scheduler.CatScheduler` | 归入 scheduler 包 |
+| `bukkit.Communication` | `bukkit.communication.Communication` | 归入 communication 包 |
+| `bukkit.CatSeedLoginAPI` | `bukkit.api.CatSeedLoginAPI` | 归入 api 包 |
+| `common.config.PluginContext` | `common.platform.PluginContext` | 迁入 platform，消除与 bukkit 同名混淆 |
+| `bungee.Listeners` | `bungee.listener.BungeeListeners` | 更名 + 归位 |
+| `bungee.BungeeCommunication` | `bungee.net.BungeeCommunication` | 归入 net 包 |
+| `velocity.Listeners` | `velocity.listener.VelocityListeners` | 更名 + 归位 |
+| `velocity.VelocityCommunication` | `velocity.net.VelocityCommunication` | 归入 net 包 |
+| —（新增） | `bukkit.command.AbstractCommandSupport` | 命令基类 |
+| —（新增） | `common.proxy.ProxyLoginTracker` | 代理端登录态追踪组件 |
+
+## 重复点清单与消除方式
+
+| 重复点 | 消除方式 |
+| --- | --- |
+| SQLite/MySQL 的连接校验/重建骨架 | 上提至 `SQL` 基类，子类仅实现 `createConnection()` |
+| 5 个命令类的「非玩家守卫 + Floodgate 跳过」样板 | `AbstractCommandSupport` 基类统一 |
+| bungee/velocity 登录态列表管理 | `ProxyLoginTracker` 组件 |
+| 洪水门跳过判断表达式 ×5 | `LoginPlayerHelper.isBedrockLoginBypassed` |
+| 口令变更-持久化块 ×3 | `LoginPlayerHelper.changePasswordAndPersist` |
+| 邮件发送+成功/失败通知 + 验证码时长常量 ×2 | `EmailSender.sendEmailAsync` + `EmailCode.DEFAULT_CODE_DURATION` |
+
+## 验证结果
+- 每阶段 `mvn -o compile` 均 BUILD SUCCESS。
+- 本次重构不改变任何运行逻辑（纯移动/抽取），入口类 FQCN 保持不变。
+- 未引入 JUnit（按约定暂不加测试框架）。
