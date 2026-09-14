@@ -76,18 +76,18 @@ public class CatScheduler {
 
   public static void runTaskLaterAsync(Runnable runnable, long delay) {
     morePaperLib
-            .scheduling()
-            .asyncScheduler()
-            .runDelayed(runnable, java.time.Duration.ofMillis(delay * 50));
+        .scheduling()
+        .asyncScheduler()
+        .runDelayed(runnable, java.time.Duration.ofMillis(delay * 50));
   }
 
   public static void runTaskTimerAsync(Runnable runnable, long delay, long period) {
     morePaperLib
-            .scheduling()
-            .asyncScheduler()
-            .runAtFixedRate(
-                    runnable,
-                    java.time.Duration.ofMillis(delay * 50),
-                    java.time.Duration.ofMillis(period * 50));
+        .scheduling()
+        .asyncScheduler()
+        .runAtFixedRate(
+            runnable,
+            java.time.Duration.ofMillis(delay * 50),
+            java.time.Duration.ofMillis(period * 50));
   }
 }
