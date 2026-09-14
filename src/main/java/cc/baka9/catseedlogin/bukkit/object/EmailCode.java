@@ -10,6 +10,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class EmailCode {
+  /** 验证码默认有效期（毫秒）：5 分钟。 */
+  public static final long DEFAULT_CODE_DURATION = 1000 * 60 * 5;
+
   public enum Type {
     Bind,
     ResetPassword

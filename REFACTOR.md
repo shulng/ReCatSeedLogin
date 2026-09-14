@@ -30,5 +30,11 @@
 3. **ProxyLoginTracker（common/proxy）**：封装登录态列表与 `sendConnectRequest / sendKeepLoggedInRequest` 流程，`BungeeListeners`/`VelocityListeners` 改委托该组件，移除重复的 `CopyOnWriteArrayList` 管理逻辑。
 - 验证：`mvn -o compile` → BUILD SUCCESS。
 
-### 阶段 3：重复代码提取
+### 阶段 3：重复代码提取（Commit 3）✅ 完成
+1. **洪水门跳过**：新增 `LoginPlayerHelper.isBedrockLoginBypassed(player)`，`AbstractCommandSupport` 统一调用；替换 5 个命令类中的 `Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player)` 表达式。
+2. **口令变更持久化**：新增 `LoginPlayerHelper.changePasswordAndPersist(lp, rawPwd)` 封装 `PasswordHelper.updatePassword → sql.edit → PlayerCache.refresh`；Login(升 Argon2)/ChangePassword/ResetPassword 三处改为调用该组件。
+3. **邮件发送编排**：`EmailSender.sendEmailAsync(to, subject, content, onSuccess, onFailure)` 统一异步发送+主线程回调；`EmailCode.DEFAULT_CODE_DURATION` 统一 `1000*60*5` 常量；ResetPassword/BindEmail 的发送与成功/失败通知改用该辅助，删除冗余的 `runTaskAsync/runTask` 样板。
+- 验证：`mvn -o compile` → BUILD SUCCESS。
+
+### 阶段 4：文档与收尾
 （待实现）

@@ -1,6 +1,5 @@
 package cc.baka9.catseedlogin.bukkit.command;
 
-import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -27,6 +26,6 @@ public abstract class AbstractCommandSupport implements CommandExecutor {
 
   /** 基岩版(Floodgate)玩家登录跳过判断。 */
   protected final boolean isBedrockBypassed(Player player) {
-    return Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player);
+    return LoginPlayerHelper.isBedrockLoginBypassed(player);
   }
 }

@@ -5,6 +5,7 @@ import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
 import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
+import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
@@ -60,6 +61,24 @@ public class LoginPlayerHelper {
 
   public static boolean isLogin(String name) {
     return canBypassLogin(name) || loginPlayers.containsKey(name);
+  }
+
+  /** 基岩版(Floodgate)玩家是否启用登录跳过。 */
+  public static boolean isBedrockLoginBypassed(Player player) {
+    return Config.Settings.BedrockLoginBypass && isFloodgatePlayer(player);
+  }
+
+  /**
+   * 更新口令并持久化：升哈希、写库并刷新缓存。
+   *
+   * @return 更新后的 LoginPlayer 副本
+   */
+  public static LoginPlayer changePasswordAndPersist(LoginPlayer lp, String rawPassword)
+      throws Exception {
+    LoginPlayer copy = PasswordHelper.updatePassword(lp, rawPassword);
+    PluginContext.getSql().edit(copy);
+    PlayerCache.refresh(copy.getName());
+    return copy;
   }
 
   private static boolean canBypassLogin(String name) {

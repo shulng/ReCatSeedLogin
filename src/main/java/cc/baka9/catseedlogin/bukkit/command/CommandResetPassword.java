@@ -9,7 +9,6 @@ import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.util.EmailSender;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
-import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import java.util.Optional;
 import org.bukkit.Bukkit;
@@ -17,7 +16,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class CommandResetPassword extends AbstractCommandSupport {
-  private static final long EMAIL_CODE_DURATION = 1000 * 60 * 5;
 
   @Override
   protected boolean onPlayerCommand(Player player, String[] args) {
@@ -68,7 +66,8 @@ public class CommandResetPassword extends AbstractCommandSupport {
     EmailCode emailCode;
     try {
       emailCode =
-          EmailCode.create(name, lp.getEmail(), EMAIL_CODE_DURATION, EmailCode.Type.ResetPassword);
+          EmailCode.create(
+              name, lp.getEmail(), EmailCode.DEFAULT_CODE_DURATION, EmailCode.Type.ResetPassword);
     } catch (Exception e) {
       sender.sendMessage(MessageKey.INTERNAL_ERROR.get());
       e.printStackTrace();
@@ -77,23 +76,14 @@ public class CommandResetPassword extends AbstractCommandSupport {
     sender.sendMessage(
         Config.Language.RESETPASSWORD_EMAIL_SENDING_MESSAGE.replace("{email}", lp.getEmail()));
 
-    sendResetEmailAsync(sender, name, emailCode);
+    String content = buildResetEmailContent(name, emailCode);
+    EmailSender.sendEmailAsync(
+        emailCode.getEmail(),
+        MessageKey.EMAIL_SUBJECT_RESET_PASSWORD.get(),
+        content,
+        () -> notifyEmailSent(sender, emailCode.getEmail()),
+        () -> notifyEmailFailed(sender));
     return true;
-  }
-
-  private void sendResetEmailAsync(CommandSender sender, String name, EmailCode emailCode) {
-    CatScheduler.runTaskAsync(
-        () -> {
-          try {
-            String content = buildResetEmailContent(name, emailCode);
-            EmailSender.sendEmail(
-                emailCode.getEmail(), MessageKey.EMAIL_SUBJECT_RESET_PASSWORD.get(), content);
-            notifyEmailSent(sender, emailCode.getEmail());
-          } catch (Exception e) {
-            notifyEmailFailed(sender);
-            e.printStackTrace();
-          }
-        });
   }
 
   private String buildResetEmailContent(String name, EmailCode emailCode) {
@@ -102,19 +92,12 @@ public class CommandResetPassword extends AbstractCommandSupport {
   }
 
   private void notifyEmailSent(CommandSender sender, String email) {
-    Bukkit.getScheduler()
-        .runTask(
-            PluginContext.getPlugin(),
-            () ->
-                sender.sendMessage(
-                    Config.Language.RESETPASSWORD_EMAIL_SENT_MESSAGE.replace("{email}", email)));
+    sender.sendMessage(
+        Config.Language.RESETPASSWORD_EMAIL_SENT_MESSAGE.replace("{email}", email));
   }
 
   private void notifyEmailFailed(CommandSender sender) {
-    Bukkit.getScheduler()
-        .runTask(
-            PluginContext.getPlugin(),
-            () -> sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_WARN));
+    sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_WARN);
   }
 
   private boolean handleReset(Player player, LoginPlayer lp, String code, String pwd) {
@@ -162,9 +145,7 @@ public class CommandResetPassword extends AbstractCommandSupport {
 
   private void executePasswordReset(String name, LoginPlayer lp, String pwd, CommandSender sender) {
     try {
-      LoginPlayer copy = PasswordHelper.updatePassword(lp, pwd);
-      PluginContext.getSql().edit(copy);
-      PlayerCache.refresh(name);
+      LoginPlayerHelper.changePasswordAndPersist(lp, pwd);
       LoginPlayerHelper.remove(lp);
       EmailCode.removeByName(name, EmailCode.Type.ResetPassword);
       Player player = Bukkit.getPlayer(name);

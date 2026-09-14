@@ -81,7 +81,8 @@ public class CommandBindEmail extends AbstractCommandSupport {
 
     EmailCode bindEmail;
     try {
-      bindEmail = EmailCode.create(name, mail, 1000 * 60 * 5, EmailCode.Type.Bind);
+      bindEmail =
+          EmailCode.create(name, mail, EmailCode.DEFAULT_CODE_DURATION, EmailCode.Type.Bind);
     } catch (Exception e) {
       sender.sendMessage(MessageKey.INTERNAL_ERROR.get());
       e.printStackTrace();
@@ -117,17 +118,13 @@ public class CommandBindEmail extends AbstractCommandSupport {
   }
 
   private void sendEmailCode(CommandSender sender, String name, String mail, EmailCode bindEmail) {
-    CatScheduler.runTaskAsync(
-        () -> {
-          try {
-            String content = buildBindEmailContent(name, bindEmail);
-            EmailSender.sendEmail(mail, MessageKey.EMAIL_SUBJECT_BIND_EMAIL.get(), content);
-            notifyBindEmailSent(sender, mail);
-          } catch (Exception e) {
-            notifyBindEmailFailed(sender);
-            e.printStackTrace();
-          }
-        });
+    String content = buildBindEmailContent(name, bindEmail);
+    EmailSender.sendEmailAsync(
+        mail,
+        MessageKey.EMAIL_SUBJECT_BIND_EMAIL.get(),
+        content,
+        () -> notifyBindEmailSent(sender, mail),
+        () -> notifyBindEmailFailed(sender));
   }
 
   private String buildBindEmailContent(String name, EmailCode bindEmail) {
@@ -136,15 +133,12 @@ public class CommandBindEmail extends AbstractCommandSupport {
   }
 
   private void notifyBindEmailSent(CommandSender sender, String mail) {
-    CatScheduler.runTask(
-        () -> {
-          sender.sendMessage(MessageKey.EMAIL_SENT_CHECK_INBOX.get(mail));
-          sender.sendMessage(MessageKey.CHECK_SPAM_FOLDER.get());
-        });
+    sender.sendMessage(MessageKey.EMAIL_SENT_CHECK_INBOX.get(mail));
+    sender.sendMessage(MessageKey.CHECK_SPAM_FOLDER.get());
   }
 
   private void notifyBindEmailFailed(CommandSender sender) {
-    CatScheduler.runTask(() -> sender.sendMessage(MessageKey.EMAIL_SEND_FAILED.get()));
+    sender.sendMessage(MessageKey.EMAIL_SEND_FAILED.get());
   }
 
   private void bindEmail(CommandSender sender, LoginPlayer lp, EmailCode bindEmail) {
