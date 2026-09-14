@@ -1,4 +1,4 @@
-package cc.baka9.catseedlogin.bukkit;
+package cc.baka9.catseedlogin.bukkit.scheduler;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

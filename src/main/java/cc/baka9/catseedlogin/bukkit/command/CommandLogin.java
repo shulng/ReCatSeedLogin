@@ -1,9 +1,9 @@
 package cc.baka9.catseedlogin.bukkit.command;
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
+import cc.baka9.catseedlogin.bukkit.config.Config;
+import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerLoginEvent;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
@@ -27,7 +27,7 @@ public class CommandLogin implements CommandExecutor {
       sender.sendMessage(Config.Language.LOGIN_REPEAT);
       return true;
     }
-    LoginPlayer lp = Cache.getIgnoreCase(name);
+    LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) {
       sender.sendMessage(Config.Language.LOGIN_NOREGISTER);
       return true;
@@ -63,7 +63,7 @@ public class CommandLogin implements CommandExecutor {
           try {
             LoginPlayer copy = PasswordHelper.updatePassword(lp, rawPassword);
             PluginContext.getSql().edit(copy);
-            Cache.refresh(copy.getName());
+            PlayerCache.refresh(copy.getName());
           } catch (Exception e) {
             PluginContext.getLogger()
                 .warning("Failed to upgrade password hash to Argon2id for " + lp.getName());

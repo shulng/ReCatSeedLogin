@@ -1,6 +1,9 @@
-package cc.baka9.catseedlogin.bukkit;
+package cc.baka9.catseedlogin.bukkit.communication;
 
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.common.communication.BaseCommunication;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.CommunicationAuth;
@@ -87,7 +90,7 @@ public class Communication extends BaseCommunication {
 
     CatScheduler.runTask(
         () -> {
-          LoginPlayer lp = Cache.getIgnoreCase(playerName);
+          LoginPlayer lp = PlayerCache.getIgnoreCase(playerName);
           if (lp == null) return;
           LoginPlayerHelper.add(lp);
           Player player = Bukkit.getPlayerExact(playerName);

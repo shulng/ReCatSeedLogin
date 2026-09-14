@@ -1,11 +1,11 @@
 package cc.baka9.catseedlogin.bukkit.command;
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
+import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.object.EmailCode;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.util.EmailSender;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
@@ -31,7 +31,7 @@ public class CommandResetPassword implements CommandExecutor {
     if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
       return true;
 
-    LoginPlayer lp = Cache.getIgnoreCase(name);
+    LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) {
       sender.sendMessage(Config.Language.RESETPASSWORD_NOREGISTER);
       return true;
@@ -169,7 +169,7 @@ public class CommandResetPassword implements CommandExecutor {
     try {
       LoginPlayer copy = PasswordHelper.updatePassword(lp, pwd);
       PluginContext.getSql().edit(copy);
-      Cache.refresh(name);
+      PlayerCache.refresh(name);
       LoginPlayerHelper.remove(lp);
       EmailCode.removeByName(name, EmailCode.Type.ResetPassword);
       Player player = Bukkit.getPlayer(name);

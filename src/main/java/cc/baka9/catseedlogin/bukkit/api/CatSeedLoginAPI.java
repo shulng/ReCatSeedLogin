@@ -1,4 +1,4 @@
-package cc.baka9.catseedlogin.bukkit;
+package cc.baka9.catseedlogin.bukkit.api;
 
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 

@@ -1,9 +1,9 @@
 package cc.baka9.catseedlogin.bukkit.object;
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
+import cc.baka9.catseedlogin.bukkit.config.Config;
+import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import com.comphenix.protocol.PacketType;
@@ -69,7 +69,7 @@ public class LoginPlayerHelper {
 
   public static boolean isRegister(String name) {
     return (Config.Settings.BedrockLoginBypass && isFloodgatePlayer(name))
-        || Cache.getIgnoreCase(name) != null;
+        || PlayerCache.getIgnoreCase(name) != null;
   }
 
   public static boolean recordCurrentIP(String name) {
@@ -81,7 +81,7 @@ public class LoginPlayerHelper {
     String currentIP = getPlayerIP(player);
     if (currentIP == null) return false;
 
-    LoginPlayer storedPlayer = Cache.getIgnoreCase(player.getName());
+    LoginPlayer storedPlayer = PlayerCache.getIgnoreCase(player.getName());
     if (storedPlayer != null) {
       List<String> storedIPs = getStoredIPs(storedPlayer);
       Long exitTime = playerExitTimes.get(player.getName());
@@ -148,7 +148,7 @@ public class LoginPlayerHelper {
   }
 
   public static Long getLastLoginTime(String name) {
-    LoginPlayer loginPlayer = Cache.getIgnoreCase(name);
+    LoginPlayer loginPlayer = PlayerCache.getIgnoreCase(name);
     return (loginPlayer != null) ? loginPlayer.getLastAction() : null;
   }
 
@@ -184,7 +184,7 @@ public class LoginPlayerHelper {
   private static void savePlayerIP(LoginPlayer lp) {
     try {
       PluginContext.getSql().edit(lp);
-      Cache.refresh(lp.getName());
+      PlayerCache.refresh(lp.getName());
     } catch (Exception e) {
       e.printStackTrace();
     }

@@ -1,11 +1,11 @@
 package cc.baka9.catseedlogin.bukkit.command;
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
+import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerRegisterEvent;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.PasswordHelper;
@@ -35,7 +35,7 @@ public class CommandRegister implements CommandExecutor {
       sender.sendMessage(Config.Language.COMMON_PASSWORD_SO_SIMPLE);
       return true;
     }
-    if (!Cache.isLoaded) return true;
+    if (!PlayerCache.isLoaded) return true;
 
     sender.sendMessage(MessageKey.REGISTERING.get());
     registerPlayerAsync(player, name, args[0]);
@@ -93,7 +93,7 @@ public class CommandRegister implements CommandExecutor {
 
     LoginPlayer lp = PasswordHelper.registerNewPlayer(name, password);
     PluginContext.getSql().add(lp);
-    Cache.refresh(lp.getName());
+    PlayerCache.refresh(lp.getName());
     LoginPlayerHelper.add(lp);
     CatScheduler.runTask(
         () -> {

@@ -1,7 +1,7 @@
 package cc.baka9.catseedlogin.bukkit.task;
 
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.CatSeedLogin;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import space.arim.morepaperlib.scheduling.ScheduledTask;

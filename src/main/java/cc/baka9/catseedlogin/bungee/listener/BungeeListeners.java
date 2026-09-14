@@ -1,6 +1,8 @@
-package cc.baka9.catseedlogin.bungee;
+package cc.baka9.catseedlogin.bungee.listener;
 
+import cc.baka9.catseedlogin.bungee.PluginMain;
 import cc.baka9.catseedlogin.bungee.config.BungeeConfigManager;
+import cc.baka9.catseedlogin.bungee.net.BungeeCommunication;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -15,14 +17,14 @@ import net.md_5.bungee.api.event.ServerConnectedEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
-public class Listeners implements Listener {
+public class BungeeListeners implements Listener {
 
   private final ProxyServer proxyServer = ProxyServer.getInstance();
   private final List<String> loggedInPlayerList = new CopyOnWriteArrayList<>();
   private final BungeeConfigManager configManager;
   private final BungeeCommunication communication;
 
-  public Listeners(BungeeConfigManager configManager, BungeeCommunication communication) {
+  public BungeeListeners(BungeeConfigManager configManager, BungeeCommunication communication) {
     this.configManager = configManager;
     this.communication = communication;
   }

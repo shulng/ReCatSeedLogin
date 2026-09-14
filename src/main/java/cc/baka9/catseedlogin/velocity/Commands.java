@@ -2,6 +2,7 @@ package cc.baka9.catseedlogin.velocity;
 
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.velocity.config.VelocityConfigManager;
+import cc.baka9.catseedlogin.velocity.listener.VelocityListeners;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -114,7 +115,7 @@ public class Commands implements SimpleCommand {
 
   private void handleList(CommandSource source) {
     try {
-      Listeners listeners = PluginMain.getInstance().getListeners();
+      VelocityListeners listeners = PluginMain.getInstance().getListeners();
       List<String> loggedInPlayers = listeners.getLoggedInPlayers();
 
       source.sendMessage(

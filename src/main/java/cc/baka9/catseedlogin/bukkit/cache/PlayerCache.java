@@ -1,12 +1,13 @@
-package cc.baka9.catseedlogin.bukkit;
+package cc.baka9.catseedlogin.bukkit.cache;
 
+import cc.baka9.catseedlogin.bukkit.CatSeedLogin;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Cache {
+public class PlayerCache {
   private static volatile Map<String, LoginPlayer> PLAYER_HASHTABLE = new ConcurrentHashMap<>();
   public static volatile boolean isLoaded = false;
 
@@ -20,7 +21,7 @@ public class Cache {
 
   public static void refreshAll() {
     isLoaded = false;
-    CatSeedLogin.instance.runTaskAsync(Cache::refresh);
+    CatSeedLogin.instance.runTaskAsync(PlayerCache::refresh);
   }
 
   private static void refresh() {

@@ -1,10 +1,17 @@
 package cc.baka9.catseedlogin.bukkit;
 
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
 import cc.baka9.catseedlogin.bukkit.command.*;
+import cc.baka9.catseedlogin.bukkit.communication.Communication;
 import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
 import cc.baka9.catseedlogin.bukkit.config.BukkitPlatformAdapter;
+import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.database.*;
+import cc.baka9.catseedlogin.bukkit.listener.PlayerListener;
+import cc.baka9.catseedlogin.bukkit.listener.ProtocolLibListener;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.task.Task;
 import cc.baka9.catseedlogin.common.i18n.I18n;
 import cn.handyplus.lib.adapter.HandySchedulerUtil;
@@ -51,7 +58,7 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
     sql = configManager.isMySQL() ? new MySQL(this) : new SQLite(this);
     try {
       sql.init();
-      Cache.refreshAll();
+      PlayerCache.refreshAll();
     } catch (Exception e) {
       getLogger().warning("§c加载数据库时出错");
       e.printStackTrace();
@@ -59,12 +66,12 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
       return;
     }
 
-    getServer().getPluginManager().registerEvents(new Listeners(), this);
+    getServer().getPluginManager().registerEvents(new PlayerListener(), this);
 
     if (configManager.isEmptyBackpack()) {
       try {
         Class.forName("com.comphenix.protocol.ProtocolLib");
-        ProtocolLibListeners.enable();
+        ProtocolLibListener.enable();
         loadProtocolLib = true;
       } catch (ClassNotFoundException e) {
         getLogger().warning("服务器没有装载ProtocolLib插件，这将无法使用登录前隐藏背包");

@@ -1,13 +1,13 @@
 package cc.baka9.catseedlogin.bukkit.command;
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Communication;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
+import cc.baka9.catseedlogin.bukkit.communication.Communication;
+import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.database.MySQL;
 import cc.baka9.catseedlogin.bukkit.database.SQLite;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.PasswordHelper;
@@ -308,7 +308,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
             : new SQLite(PluginContext.getPlugin()));
     try {
       PluginContext.getSql().init();
-      Cache.refreshAllSync();
+      PlayerCache.refreshAllSync();
     } catch (Exception e) {
       PluginContext.getLogger().warning("§c加载数据库时出错");
       e.printStackTrace();
@@ -336,7 +336,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
   private boolean delPlayer(CommandSender sender, String[] args) {
     if (args.length < 2 || !args[0].equalsIgnoreCase("delplayer")) return false;
     String name = args[1];
-    LoginPlayer lp = Cache.getIgnoreCase(name);
+    LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) {
       sender.sendMessage(MessageKey.ACCOUNT_NOT_EXISTS.get(name));
       return true;
@@ -350,7 +350,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
         () -> {
           try {
             PluginContext.getSql().del(lp.getName());
-            Cache.refresh(lp.getName());
+            PlayerCache.refresh(lp.getName());
             LoginPlayerHelper.remove(lp);
             sender.sendMessage(MessageKey.ACCOUNT_DELETED.get(lp.getName()));
             kickPlayerIfOnline(lp.getName());
@@ -386,7 +386,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
   }
 
   private void setPwdLookup(CommandSender sender, String name, String pwd) {
-    LoginPlayer lp = Cache.getIgnoreCase(name);
+    LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) {
       setPwdRegisterNew(sender, name, pwd);
     } else {
@@ -398,7 +398,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
     try {
       LoginPlayer lp = PasswordHelper.registerNewPlayer(name, pwd);
       PluginContext.getSql().add(lp);
-      Cache.refresh(lp.getName());
+      PlayerCache.refresh(lp.getName());
       sender.sendMessage(MessageKey.ACCOUNT_NOT_EXISTS_REGISTERED.get());
     } catch (Exception e) {
       sender.sendMessage(MessageKey.DATABASE_ERROR.get());
@@ -410,7 +410,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
     try {
       LoginPlayer copy = PasswordHelper.updatePassword(lp, pwd);
       PluginContext.getSql().edit(copy);
-      Cache.refresh(copy.getName());
+      PlayerCache.refresh(copy.getName());
       LoginPlayerHelper.remove(lp);
       sender.sendMessage(MessageKey.PASSWORD_SET_MSG.get(lp.getName()));
       notifyPlayerPasswordChanged(lp);

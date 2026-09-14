@@ -1,7 +1,7 @@
 package cc.baka9.catseedlogin.bungee.config;
 
 import cc.baka9.catseedlogin.common.config.BaseConfigManager;
-import cc.baka9.catseedlogin.common.config.PluginContext;
+import cc.baka9.catseedlogin.common.platform.PluginContext;
 import java.io.InputStream;
 
 public class BungeeConfigManager extends BaseConfigManager {

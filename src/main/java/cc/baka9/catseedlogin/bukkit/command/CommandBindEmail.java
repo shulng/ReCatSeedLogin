@@ -1,11 +1,11 @@
 package cc.baka9.catseedlogin.bukkit.command;
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
+import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.object.EmailCode;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.util.EmailSender;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
@@ -43,7 +43,7 @@ public class CommandBindEmail implements CommandExecutor {
     if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
       return false;
 
-    LoginPlayer lp = Cache.getIgnoreCase(name);
+    LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) {
       sender.sendMessage(MessageKey.NOT_REGISTERED.get());
       return false;
@@ -62,7 +62,7 @@ public class CommandBindEmail implements CommandExecutor {
   private void handleSet(CommandSender sender, String name, String[] args) {
     if (args.length <= 1) return;
 
-    LoginPlayer lp = Cache.getIgnoreCase(name);
+    LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) return;
     if (lp.getEmail() != null && ValidationUtil.isValidEmail(lp.getEmail())) {
       sender.sendMessage(MessageKey.EMAIL_ALREADY_BOUND.get());
@@ -100,7 +100,7 @@ public class CommandBindEmail implements CommandExecutor {
   private void handleVerify(CommandSender sender, String name, String[] args) {
     if (args.length <= 1) return;
 
-    LoginPlayer lp = Cache.getIgnoreCase(name);
+    LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp.getEmail() != null && ValidationUtil.isValidEmail(lp.getEmail())) {
       sender.sendMessage(MessageKey.EMAIL_ALREADY_BOUND.get());
       return;
@@ -161,7 +161,7 @@ public class CommandBindEmail implements CommandExecutor {
     try {
       lp.setEmail(bindEmail.getEmail());
       PluginContext.getSql().edit(lp);
-      Cache.refresh(lp.getName());
+      PlayerCache.refresh(lp.getName());
       notifyBindSuccess(sender, bindEmail);
     } catch (Exception e) {
       e.printStackTrace();

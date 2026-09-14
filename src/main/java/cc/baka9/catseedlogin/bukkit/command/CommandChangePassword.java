@@ -1,10 +1,10 @@
 package cc.baka9.catseedlogin.bukkit.command;
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
+import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.Crypt;
@@ -27,7 +27,7 @@ public class CommandChangePassword implements CommandExecutor {
     if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
       return true;
 
-    LoginPlayer lp = Cache.getIgnoreCase(name);
+    LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) {
       sender.sendMessage(Config.Language.CHANGEPASSWORD_NOREGISTER);
       return true;
@@ -48,7 +48,7 @@ public class CommandChangePassword implements CommandExecutor {
       sender.sendMessage(Config.Language.COMMON_PASSWORD_SO_SIMPLE);
       return true;
     }
-    if (!Cache.isLoaded) return true;
+    if (!PlayerCache.isLoaded) return true;
 
     sender.sendMessage(MessageKey.CHANGING_PASSWORD.get());
     changePasswordAsync(sender, player, lp, args[1]);
@@ -65,7 +65,7 @@ public class CommandChangePassword implements CommandExecutor {
     try {
       LoginPlayer copy = PasswordHelper.updatePassword(lp, newPwd);
       PluginContext.getSql().edit(copy);
-      Cache.refresh(copy.getName());
+      PlayerCache.refresh(copy.getName());
       LoginPlayerHelper.remove(lp);
       CatScheduler.runTask(() -> notifyChangeSuccess(sender, player));
     } catch (Exception e) {

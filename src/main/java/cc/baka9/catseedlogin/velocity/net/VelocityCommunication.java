@@ -1,14 +1,15 @@
-package cc.baka9.catseedlogin.bungee;
+package cc.baka9.catseedlogin.velocity.net;
 
-import cc.baka9.catseedlogin.bungee.config.BungeeConfigManager;
 import cc.baka9.catseedlogin.common.communication.BaseCommunication;
+import cc.baka9.catseedlogin.velocity.config.VelocityConfigManager;
+import org.slf4j.Logger;
 
-public class BungeeCommunication extends BaseCommunication {
+public class VelocityCommunication extends BaseCommunication {
 
-  private final BungeeConfigManager configManager;
-  private final java.util.logging.Logger logger;
+  private final VelocityConfigManager configManager;
+  private final Logger logger;
 
-  public BungeeCommunication(BungeeConfigManager configManager, java.util.logging.Logger logger) {
+  public VelocityCommunication(VelocityConfigManager configManager, Logger logger) {
     this.configManager = configManager;
     this.logger = logger;
   }
@@ -25,13 +26,12 @@ public class BungeeCommunication extends BaseCommunication {
 
   @Override
   protected void logError(String message, Exception e) {
-    logger.severe(message);
-    e.printStackTrace();
+    logger.error(message, e);
   }
 
   @Override
   protected void logWarning(String message) {
-    logger.warning(message);
+    logger.warn(message);
   }
 
   @Override

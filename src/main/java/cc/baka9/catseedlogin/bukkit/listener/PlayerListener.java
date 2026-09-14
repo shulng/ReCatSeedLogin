@@ -1,6 +1,9 @@
-package cc.baka9.catseedlogin.bukkit;
+package cc.baka9.catseedlogin.bukkit.listener;
 
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
+import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.task.Task;
 import cc.baka9.catseedlogin.bukkit.task.TaskAutoKick;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
@@ -28,7 +31,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.geysermc.floodgate.api.FloodgateApi;
 
-public class Listeners implements Listener {
+public class PlayerListener implements Listener {
 
   private boolean playerIsNotMinecraftPlayer(Player p) {
     return !p.getClass().getName().matches("org\\.bukkit\\.craftbukkit.*?\\.entity\\.CraftPlayer");
@@ -47,13 +50,13 @@ public class Listeners implements Listener {
 
   @EventHandler
   public void onPlayerLogin(AsyncPlayerPreLoginEvent event) {
-    if (!Cache.isLoaded) {
+    if (!PlayerCache.isLoaded) {
       event.disallow(
           AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.CACHE_NOT_INITIALIZED.get());
       return;
     }
     String name = event.getName();
-    LoginPlayer lp = Cache.getIgnoreCase(name);
+    LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) return;
     if (!lp.getName().equals(name)) {
       event.disallow(
@@ -229,7 +232,7 @@ public class Listeners implements Listener {
       return;
     }
     if (Config.Settings.LoginwiththesameIP && LoginPlayerHelper.recordCurrentIP(player)) {
-      LoginPlayer lp = Cache.getIgnoreCase(player.getName());
+      LoginPlayer lp = PlayerCache.getIgnoreCase(player.getName());
       if (lp != null) {
         LoginPlayerHelper.add(lp);
       }
@@ -237,7 +240,7 @@ public class Listeners implements Listener {
       teleportToLastLocation(player);
       return;
     }
-    Cache.refresh(player.getName());
+    PlayerCache.refresh(player.getName());
     if (Config.Settings.CanTpSpawnLocation) {
       CatScheduler.teleport(player, Config.Settings.SpawnLocation);
     }
