@@ -181,8 +181,7 @@ public class Config {
       resetPasswordNoRegister = MessageKey.RESETPASSWORD_NOREGISTER.get();
       resetPasswordEmailDisable = MessageKey.RESETPASSWORD_EMAIL_DISABLE.get();
       resetPasswordEmailNoSet = MessageKey.RESETPASSWORD_EMAIL_NO_SET.get();
-      RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE =
-          MessageKey.RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE.get();
+      resetPasswordEmailRepeatSendMessage = MessageKey.RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE.get();
       resetPasswordEmailSendingMessage = MessageKey.RESETPASSWORD_EMAIL_SENDING_MESSAGE.get();
       resetPasswordEmailSentMessage = MessageKey.RESETPASSWORD_EMAIL_SENT_MESSAGE.get();
       resetPasswordEmailWarn = MessageKey.RESETPASSWORD_EMAIL_WARN.get();
