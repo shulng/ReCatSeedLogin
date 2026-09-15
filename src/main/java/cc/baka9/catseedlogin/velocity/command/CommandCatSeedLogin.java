@@ -1,6 +1,7 @@
-package cc.baka9.catseedlogin.velocity;
+package cc.baka9.catseedlogin.velocity.command;
 
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
+import cc.baka9.catseedlogin.velocity.PluginMain;
 import cc.baka9.catseedlogin.velocity.config.VelocityConfigManager;
 import cc.baka9.catseedlogin.velocity.listener.VelocityListeners;
 import com.velocitypowered.api.command.CommandSource;
@@ -14,13 +15,13 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.slf4j.Logger;
 
-public class Commands implements SimpleCommand {
+public class CommandCatSeedLogin implements SimpleCommand {
 
   private final VelocityConfigManager configManager;
   private final ProxyServer proxyServer;
   private final Logger logger;
 
-  public Commands(VelocityConfigManager configManager, ProxyServer proxyServer, Logger logger) {
+  public CommandCatSeedLogin(VelocityConfigManager configManager, ProxyServer proxyServer, Logger logger) {
     this.configManager = configManager;
     this.proxyServer = proxyServer;
     this.logger = logger;

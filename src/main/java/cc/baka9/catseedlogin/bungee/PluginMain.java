@@ -1,5 +1,6 @@
 package cc.baka9.catseedlogin.bungee;
 
+import cc.baka9.catseedlogin.bungee.command.CommandCatSeedLogin;
 import cc.baka9.catseedlogin.bungee.config.BungeeConfigManager;
 import cc.baka9.catseedlogin.bungee.config.BungeePlatformAdapter;
 import cc.baka9.catseedlogin.bungee.listener.BungeeListeners;
@@ -29,7 +30,7 @@ public class PluginMain extends Plugin implements PluginContext {
         .getPluginManager()
         .registerCommand(
             this,
-            new BungeeCommands("CatSeedLoginBungee", "catseedlogin.admin", configManager, "cslb"));
+            new CommandCatSeedLogin("CatSeedLoginBungee", "catseedlogin.admin", configManager, "cslb"));
   }
 
   public static ScheduledTask runAsync(Runnable runnable) {

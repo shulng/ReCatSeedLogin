@@ -4,7 +4,7 @@ import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
 import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.object.EmailCode;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
-import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.platform.BukkitContext;
 import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.util.EmailSender;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
@@ -148,7 +148,7 @@ public class CommandBindEmail extends AbstractCommandSupport {
   private void executeBindEmail(CommandSender sender, LoginPlayer lp, EmailCode bindEmail) {
     try {
       lp.setEmail(bindEmail.getEmail());
-      PluginContext.getSql().edit(lp);
+      BukkitContext.getSql().edit(lp);
       PlayerCache.refresh(lp.getName());
       notifyBindSuccess(sender, bindEmail);
     } catch (Exception e) {

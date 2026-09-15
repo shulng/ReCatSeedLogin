@@ -3,7 +3,7 @@ package cc.baka9.catseedlogin.bukkit.command;
 import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
 import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
-import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.platform.BukkitContext;
 import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
@@ -75,7 +75,7 @@ public class CommandChangePassword extends AbstractCommandSupport {
     if (!Config.Settings.CanTpSpawnLocation) return;
 
     CatScheduler.teleport(online, Config.Settings.SpawnLocation);
-    if (PluginContext.isLoadProtocolLib()) {
+    if (BukkitContext.isLoadProtocolLib()) {
       LoginPlayerHelper.sendBlankInventoryPacket(online);
     }
   }

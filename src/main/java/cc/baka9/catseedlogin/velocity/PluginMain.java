@@ -1,6 +1,7 @@
 package cc.baka9.catseedlogin.velocity;
 
 import cc.baka9.catseedlogin.common.i18n.I18n;
+import cc.baka9.catseedlogin.velocity.command.CommandCatSeedLogin;
 import cc.baka9.catseedlogin.velocity.config.VelocityConfigManager;
 import cc.baka9.catseedlogin.velocity.config.VelocityPlatformAdapter;
 import cc.baka9.catseedlogin.velocity.listener.VelocityListeners;
@@ -75,7 +76,7 @@ public class PluginMain {
                 .metaBuilder("CatSeedLoginVelocity")
                 .aliases("cslv")
                 .build(),
-            new Commands(configManager, proxyServer, logger));
+            new CommandCatSeedLogin(configManager, proxyServer, logger));
 
     logger.info("CatSeedLogin-Velocity has been enabled!");
   }

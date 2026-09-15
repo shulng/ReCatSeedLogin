@@ -2,7 +2,7 @@ package cc.baka9.catseedlogin.bukkit.command;
 
 import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
 import cc.baka9.catseedlogin.bukkit.config.Config;
-import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.platform.BukkitContext;
 import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerLoginEvent;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
@@ -57,7 +57,7 @@ public class CommandLogin extends AbstractCommandSupport {
           try {
             LoginPlayerHelper.changePasswordAndPersist(lp, rawPassword);
           } catch (Exception e) {
-            PluginContext.getLogger()
+            BukkitContext.getLogger()
                 .warning("Failed to upgrade password hash to Argon2id for " + lp.getName());
           }
         });

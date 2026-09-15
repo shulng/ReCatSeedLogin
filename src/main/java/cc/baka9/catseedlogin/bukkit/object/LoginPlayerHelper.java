@@ -2,7 +2,7 @@ package cc.baka9.catseedlogin.bukkit.object;
 
 import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
 import cc.baka9.catseedlogin.bukkit.config.Config;
-import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.platform.BukkitContext;
 import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.PasswordHelper;
@@ -36,7 +36,7 @@ public class LoginPlayerHelper {
     try {
       loginPlayers.put(lp.getName(), lp);
     } catch (Exception e) {
-      PluginContext.getLogger().severe("Failed to add LoginPlayer: " + e.getMessage());
+      BukkitContext.getLogger().severe("Failed to add LoginPlayer: " + e.getMessage());
     }
   }
 
@@ -45,7 +45,7 @@ public class LoginPlayerHelper {
     try {
       loginPlayers.remove(lp.getName());
     } catch (Exception e) {
-      PluginContext.getLogger().severe("Failed to remove LoginPlayer: " + e.getMessage());
+      BukkitContext.getLogger().severe("Failed to remove LoginPlayer: " + e.getMessage());
     }
   }
 
@@ -54,7 +54,7 @@ public class LoginPlayerHelper {
     try {
       loginPlayers.remove(name);
     } catch (Exception e) {
-      PluginContext.getLogger()
+      BukkitContext.getLogger()
           .severe("Failed to remove LoginPlayer by name: " + name + " - " + e.getMessage());
     }
   }
@@ -76,7 +76,7 @@ public class LoginPlayerHelper {
   public static LoginPlayer changePasswordAndPersist(LoginPlayer lp, String rawPassword)
       throws Exception {
     LoginPlayer copy = PasswordHelper.updatePassword(lp, rawPassword);
-    PluginContext.getSql().edit(copy);
+    BukkitContext.getSql().edit(copy);
     PlayerCache.refresh(copy.getName());
     return copy;
   }
@@ -131,7 +131,7 @@ public class LoginPlayerHelper {
       try {
         playerExitTimes.put(playerName, System.currentTimeMillis());
       } catch (Exception e) {
-        PluginContext.getLogger()
+        BukkitContext.getLogger()
             .severe("Failed to record player exit time: " + playerName + " - " + e.getMessage());
       }
     }
@@ -191,7 +191,7 @@ public class LoginPlayerHelper {
 
       savePlayerIPAsync(player, lp);
     } catch (Exception e) {
-      PluginContext.getLogger()
+      BukkitContext.getLogger()
           .warning("Failed to record IP for player: " + player.getName() + " - " + e.getMessage());
     }
   }
@@ -202,7 +202,7 @@ public class LoginPlayerHelper {
 
   private static void savePlayerIP(LoginPlayer lp) {
     try {
-      PluginContext.getSql().edit(lp);
+      BukkitContext.getSql().edit(lp);
       PlayerCache.refresh(lp.getName());
     } catch (Exception e) {
       e.printStackTrace();

@@ -10,7 +10,7 @@ import cc.baka9.catseedlogin.bukkit.database.*;
 import cc.baka9.catseedlogin.bukkit.listener.PlayerListener;
 import cc.baka9.catseedlogin.bukkit.listener.ProtocolLibListener;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
-import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.platform.BukkitContext;
 import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.task.Task;
 import cc.baka9.catseedlogin.common.i18n.I18n;
@@ -78,7 +78,7 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
       }
     }
 
-    PluginContext.init(this, sql, loadProtocolLib);
+    BukkitContext.init(this, sql, loadProtocolLib);
 
     if (configManager.isEnable()) {
       Communication.socketServerStartAsync();

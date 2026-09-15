@@ -6,7 +6,7 @@ import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.database.MySQL;
 import cc.baka9.catseedlogin.bukkit.database.SQLite;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
-import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.platform.BukkitContext;
 import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
@@ -297,33 +297,33 @@ public class CommandCatSeedLogin implements CommandExecutor {
     if (args.length == 0 || !args[0].equalsIgnoreCase("reload")) return false;
     Config.reload();
     try {
-      PluginContext.getSql().closeConnection();
+      BukkitContext.getSql().closeConnection();
     } catch (Exception e) {
-      PluginContext.getLogger().warning("§c关闭旧数据库连接时出错");
+      BukkitContext.getLogger().warning("§c关闭旧数据库连接时出错");
       e.printStackTrace();
     }
-    PluginContext.setSql(
+    BukkitContext.setSql(
         Config.MySQL.Enable
-            ? new MySQL(PluginContext.getPlugin())
-            : new SQLite(PluginContext.getPlugin()));
+            ? new MySQL(BukkitContext.getPlugin())
+            : new SQLite(BukkitContext.getPlugin()));
     try {
-      PluginContext.getSql().init();
+      BukkitContext.getSql().init();
       PlayerCache.refreshAllSync();
     } catch (Exception e) {
-      PluginContext.getLogger().warning("§c加载数据库时出错");
+      BukkitContext.getLogger().warning("§c加载数据库时出错");
       e.printStackTrace();
     }
     try {
       Communication.socketServerStopAsync();
     } catch (Exception e) {
-      PluginContext.getLogger().warning("§c停止通信服务时出错");
+      BukkitContext.getLogger().warning("§c停止通信服务时出错");
       e.printStackTrace();
     }
     if (Config.BungeeCord.Enable) {
       try {
         Communication.socketServerStartAsync();
       } catch (Exception e) {
-        PluginContext.getLogger().warning("§c启动通信服务时出错");
+        BukkitContext.getLogger().warning("§c启动通信服务时出错");
         e.printStackTrace();
       }
     }
@@ -349,7 +349,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
     CatScheduler.runTaskAsync(
         () -> {
           try {
-            PluginContext.getSql().del(lp.getName());
+            BukkitContext.getSql().del(lp.getName());
             PlayerCache.refresh(lp.getName());
             LoginPlayerHelper.remove(lp);
             sender.sendMessage(MessageKey.ACCOUNT_DELETED.get(lp.getName()));
@@ -397,7 +397,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
   private void setPwdRegisterNew(CommandSender sender, String name, String pwd) {
     try {
       LoginPlayer lp = PasswordHelper.registerNewPlayer(name, pwd);
-      PluginContext.getSql().add(lp);
+      BukkitContext.getSql().add(lp);
       PlayerCache.refresh(lp.getName());
       sender.sendMessage(MessageKey.ACCOUNT_NOT_EXISTS_REGISTERED.get());
     } catch (Exception e) {
@@ -409,7 +409,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
   private void setPwdUpdateExisting(CommandSender sender, LoginPlayer lp, String pwd) {
     try {
       LoginPlayer copy = PasswordHelper.updatePassword(lp, pwd);
-      PluginContext.getSql().edit(copy);
+      BukkitContext.getSql().edit(copy);
       PlayerCache.refresh(copy.getName());
       LoginPlayerHelper.remove(lp);
       sender.sendMessage(MessageKey.PASSWORD_SET_MSG.get(lp.getName()));
@@ -428,7 +428,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
           p.sendMessage(MessageKey.PASSWORD_RESET_BY_ADMIN.get());
           if (!Config.Settings.CanTpSpawnLocation) return;
           CatScheduler.teleport(p, Config.Settings.SpawnLocation);
-          if (PluginContext.isLoadProtocolLib()) {
+          if (BukkitContext.isLoadProtocolLib()) {
             LoginPlayerHelper.sendBlankInventoryPacket(p);
           }
         });

@@ -4,7 +4,7 @@ import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
 import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.object.EmailCode;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
-import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.platform.BukkitContext;
 import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.util.EmailSender;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
@@ -165,7 +165,7 @@ public class CommandResetPassword extends AbstractCommandSupport {
     }
     p.sendMessage(Config.Language.RESETPASSWORD_SUCCESS);
 
-    if (PluginContext.isLoadProtocolLib()) {
+    if (BukkitContext.isLoadProtocolLib()) {
       LoginPlayerHelper.sendBlankInventoryPacket(p);
     }
   }

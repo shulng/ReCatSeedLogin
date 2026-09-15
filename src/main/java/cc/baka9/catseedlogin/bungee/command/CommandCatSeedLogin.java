@@ -1,15 +1,15 @@
-package cc.baka9.catseedlogin.bungee;
+package cc.baka9.catseedlogin.bungee.command;
 
 import cc.baka9.catseedlogin.bungee.config.BungeeConfigManager;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
 
-public class BungeeCommands extends net.md_5.bungee.api.plugin.Command {
+public class CommandCatSeedLogin extends net.md_5.bungee.api.plugin.Command {
 
   private final BungeeConfigManager configManager;
 
-  public BungeeCommands(
+  public CommandCatSeedLogin(
       String name, String permission, BungeeConfigManager configManager, String... aliases) {
     super(name, permission, aliases);
     this.configManager = configManager;

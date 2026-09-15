@@ -4,7 +4,7 @@ import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
 import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerRegisterEvent;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
-import cc.baka9.catseedlogin.bukkit.platform.PluginContext;
+import cc.baka9.catseedlogin.bukkit.platform.BukkitContext;
 import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
@@ -73,7 +73,7 @@ public class CommandRegister extends AbstractCommandSupport {
   private void processRegistration(
       Player player, String name, String password, String currentIp, boolean isLoopback)
       throws Exception {
-    List<LoginPlayer> loginPlayersByIp = PluginContext.getSql().getLikeByIp(currentIp);
+    List<LoginPlayer> loginPlayersByIp = BukkitContext.getSql().getLikeByIp(currentIp);
 
     if (!isLoopback && loginPlayersByIp.size() >= Config.Settings.IpRegisterCountLimit) {
       player.sendMessage(
@@ -88,7 +88,7 @@ public class CommandRegister extends AbstractCommandSupport {
     }
 
     LoginPlayer lp = PasswordHelper.registerNewPlayer(name, password);
-    PluginContext.getSql().add(lp);
+    BukkitContext.getSql().add(lp);
     PlayerCache.refresh(lp.getName());
     LoginPlayerHelper.add(lp);
     CatScheduler.runTask(
