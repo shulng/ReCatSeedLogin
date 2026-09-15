@@ -46,7 +46,7 @@ public class CommandBindEmail extends AbstractCommandSupport {
       sender.sendMessage(MessageKey.NOT_LOGGED_IN.get());
       return false;
     }
-    if (!Config.EmailVerify.Enable) {
+    if (!Config.EmailVerify.enable) {
       sender.sendMessage(MessageKey.RESETPASSWORD_EMAIL_DISABLE.get());
       return false;
     }

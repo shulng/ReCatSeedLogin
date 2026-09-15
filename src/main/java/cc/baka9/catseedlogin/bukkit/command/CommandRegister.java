@@ -26,11 +26,11 @@ public class CommandRegister extends AbstractCommandSupport {
       return true;
     }
     if (!args[0].equals(args[1])) {
-      sender.sendMessage(Config.Language.REGISTER_PASSWORD_CONFIRM_FAIL);
+      sender.sendMessage(Config.Language.registerPasswordConfirmFail);
       return true;
     }
     if (ValidationUtil.isPasswordTooSimple(args[0])) {
-      sender.sendMessage(Config.Language.COMMON_PASSWORD_SO_SIMPLE);
+      sender.sendMessage(Config.Language.commonPasswordSoSimple);
       return true;
     }
     if (!PlayerCache.isLoaded) return true;
@@ -42,11 +42,11 @@ public class CommandRegister extends AbstractCommandSupport {
 
   private boolean canRegister(CommandSender sender, String name) {
     if (LoginPlayerHelper.isLogin(name)) {
-      sender.sendMessage(Config.Language.REGISTER_AFTER_LOGIN_ALREADY);
+      sender.sendMessage(Config.Language.registerAfterLoginAlready);
       return false;
     }
     if (LoginPlayerHelper.isRegister(name)) {
-      sender.sendMessage(Config.Language.REGISTER_BEFORE_LOGIN_ALREADY);
+      sender.sendMessage(Config.Language.registerBeforeLoginAlready);
       return false;
     }
     return true;
@@ -75,9 +75,9 @@ public class CommandRegister extends AbstractCommandSupport {
       throws Exception {
     List<LoginPlayer> loginPlayersByIp = BukkitContext.getSql().getLikeByIp(currentIp);
 
-    if (!isLoopback && loginPlayersByIp.size() >= Config.Settings.IpRegisterCountLimit) {
+    if (!isLoopback && loginPlayersByIp.size() >= Config.Settings.ipRegisterCountLimit) {
       player.sendMessage(
-          Config.Language.REGISTER_MORE
+          Config.Language.registerMore
               .replace("{count}", String.valueOf(loginPlayersByIp.size()))
               .replace(
                   "{accounts}",
@@ -96,7 +96,7 @@ public class CommandRegister extends AbstractCommandSupport {
           CatSeedPlayerRegisterEvent event = new CatSeedPlayerRegisterEvent(Bukkit.getPlayer(name));
           Bukkit.getServer().getPluginManager().callEvent(event);
         });
-    player.sendMessage(Config.Language.REGISTER_SUCCESS);
+    player.sendMessage(Config.Language.registerSuccess);
     CatScheduler.updateInventory(player);
     LoginPlayerHelper.recordCurrentIP(player, lp);
   }

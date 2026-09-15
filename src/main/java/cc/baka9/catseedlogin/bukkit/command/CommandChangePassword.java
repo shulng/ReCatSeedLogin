@@ -23,23 +23,23 @@ public class CommandChangePassword extends AbstractCommandSupport {
 
     LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) {
-      sender.sendMessage(Config.Language.CHANGEPASSWORD_NOREGISTER);
+      sender.sendMessage(Config.Language.changePasswordNoRegister);
       return true;
     }
     if (!LoginPlayerHelper.isLogin(name)) {
-      sender.sendMessage(Config.Language.CHANGEPASSWORD_NOLOGIN);
+      sender.sendMessage(Config.Language.changePasswordNoLogin);
       return true;
     }
     if (!Crypt.match(name, args[0], lp.getPassword().trim())) {
-      sender.sendMessage(Config.Language.CHANGEPASSWORD_OLDPASSWORD_INCORRECT);
+      sender.sendMessage(Config.Language.changePasswordOldPasswordIncorrect);
       return true;
     }
     if (!args[1].equals(args[2])) {
-      sender.sendMessage(Config.Language.CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL);
+      sender.sendMessage(Config.Language.changePasswordPasswordConfirmFail);
       return true;
     }
     if (ValidationUtil.isPasswordTooSimple(args[1])) {
-      sender.sendMessage(Config.Language.COMMON_PASSWORD_SO_SIMPLE);
+      sender.sendMessage(Config.Language.commonPasswordSoSimple);
       return true;
     }
     if (!PlayerCache.isLoaded) return true;
@@ -70,11 +70,11 @@ public class CommandChangePassword extends AbstractCommandSupport {
     Player online = Bukkit.getPlayer(player.getUniqueId());
     if (online == null || !online.isOnline()) return;
 
-    online.sendMessage(Config.Language.CHANGEPASSWORD_SUCCESS);
+    online.sendMessage(Config.Language.changePasswordSuccess);
     Config.setOfflineLocation(online);
-    if (!Config.Settings.CanTpSpawnLocation) return;
+    if (!Config.Settings.canTpSpawnLocation) return;
 
-    CatScheduler.teleport(online, Config.Settings.SpawnLocation);
+    CatScheduler.teleport(online, Config.Settings.spawnLocation);
     if (BukkitContext.isLoadProtocolLib()) {
       LoginPlayerHelper.sendBlankInventoryPacket(online);
     }

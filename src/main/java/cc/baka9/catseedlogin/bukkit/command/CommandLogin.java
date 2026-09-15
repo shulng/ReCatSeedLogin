@@ -18,12 +18,12 @@ public class CommandLogin extends AbstractCommandSupport {
     if (args.length == 0) return false;
     String name = player.getName();
     if (LoginPlayerHelper.isLogin(name)) {
-      player.sendMessage(Config.Language.LOGIN_REPEAT);
+      player.sendMessage(Config.Language.loginRepeat);
       return true;
     }
     LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) {
-      player.sendMessage(Config.Language.LOGIN_NOREGISTER);
+      player.sendMessage(Config.Language.loginNoRegister);
       return true;
     }
     if (!Crypt.match(name, args[0], lp.getPassword().trim())) {
@@ -42,10 +42,10 @@ public class CommandLogin extends AbstractCommandSupport {
     CatSeedPlayerLoginEvent loginEvent =
         new CatSeedPlayerLoginEvent(player, lp.getEmail(), CatSeedPlayerLoginEvent.Result.SUCCESS);
     Bukkit.getServer().getPluginManager().callEvent(loginEvent);
-    player.sendMessage(Config.Language.LOGIN_SUCCESS);
+    player.sendMessage(Config.Language.loginSuccess);
     CatScheduler.updateInventory(player);
     LoginPlayerHelper.recordCurrentIP(player, lp);
-    if (Config.Settings.AfterLoginBack && Config.Settings.CanTpSpawnLocation) {
+    if (Config.Settings.afterLoginBack && Config.Settings.canTpSpawnLocation) {
       Config.getOfflineLocation(player)
           .ifPresent(location -> CatScheduler.teleport(player, location));
     }
@@ -64,12 +64,12 @@ public class CommandLogin extends AbstractCommandSupport {
   }
 
   private void handleLoginFail(CommandSender sender, Player player, LoginPlayer lp) {
-    sender.sendMessage(Config.Language.LOGIN_FAIL);
+    sender.sendMessage(Config.Language.loginFail);
     CatSeedPlayerLoginEvent loginEvent =
         new CatSeedPlayerLoginEvent(player, lp.getEmail(), CatSeedPlayerLoginEvent.Result.FAIL);
     Bukkit.getServer().getPluginManager().callEvent(loginEvent);
-    if (Config.EmailVerify.Enable) {
-      sender.sendMessage(Config.Language.LOGIN_FAIL_IF_FORGET);
+    if (Config.EmailVerify.enable) {
+      sender.sendMessage(Config.Language.loginFailIfForget);
     }
   }
 }

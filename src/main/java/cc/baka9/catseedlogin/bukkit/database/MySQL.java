@@ -18,14 +18,14 @@ public class MySQL extends SQL {
       Class.forName("com.mysql.cj.jdbc.Driver");
       return DriverManager.getConnection(
           "jdbc:mysql://"
-              + Config.MySQL.Host
+              + Config.MySQL.host
               + ":"
-              + Config.MySQL.Port
+              + Config.MySQL.port
               + "/"
-              + Config.MySQL.Database
+              + Config.MySQL.database
               + "?characterEncoding=UTF-8",
-          Config.MySQL.User,
-          Config.MySQL.Password);
+          Config.MySQL.user,
+          Config.MySQL.password);
     } catch (ClassNotFoundException | SQLException e) {
       throw new SQLException(e);
     }

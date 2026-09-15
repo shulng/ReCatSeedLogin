@@ -23,8 +23,8 @@ public class TaskSendLoginMessage extends Task {
 
       String message =
           LoginPlayerHelper.isRegister(playerName)
-              ? Config.Language.LOGIN_REQUEST
-              : Config.Language.REGISTER_REQUEST;
+              ? Config.Language.loginRequest
+              : Config.Language.registerRequest;
       player.sendMessage(message);
     } catch (Exception e) {
       e.printStackTrace();

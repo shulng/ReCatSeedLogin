@@ -26,11 +26,11 @@ public class CommandResetPassword extends AbstractCommandSupport {
 
     LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_NOREGISTER);
+      sender.sendMessage(Config.Language.resetPasswordNoRegister);
       return true;
     }
-    if (!Config.EmailVerify.Enable) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_DISABLE);
+    if (!Config.EmailVerify.enable) {
+      sender.sendMessage(Config.Language.resetPasswordEmailDisable);
       return true;
     }
 
@@ -47,7 +47,7 @@ public class CommandResetPassword extends AbstractCommandSupport {
 
   private boolean handleForget(CommandSender sender, String name, LoginPlayer lp) {
     if (lp.getEmail() == null) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_NO_SET);
+      sender.sendMessage(Config.Language.resetPasswordEmailNoSet);
       return true;
     }
 
@@ -55,7 +55,7 @@ public class CommandResetPassword extends AbstractCommandSupport {
       Optional<EmailCode> optional = EmailCode.getByName(name, EmailCode.Type.ResetPassword);
       if (optional.isPresent()) {
         sender.sendMessage(
-            Config.Language.RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE.replace(
+            Config.Language.resetPasswordEmailRepeatSendMessage.replace(
                 "{email}", optional.get().getEmail()));
         return true;
       }
@@ -74,7 +74,7 @@ public class CommandResetPassword extends AbstractCommandSupport {
       return true;
     }
     sender.sendMessage(
-        Config.Language.RESETPASSWORD_EMAIL_SENDING_MESSAGE.replace("{email}", lp.getEmail()));
+        Config.Language.resetPasswordEmailSendingMessage.replace("{email}", lp.getEmail()));
 
     String content = buildResetEmailContent(name, emailCode);
     EmailSender.sendEmailAsync(
@@ -93,17 +93,17 @@ public class CommandResetPassword extends AbstractCommandSupport {
 
   private void notifyEmailSent(CommandSender sender, String email) {
     sender.sendMessage(
-        Config.Language.RESETPASSWORD_EMAIL_SENT_MESSAGE.replace("{email}", email));
+        Config.Language.resetPasswordEmailSentMessage.replace("{email}", email));
   }
 
   private void notifyEmailFailed(CommandSender sender) {
-    sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_WARN);
+    sender.sendMessage(Config.Language.resetPasswordEmailWarn);
   }
 
   private boolean handleReset(Player player, LoginPlayer lp, String code, String pwd) {
     CommandSender sender = player;
     if (lp.getEmail() == null) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_NO_SET);
+      sender.sendMessage(Config.Language.resetPasswordEmailNoSet);
       return true;
     }
 
@@ -111,21 +111,21 @@ public class CommandResetPassword extends AbstractCommandSupport {
       Optional<EmailCode> optional =
           EmailCode.getByName(lp.getName(), EmailCode.Type.ResetPassword);
       if (!optional.isPresent()) {
-        sender.sendMessage(Config.Language.RESETPASSWORD_FAIL);
+        sender.sendMessage(Config.Language.resetPasswordFail);
         return true;
       }
       if (!optional.get().getCode().equals(code)) {
-        sender.sendMessage(Config.Language.RESETPASSWORD_EMAILCODE_INCORRECT);
+        sender.sendMessage(Config.Language.resetPasswordEmailCodeIncorrect);
         return true;
       }
     } catch (Exception e) {
       e.printStackTrace();
-      sender.sendMessage(Config.Language.RESETPASSWORD_FAIL);
+      sender.sendMessage(Config.Language.resetPasswordFail);
       return true;
     }
 
     if (ValidationUtil.isPasswordTooSimple(pwd)) {
-      sender.sendMessage(Config.Language.COMMON_PASSWORD_SO_SIMPLE);
+      sender.sendMessage(Config.Language.commonPasswordSoSimple);
       return true;
     }
 
@@ -160,10 +160,10 @@ public class CommandResetPassword extends AbstractCommandSupport {
     Player p = Bukkit.getPlayer(name);
     if (p == null || !p.isOnline()) return;
 
-    if (Config.Settings.CanTpSpawnLocation) {
-      CatScheduler.teleport(p, Config.Settings.SpawnLocation);
+    if (Config.Settings.canTpSpawnLocation) {
+      CatScheduler.teleport(p, Config.Settings.spawnLocation);
     }
-    p.sendMessage(Config.Language.RESETPASSWORD_SUCCESS);
+    p.sendMessage(Config.Language.resetPasswordSuccess);
 
     if (BukkitContext.isLoadProtocolLib()) {
       LoginPlayerHelper.sendBlankInventoryPacket(p);

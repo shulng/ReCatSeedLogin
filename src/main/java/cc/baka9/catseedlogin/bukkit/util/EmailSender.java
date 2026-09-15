@@ -35,18 +35,18 @@ public final class EmailSender {
       return;
     }
     HtmlEmail email = new HtmlEmail();
-    email.setHostName(Config.EmailVerify.EmailSmtpHost);
+    email.setHostName(Config.EmailVerify.emailSmtpHost);
     try {
-      email.setSmtpPort(Integer.parseInt(Config.EmailVerify.EmailSmtpPort));
+      email.setSmtpPort(Integer.parseInt(Config.EmailVerify.emailSmtpPort));
     } catch (NumberFormatException e) {
       return;
     }
     email.setAuthenticator(
         new DefaultAuthenticator(
-            Config.EmailVerify.EmailAccount, Config.EmailVerify.EmailPassword));
+            Config.EmailVerify.emailAccount, Config.EmailVerify.emailPassword));
     configureSecurity(email);
     try {
-      email.setFrom(Config.EmailVerify.EmailAccount, Config.EmailVerify.FromPersonal);
+      email.setFrom(Config.EmailVerify.emailAccount, Config.EmailVerify.fromPersonal);
       email.setSubject(subject);
       email.setHtmlMsg(content);
       email.addTo(receiveMailAccount);
@@ -58,7 +58,7 @@ public final class EmailSender {
   }
 
   private static void configureSecurity(HtmlEmail email) {
-    if (Config.EmailVerify.SSLAuthVerify) {
+    if (Config.EmailVerify.sslAuthVerify) {
       email.setSSLOnConnect(true);
       email.setSSLCheckServerIdentity(true);
     } else {

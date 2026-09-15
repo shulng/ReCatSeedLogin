@@ -65,7 +65,7 @@ public class LoginPlayerHelper {
 
   /** 基岩版(Floodgate)玩家是否启用登录跳过。 */
   public static boolean isBedrockLoginBypassed(Player player) {
-    return Config.Settings.BedrockLoginBypass && isFloodgatePlayer(player);
+    return Config.Settings.bedrockLoginBypass && isFloodgatePlayer(player);
   }
 
   /**
@@ -82,12 +82,12 @@ public class LoginPlayerHelper {
   }
 
   private static boolean canBypassLogin(String name) {
-    return (Config.Settings.BedrockLoginBypass && isFloodgatePlayer(name))
-        || (Config.Settings.LoginwiththesameIP && recordCurrentIP(name));
+    return (Config.Settings.bedrockLoginBypass && isFloodgatePlayer(name))
+        || (Config.Settings.loginWithSameIp && recordCurrentIP(name));
   }
 
   public static boolean isRegister(String name) {
-    return (Config.Settings.BedrockLoginBypass && isFloodgatePlayer(name))
+    return (Config.Settings.bedrockLoginBypass && isFloodgatePlayer(name))
         || PlayerCache.getIgnoreCase(name) != null;
   }
 
@@ -106,12 +106,12 @@ public class LoginPlayerHelper {
       Long exitTime = playerExitTimes.get(player.getName());
 
       if (ValidationUtil.isLoopbackAddress(currentIP)) return false;
-      return Config.Settings.IPTimeout == 0
+      return Config.Settings.ipTimeout == 0
           ? storedIPs.contains(currentIP)
           : exitTime != null
               && storedIPs.contains(currentIP)
               && (System.currentTimeMillis() - exitTime)
-                  <= (long) Config.Settings.IPTimeout * 60 * 1000;
+                  <= (long) Config.Settings.ipTimeout * 60 * 1000;
     }
 
     return false;
@@ -127,7 +127,7 @@ public class LoginPlayerHelper {
 
   public static void recordPlayerExitTime(String playerName) {
     if (playerName == null) return;
-    if (Config.Settings.IPTimeout != 0 && isLogin(playerName)) {
+    if (Config.Settings.ipTimeout != 0 && isLogin(playerName)) {
       try {
         playerExitTimes.put(playerName, System.currentTimeMillis());
       } catch (Exception e) {
@@ -210,7 +210,7 @@ public class LoginPlayerHelper {
   }
 
   public static void sendBlankInventoryPacket(Player player) {
-    if (!Config.Settings.EmptyBackpack) return;
+    if (!Config.Settings.emptyBackpack) return;
 
     try {
       ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();

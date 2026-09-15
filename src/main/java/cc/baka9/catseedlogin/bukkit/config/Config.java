@@ -22,203 +22,203 @@ public class Config {
   private static CatSeedLogin plugin;
 
   public static class MySQL {
-    public static volatile boolean Enable;
-    public static volatile String Host;
-    public static volatile String Port;
-    public static volatile String Database;
-    public static volatile String User;
-    public static volatile String Password;
+    public static volatile boolean enable;
+    public static volatile String host;
+    public static volatile String port;
+    public static volatile String database;
+    public static volatile String user;
+    public static volatile String password;
 
     public static void load() {
       BukkitConfigManager cm = plugin.getConfigManager();
-      Enable = cm.isMySQL();
-      Host = cm.getDatabaseHost();
-      Port = String.valueOf(cm.getDatabasePort());
-      Database = cm.getDatabaseName();
-      User = cm.getDatabaseUser();
-      Password = cm.getDatabasePassword();
+      enable = cm.isMySQL();
+      host = cm.getDatabaseHost();
+      port = String.valueOf(cm.getDatabasePort());
+      database = cm.getDatabaseName();
+      user = cm.getDatabaseUser();
+      password = cm.getDatabasePassword();
     }
   }
 
   public static class BungeeCord {
-    public static volatile boolean Enable;
-    public static volatile String Host;
-    public static volatile String Port;
-    public static volatile String AuthKey;
+    public static volatile boolean enable;
+    public static volatile String host;
+    public static volatile String port;
+    public static volatile String authKey;
 
     public static void load() {
       BukkitConfigManager cm = plugin.getConfigManager();
-      Enable = cm.isEnable();
-      Host = cm.getProxyHost();
-      Port = String.valueOf(cm.getProxyPort());
-      AuthKey = cm.getAuthKey();
+      enable = cm.isEnable();
+      host = cm.getProxyHost();
+      port = String.valueOf(cm.getProxyPort());
+      authKey = cm.getAuthKey();
     }
   }
 
   public static class Settings {
-    public static volatile int IpRegisterCountLimit;
-    public static volatile int IpCountLimit;
-    public static volatile Location SpawnLocation;
-    public static volatile boolean LimitChineseID;
-    public static volatile boolean BedrockLoginBypass;
-    public static volatile boolean LoginwiththesameIP;
-    public static volatile boolean EmptyBackpack;
-    public static volatile int IPTimeout;
-    public static volatile int MaxLengthID;
-    public static volatile int MinLengthID;
-    public static volatile boolean BeforeLoginNoDamage;
-    public static volatile long ReenterInterval;
-    public static volatile boolean AfterLoginBack;
-    public static volatile boolean CanTpSpawnLocation;
-    public static volatile List<Pattern> CommandWhiteList = new java.util.ArrayList<>();
-    public static volatile int AutoKick;
-    public static volatile String NamePattern;
-    public static volatile boolean DeathStateQuitRecordLocation;
-    public static volatile boolean FloodgatePrefixProtect;
+    public static volatile int ipRegisterCountLimit;
+    public static volatile int ipCountLimit;
+    public static volatile Location spawnLocation;
+    public static volatile boolean limitChineseId;
+    public static volatile boolean bedrockLoginBypass;
+    public static volatile boolean loginWithSameIp;
+    public static volatile boolean emptyBackpack;
+    public static volatile int ipTimeout;
+    public static volatile int maxLengthId;
+    public static volatile int minLengthId;
+    public static volatile boolean beforeLoginNoDamage;
+    public static volatile long reenterInterval;
+    public static volatile boolean afterLoginBack;
+    public static volatile boolean canTpSpawnLocation;
+    public static volatile List<Pattern> commandWhiteList = new java.util.ArrayList<>();
+    public static volatile int autoKick;
+    public static volatile String namePattern;
+    public static volatile boolean deathStateQuitRecordLocation;
+    public static volatile boolean floodgatePrefixProtect;
 
     public static void load() {
       BukkitConfigManager cm = plugin.getConfigManager();
-      IpRegisterCountLimit = cm.getIpRegisterCountLimit();
-      IpCountLimit = cm.getIpCountLimit();
-      LimitChineseID = cm.isLimitChineseID();
-      MinLengthID = cm.getMinLengthID();
-      BedrockLoginBypass = cm.isBedrockLoginBypass();
-      LoginwiththesameIP = cm.isLoginWithSameIP();
-      EmptyBackpack = cm.isEmptyBackpack();
-      MaxLengthID = cm.getMaxLengthID();
-      BeforeLoginNoDamage = cm.isBeforeLoginNoDamage();
-      ReenterInterval = cm.getReenterInterval();
-      AfterLoginBack = cm.isAfterLoginBack();
-      CanTpSpawnLocation = cm.isCanTpSpawnLocation();
-      NamePattern = cm.getNamePattern();
-      CommandWhiteList = cm.getCommandWhiteList();
-      AutoKick = cm.getAutoKick();
-      IPTimeout = cm.getIPTimeout();
-      SpawnLocation = cm.getBukkitSpawnLocation();
-      DeathStateQuitRecordLocation = cm.isDeathStateQuitRecordLocation();
-      FloodgatePrefixProtect = cm.isFloodgatePrefixProtect();
+      ipRegisterCountLimit = cm.getIpRegisterCountLimit();
+      ipCountLimit = cm.getIpCountLimit();
+      limitChineseId = cm.isLimitChineseID();
+      minLengthId = cm.getMinLengthID();
+      bedrockLoginBypass = cm.isBedrockLoginBypass();
+      loginWithSameIp = cm.isLoginWithSameIP();
+      emptyBackpack = cm.isEmptyBackpack();
+      maxLengthId = cm.getMaxLengthID();
+      beforeLoginNoDamage = cm.isBeforeLoginNoDamage();
+      reenterInterval = cm.getReenterInterval();
+      afterLoginBack = cm.isAfterLoginBack();
+      canTpSpawnLocation = cm.isCanTpSpawnLocation();
+      namePattern = cm.getNamePattern();
+      commandWhiteList = cm.getCommandWhiteList();
+      autoKick = cm.getAutoKick();
+      ipTimeout = cm.getIPTimeout();
+      spawnLocation = cm.getBukkitSpawnLocation();
+      deathStateQuitRecordLocation = cm.isDeathStateQuitRecordLocation();
+      floodgatePrefixProtect = cm.isFloodgatePrefixProtect();
     }
 
     public static void save() {
       BukkitConfigManager cm = plugin.getConfigManager();
-      cm.set(ConfigConstants.Path.SETTINGS_IP_REGISTER_LIMIT, IpRegisterCountLimit);
-      cm.set(ConfigConstants.Path.SETTINGS_IP_COUNT_LIMIT, IpCountLimit);
-      cm.set(ConfigConstants.Path.SETTINGS_LIMIT_CHINESE_ID, LimitChineseID);
-      cm.set(ConfigConstants.Path.BEDROCK_LOGIN_BYPASS, BedrockLoginBypass);
-      cm.set(ConfigConstants.Path.SAME_IP_ENABLED, LoginwiththesameIP);
-      cm.set(ConfigConstants.Path.EMPTY_BACKPACK, EmptyBackpack);
-      cm.set(ConfigConstants.Path.SAME_IP_TIMEOUT, IPTimeout);
-      cm.set(ConfigConstants.Path.SETTINGS_MIN_LENGTH_ID, MinLengthID);
-      cm.set(ConfigConstants.Path.SETTINGS_MAX_LENGTH_ID, MaxLengthID);
-      cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_NO_DAMAGE, BeforeLoginNoDamage);
-      cm.set(ConfigConstants.Path.SETTINGS_REENTER_INTERVAL, ReenterInterval);
-      cm.set(ConfigConstants.Path.SETTINGS_AFTER_LOGIN_BACK, AfterLoginBack);
-      cm.set(ConfigConstants.Path.SETTINGS_CAN_TP_SPAWN_LOCATION, CanTpSpawnLocation);
-      cm.set(ConfigConstants.Path.SETTINGS_AUTO_KICK, AutoKick);
-      cm.set(ConfigConstants.Path.SETTINGS_DEATH_STATE_QUIT_RECORD, DeathStateQuitRecordLocation);
-      cm.set(ConfigConstants.Path.BEDROCK_FLOODGATE_PREFIX, FloodgatePrefixProtect);
-      cm.set(ConfigConstants.Path.SETTINGS_NAME_PATTERN, NamePattern);
+      cm.set(ConfigConstants.Path.SETTINGS_IP_REGISTER_LIMIT, ipRegisterCountLimit);
+      cm.set(ConfigConstants.Path.SETTINGS_IP_COUNT_LIMIT, ipCountLimit);
+      cm.set(ConfigConstants.Path.SETTINGS_LIMIT_CHINESE_ID, limitChineseId);
+      cm.set(ConfigConstants.Path.BEDROCK_LOGIN_BYPASS, bedrockLoginBypass);
+      cm.set(ConfigConstants.Path.SAME_IP_ENABLED, loginWithSameIp);
+      cm.set(ConfigConstants.Path.EMPTY_BACKPACK, emptyBackpack);
+      cm.set(ConfigConstants.Path.SAME_IP_TIMEOUT, ipTimeout);
+      cm.set(ConfigConstants.Path.SETTINGS_MIN_LENGTH_ID, minLengthId);
+      cm.set(ConfigConstants.Path.SETTINGS_MAX_LENGTH_ID, maxLengthId);
+      cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_NO_DAMAGE, beforeLoginNoDamage);
+      cm.set(ConfigConstants.Path.SETTINGS_REENTER_INTERVAL, reenterInterval);
+      cm.set(ConfigConstants.Path.SETTINGS_AFTER_LOGIN_BACK, afterLoginBack);
+      cm.set(ConfigConstants.Path.SETTINGS_CAN_TP_SPAWN_LOCATION, canTpSpawnLocation);
+      cm.set(ConfigConstants.Path.SETTINGS_AUTO_KICK, autoKick);
+      cm.set(ConfigConstants.Path.SETTINGS_DEATH_STATE_QUIT_RECORD, deathStateQuitRecordLocation);
+      cm.set(ConfigConstants.Path.BEDROCK_FLOODGATE_PREFIX, floodgatePrefixProtect);
+      cm.set(ConfigConstants.Path.SETTINGS_NAME_PATTERN, namePattern);
 
-      if (CommandWhiteList != null && !CommandWhiteList.isEmpty()) {
+      if (commandWhiteList != null && !commandWhiteList.isEmpty()) {
         cm.getMainConfig()
             .set(
                 ConfigConstants.Path.SETTINGS_COMMAND_WHITELIST,
-                CommandWhiteList.stream().map(Pattern::toString).collect(Collectors.toList()));
+                commandWhiteList.stream().map(Pattern::toString).collect(Collectors.toList()));
       }
 
-      if (SpawnLocation != null) {
-        cm.setSpawnLocation(SpawnLocation);
+      if (spawnLocation != null) {
+        cm.setSpawnLocation(spawnLocation);
       }
     }
   }
 
   public static class Language {
-    public static String LOGIN_REQUEST;
-    public static String REGISTER_REQUEST;
-    public static String LOGIN_NOREGISTER;
-    public static String LOGIN_REPEAT;
-    public static String LOGIN_SUCCESS;
-    public static String LOGIN_FAIL;
-    public static String LOGIN_FAIL_IF_FORGET;
-    public static String REGISTER_SUCCESS;
-    public static String REGISTER_BEFORE_LOGIN_ALREADY;
-    public static String REGISTER_AFTER_LOGIN_ALREADY;
-    public static String REGISTER_PASSWORD_CONFIRM_FAIL;
-    public static String COMMON_PASSWORD_SO_SIMPLE;
-    public static String RESETPASSWORD_NOREGISTER;
-    public static String RESETPASSWORD_EMAIL_DISABLE;
-    public static String RESETPASSWORD_EMAIL_NO_SET;
-    public static String RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE;
-    public static String RESETPASSWORD_EMAIL_SENDING_MESSAGE;
-    public static String RESETPASSWORD_EMAIL_SENT_MESSAGE;
-    public static String RESETPASSWORD_EMAIL_WARN;
-    public static String RESETPASSWORD_SUCCESS;
-    public static String RESETPASSWORD_EMAILCODE_INCORRECT;
-    public static String RESETPASSWORD_FAIL;
-    public static String CHANGEPASSWORD_NOREGISTER;
-    public static String CHANGEPASSWORD_NOLOGIN;
-    public static String CHANGEPASSWORD_OLDPASSWORD_INCORRECT;
-    public static String CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL;
-    public static String CHANGEPASSWORD_SUCCESS;
-    public static String AUTO_KICK;
-    public static String REGISTER_MORE;
-    public static String BEDROCK_LOGIN_BYPASS;
-    public static String LOGIN_WITH_THE_SAME_IP;
+    public static String loginRequest;
+    public static String registerRequest;
+    public static String loginNoRegister;
+    public static String loginRepeat;
+    public static String loginSuccess;
+    public static String loginFail;
+    public static String loginFailIfForget;
+    public static String registerSuccess;
+    public static String registerBeforeLoginAlready;
+    public static String registerAfterLoginAlready;
+    public static String registerPasswordConfirmFail;
+    public static String commonPasswordSoSimple;
+    public static String resetPasswordNoRegister;
+    public static String resetPasswordEmailDisable;
+    public static String resetPasswordEmailNoSet;
+    public static String resetPasswordEmailRepeatSendMessage;
+    public static String resetPasswordEmailSendingMessage;
+    public static String resetPasswordEmailSentMessage;
+    public static String resetPasswordEmailWarn;
+    public static String resetPasswordSuccess;
+    public static String resetPasswordEmailCodeIncorrect;
+    public static String resetPasswordFail;
+    public static String changePasswordNoRegister;
+    public static String changePasswordNoLogin;
+    public static String changePasswordOldPasswordIncorrect;
+    public static String changePasswordPasswordConfirmFail;
+    public static String changePasswordSuccess;
+    public static String autoKick;
+    public static String registerMore;
+    public static String bedrockLoginBypass;
+    public static String loginWithTheSameIp;
 
     public static void load() {
-      LOGIN_REQUEST = MessageKey.LOGIN_REQUEST.get();
-      REGISTER_REQUEST = MessageKey.REGISTER_REQUEST.get();
-      LOGIN_NOREGISTER = MessageKey.LOGIN_NOREGISTER.get();
-      LOGIN_REPEAT = MessageKey.LOGIN_REPEAT.get();
-      LOGIN_SUCCESS = MessageKey.LOGIN_SUCCESS.get();
-      LOGIN_FAIL = MessageKey.LOGIN_FAIL.get();
-      LOGIN_FAIL_IF_FORGET = MessageKey.LOGIN_FAIL_IF_FORGET.get();
-      REGISTER_SUCCESS = MessageKey.REGISTER_SUCCESS.get();
-      REGISTER_BEFORE_LOGIN_ALREADY = MessageKey.REGISTER_BEFORE_LOGIN_ALREADY.get();
-      REGISTER_AFTER_LOGIN_ALREADY = MessageKey.REGISTER_AFTER_LOGIN_ALREADY.get();
-      REGISTER_PASSWORD_CONFIRM_FAIL = MessageKey.REGISTER_PASSWORD_CONFIRM_FAIL.get();
-      COMMON_PASSWORD_SO_SIMPLE = MessageKey.COMMON_PASSWORD_SO_SIMPLE.get();
-      RESETPASSWORD_NOREGISTER = MessageKey.RESETPASSWORD_NOREGISTER.get();
-      RESETPASSWORD_EMAIL_DISABLE = MessageKey.RESETPASSWORD_EMAIL_DISABLE.get();
-      RESETPASSWORD_EMAIL_NO_SET = MessageKey.RESETPASSWORD_EMAIL_NO_SET.get();
+      loginRequest = MessageKey.LOGIN_REQUEST.get();
+      registerRequest = MessageKey.REGISTER_REQUEST.get();
+      loginNoRegister = MessageKey.LOGIN_NOREGISTER.get();
+      loginRepeat = MessageKey.LOGIN_REPEAT.get();
+      loginSuccess = MessageKey.LOGIN_SUCCESS.get();
+      loginFail = MessageKey.LOGIN_FAIL.get();
+      loginFailIfForget = MessageKey.LOGIN_FAIL_IF_FORGET.get();
+      registerSuccess = MessageKey.REGISTER_SUCCESS.get();
+      registerBeforeLoginAlready = MessageKey.REGISTER_BEFORE_LOGIN_ALREADY.get();
+      registerAfterLoginAlready = MessageKey.REGISTER_AFTER_LOGIN_ALREADY.get();
+      registerPasswordConfirmFail = MessageKey.REGISTER_PASSWORD_CONFIRM_FAIL.get();
+      commonPasswordSoSimple = MessageKey.COMMON_PASSWORD_SO_SIMPLE.get();
+      resetPasswordNoRegister = MessageKey.RESETPASSWORD_NOREGISTER.get();
+      resetPasswordEmailDisable = MessageKey.RESETPASSWORD_EMAIL_DISABLE.get();
+      resetPasswordEmailNoSet = MessageKey.RESETPASSWORD_EMAIL_NO_SET.get();
       RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE =
           MessageKey.RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE.get();
-      RESETPASSWORD_EMAIL_SENDING_MESSAGE = MessageKey.RESETPASSWORD_EMAIL_SENDING_MESSAGE.get();
-      RESETPASSWORD_EMAIL_SENT_MESSAGE = MessageKey.RESETPASSWORD_EMAIL_SENT_MESSAGE.get();
-      RESETPASSWORD_EMAIL_WARN = MessageKey.RESETPASSWORD_EMAIL_WARN.get();
-      RESETPASSWORD_SUCCESS = MessageKey.RESETPASSWORD_SUCCESS.get();
-      RESETPASSWORD_EMAILCODE_INCORRECT = MessageKey.RESETPASSWORD_EMAILCODE_INCORRECT.get();
-      RESETPASSWORD_FAIL = MessageKey.RESETPASSWORD_FAIL.get();
-      CHANGEPASSWORD_NOREGISTER = MessageKey.CHANGEPASSWORD_NOREGISTER.get();
-      CHANGEPASSWORD_NOLOGIN = MessageKey.CHANGEPASSWORD_NOLOGIN.get();
-      CHANGEPASSWORD_OLDPASSWORD_INCORRECT = MessageKey.CHANGEPASSWORD_OLDPASSWORD_INCORRECT.get();
-      CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL = MessageKey.CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL.get();
-      CHANGEPASSWORD_SUCCESS = MessageKey.CHANGEPASSWORD_SUCCESS.get();
-      AUTO_KICK = MessageKey.AUTO_KICK.get();
-      REGISTER_MORE = MessageKey.REGISTER_MORE.get();
-      BEDROCK_LOGIN_BYPASS = MessageKey.BEDROCK_LOGIN_BYPASS.get();
-      LOGIN_WITH_THE_SAME_IP = MessageKey.LOGIN_WITH_THE_SAME_IP.get();
+      resetPasswordEmailSendingMessage = MessageKey.RESETPASSWORD_EMAIL_SENDING_MESSAGE.get();
+      resetPasswordEmailSentMessage = MessageKey.RESETPASSWORD_EMAIL_SENT_MESSAGE.get();
+      resetPasswordEmailWarn = MessageKey.RESETPASSWORD_EMAIL_WARN.get();
+      resetPasswordSuccess = MessageKey.RESETPASSWORD_SUCCESS.get();
+      resetPasswordEmailCodeIncorrect = MessageKey.RESETPASSWORD_EMAILCODE_INCORRECT.get();
+      resetPasswordFail = MessageKey.RESETPASSWORD_FAIL.get();
+      changePasswordNoRegister = MessageKey.CHANGEPASSWORD_NOREGISTER.get();
+      changePasswordNoLogin = MessageKey.CHANGEPASSWORD_NOLOGIN.get();
+      changePasswordOldPasswordIncorrect = MessageKey.CHANGEPASSWORD_OLDPASSWORD_INCORRECT.get();
+      changePasswordPasswordConfirmFail = MessageKey.CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL.get();
+      changePasswordSuccess = MessageKey.CHANGEPASSWORD_SUCCESS.get();
+      autoKick = MessageKey.AUTO_KICK.get();
+      registerMore = MessageKey.REGISTER_MORE.get();
+      bedrockLoginBypass = MessageKey.BEDROCK_LOGIN_BYPASS.get();
+      loginWithTheSameIp = MessageKey.LOGIN_WITH_THE_SAME_IP.get();
     }
   }
 
   public static class EmailVerify {
-    public static volatile boolean Enable;
-    public static volatile String EmailAccount;
-    public static volatile String EmailPassword;
-    public static volatile String EmailSmtpHost;
-    public static volatile String EmailSmtpPort;
-    public static volatile boolean SSLAuthVerify;
-    public static volatile String FromPersonal;
+    public static volatile boolean enable;
+    public static volatile String emailAccount;
+    public static volatile String emailPassword;
+    public static volatile String emailSmtpHost;
+    public static volatile String emailSmtpPort;
+    public static volatile boolean sslAuthVerify;
+    public static volatile String fromPersonal;
 
     public static void load() {
       BukkitConfigManager cm = plugin.getConfigManager();
-      Enable = cm.isEmailEnable();
-      EmailAccount = cm.getEmailAccount();
-      EmailPassword = cm.getEmailPassword();
-      EmailSmtpHost = cm.getEmailSmtpHost();
-      EmailSmtpPort = cm.getEmailSmtpPort();
-      SSLAuthVerify = cm.isSSLAuthVerify();
-      FromPersonal = cm.getFromPersonal();
+      enable = cm.isEmailEnable();
+      emailAccount = cm.getEmailAccount();
+      emailPassword = cm.getEmailPassword();
+      emailSmtpHost = cm.getEmailSmtpHost();
+      emailSmtpPort = cm.getEmailSmtpPort();
+      sslAuthVerify = cm.isSSLAuthVerify();
+      fromPersonal = cm.getFromPersonal();
     }
   }
 
