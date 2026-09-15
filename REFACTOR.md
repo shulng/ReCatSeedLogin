@@ -41,6 +41,22 @@
 - 更新 `README.md`「项目架构」目录树为重构后的目标结构。
 - 最终 `mvn -o compile` → BUILD SUCCESS；三平台入口 FQCN 与 `plugin.yml`/`bungee.yml`/`velocity-plugin.json` 均未改动。
 
+### 阶段 5：命名标准化（Commit 5A / 5C / 5D）
+分类体系与命名规范见 `NAMING.md`（Commit 5D）。按类别实际实施的更名：
+- **全层级范围**：类/接口、常量、配置字段、方法/变量四类。
+- **Commit 5A（类/接口）**
+  - 命令类跨平台统一 → `Command<领域>` 置于 `<平台>/command/`：`velocity.Commands`→`velocity.command.CommandCatSeedLogin`、`bungee.BungeeCommands`→`bungee.command.CommandCatSeedLogin`（bukkit 命令类已合规）。
+  - 消除同名歧义：`bukkit/platform/PluginContext`（静态定位器单例）→ `BukkitContext`，与 `common.platform.PluginContext`（接口）区分。
+- **Commit 5B（常量）**：审计结论——`ConfigConstants.*`、`MessageKey.*` 已全部 `SCREAMING_SNAKE`，无违规模，零改动（并入文档）。
+- **Commit 5C（配置字段/方法）**
+  - `bukkit/config/Config.java` 嵌套静态字段全部 lowerCamelCase 化（服务器/Database/Email 命名空间，如 `LoginwiththesameIP→loginWithSameIp`、`SSLAuthVerify→sslAuthVerify`、`Enable→enable`）；同步更新 14 个引用文件。
+  - 方法修正：`CommandCatSeedLogin.LoginwiththesameIP` → `loginWithSameIp`。
+  - 说明：`CoreConfig`/`BaseConfigManager` 的 `getIPTimeout`、`isLoginWithSameIP` 等访问器为「接口+实现」一致约定的缩写（Google 风格允许），作为记录在案的例外保留，不在本阶段归一。
+- **Commit 5D（文档/收尾）**
+  - 新增 `NAMING.md`（分类体系 + 命名规则表）。
+  - 更新本文件（阶段 5 记录）与 `README.md` 目录树。
+  - 最终 `mvn -o -DskipTests package` → BUILD SUCCESS。
+
 ---
 
 ## 重构前后结构对照（摘要）
