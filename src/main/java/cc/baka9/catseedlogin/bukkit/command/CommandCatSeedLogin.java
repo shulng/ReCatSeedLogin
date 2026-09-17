@@ -235,7 +235,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
 
   private boolean commandWhiteListAdd(CommandSender sender, String[] args) {
     if (args.length < 2 || !args[0].equalsIgnoreCase("commandWhiteListAdd")) return false;
-    String regex = joinArgs(args, 1);
+    String regex = joinArgs(args);
     Pattern pattern = Pattern.compile(regex);
     if (containsRegex(regex)) {
       sender.sendMessage(MessageKey.ADMIN_COMMAND_WHITELIST_ALREADY_EXISTS.get(regex));
@@ -249,7 +249,7 @@ public class CommandCatSeedLogin implements CommandExecutor {
 
   private boolean commandWhiteListDel(CommandSender sender, String[] args) {
     if (args.length < 2 || !args[0].equalsIgnoreCase("commandWhiteListDel")) return false;
-    String regex = joinArgs(args, 1);
+    String regex = joinArgs(args);
     if (containsRegex(regex)) {
       removeRegex(regex);
       Config.Settings.save();
@@ -260,9 +260,9 @@ public class CommandCatSeedLogin implements CommandExecutor {
     return true;
   }
 
-  private static String joinArgs(String[] args, int from) {
-    String[] cmd = new String[args.length - from];
-    System.arraycopy(args, from, cmd, 0, cmd.length);
+  private static String joinArgs(String[] args) {
+    String[] cmd = new String[args.length - 1];
+    System.arraycopy(args, 1, cmd, 0, cmd.length);
     return String.join(" ", cmd);
   }
 
