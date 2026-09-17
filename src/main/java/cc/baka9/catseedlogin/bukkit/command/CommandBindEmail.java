@@ -1,29 +1,28 @@
 package cc.baka9.catseedlogin.bukkit.command;
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
+import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.object.EmailCode;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.platform.BukkitContext;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.util.EmailSender;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import java.util.Optional;
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class CommandBindEmail implements CommandExecutor {
+public class CommandBindEmail extends AbstractCommandSupport {
 
   @Override
-  public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
-    if (args.length == 0 || !(sender instanceof Player)) return false;
+  protected boolean onPlayerCommand(Player player, String[] args) {
+    if (args.length == 0) return false;
 
-    String name = sender.getName();
+    CommandSender sender = player;
+    String name = player.getName();
 
     if (!canBindEmail(sender, name)) return true;
 
@@ -38,12 +37,7 @@ public class CommandBindEmail implements CommandExecutor {
   }
 
   private boolean canBindEmail(CommandSender sender, String name) {
-    Player player = (Player) sender;
-
-    if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
-      return false;
-
-    LoginPlayer lp = Cache.getIgnoreCase(name);
+    LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) {
       sender.sendMessage(MessageKey.NOT_REGISTERED.get());
       return false;
@@ -52,7 +46,7 @@ public class CommandBindEmail implements CommandExecutor {
       sender.sendMessage(MessageKey.NOT_LOGGED_IN.get());
       return false;
     }
-    if (!Config.EmailVerify.Enable) {
+    if (!Config.EmailVerify.enable) {
       sender.sendMessage(MessageKey.RESETPASSWORD_EMAIL_DISABLE.get());
       return false;
     }
@@ -62,7 +56,7 @@ public class CommandBindEmail implements CommandExecutor {
   private void handleSet(CommandSender sender, String name, String[] args) {
     if (args.length <= 1) return;
 
-    LoginPlayer lp = Cache.getIgnoreCase(name);
+    LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) return;
     if (lp.getEmail() != null && ValidationUtil.isValidEmail(lp.getEmail())) {
       sender.sendMessage(MessageKey.EMAIL_ALREADY_BOUND.get());
@@ -87,7 +81,8 @@ public class CommandBindEmail implements CommandExecutor {
 
     EmailCode bindEmail;
     try {
-      bindEmail = EmailCode.create(name, mail, 1000 * 60 * 5, EmailCode.Type.Bind);
+      bindEmail =
+          EmailCode.create(name, mail, EmailCode.DEFAULT_CODE_DURATION, EmailCode.Type.Bind);
     } catch (Exception e) {
       sender.sendMessage(MessageKey.INTERNAL_ERROR.get());
       e.printStackTrace();
@@ -100,7 +95,7 @@ public class CommandBindEmail implements CommandExecutor {
   private void handleVerify(CommandSender sender, String name, String[] args) {
     if (args.length <= 1) return;
 
-    LoginPlayer lp = Cache.getIgnoreCase(name);
+    LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp.getEmail() != null && ValidationUtil.isValidEmail(lp.getEmail())) {
       sender.sendMessage(MessageKey.EMAIL_ALREADY_BOUND.get());
       return;
@@ -123,17 +118,13 @@ public class CommandBindEmail implements CommandExecutor {
   }
 
   private void sendEmailCode(CommandSender sender, String name, String mail, EmailCode bindEmail) {
-    CatScheduler.runTaskAsync(
-        () -> {
-          try {
-            String content = buildBindEmailContent(name, bindEmail);
-            EmailSender.sendEmail(mail, MessageKey.EMAIL_SUBJECT_BIND_EMAIL.get(), content);
-            notifyBindEmailSent(sender, mail);
-          } catch (Exception e) {
-            notifyBindEmailFailed(sender);
-            e.printStackTrace();
-          }
-        });
+    String content = buildBindEmailContent(name, bindEmail);
+    EmailSender.sendEmailAsync(
+        mail,
+        MessageKey.EMAIL_SUBJECT_BIND_EMAIL.get(),
+        content,
+        () -> notifyBindEmailSent(sender, mail),
+        () -> notifyBindEmailFailed(sender));
   }
 
   private String buildBindEmailContent(String name, EmailCode bindEmail) {
@@ -142,15 +133,12 @@ public class CommandBindEmail implements CommandExecutor {
   }
 
   private void notifyBindEmailSent(CommandSender sender, String mail) {
-    CatScheduler.runTask(
-        () -> {
-          sender.sendMessage(MessageKey.EMAIL_SENT_CHECK_INBOX.get(mail));
-          sender.sendMessage(MessageKey.CHECK_SPAM_FOLDER.get());
-        });
+    sender.sendMessage(MessageKey.EMAIL_SENT_CHECK_INBOX.get(mail));
+    sender.sendMessage(MessageKey.CHECK_SPAM_FOLDER.get());
   }
 
   private void notifyBindEmailFailed(CommandSender sender) {
-    CatScheduler.runTask(() -> sender.sendMessage(MessageKey.EMAIL_SEND_FAILED.get()));
+    sender.sendMessage(MessageKey.EMAIL_SEND_FAILED.get());
   }
 
   private void bindEmail(CommandSender sender, LoginPlayer lp, EmailCode bindEmail) {
@@ -160,8 +148,8 @@ public class CommandBindEmail implements CommandExecutor {
   private void executeBindEmail(CommandSender sender, LoginPlayer lp, EmailCode bindEmail) {
     try {
       lp.setEmail(bindEmail.getEmail());
-      PluginContext.getSql().edit(lp);
-      Cache.refresh(lp.getName());
+      BukkitContext.getSql().edit(lp);
+      PlayerCache.refresh(lp.getName());
       notifyBindSuccess(sender, bindEmail);
     } catch (Exception e) {
       e.printStackTrace();

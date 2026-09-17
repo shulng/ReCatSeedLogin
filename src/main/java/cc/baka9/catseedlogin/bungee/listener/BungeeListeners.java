@@ -1,9 +1,10 @@
-package cc.baka9.catseedlogin.bungee;
+package cc.baka9.catseedlogin.bungee.listener;
 
+import cc.baka9.catseedlogin.bungee.PluginMain;
 import cc.baka9.catseedlogin.bungee.config.BungeeConfigManager;
+import cc.baka9.catseedlogin.bungee.net.BungeeCommunication;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import cc.baka9.catseedlogin.common.proxy.ProxyLoginTracker;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -15,16 +16,15 @@ import net.md_5.bungee.api.event.ServerConnectedEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
-public class Listeners implements Listener {
+public class BungeeListeners implements Listener {
 
   private final ProxyServer proxyServer = ProxyServer.getInstance();
-  private final List<String> loggedInPlayerList = new CopyOnWriteArrayList<>();
+  private final ProxyLoginTracker tracker;
   private final BungeeConfigManager configManager;
-  private final BungeeCommunication communication;
 
-  public Listeners(BungeeConfigManager configManager, BungeeCommunication communication) {
+  public BungeeListeners(BungeeConfigManager configManager, BungeeCommunication communication) {
     this.configManager = configManager;
-    this.communication = communication;
+    this.tracker = new ProxyLoginTracker(communication);
   }
 
   @EventHandler
@@ -34,7 +34,7 @@ public class Listeners implements Listener {
     }
     ProxiedPlayer player = (ProxiedPlayer) event.getSender();
     String playerName = player.getName();
-    if (!loggedInPlayerList.contains(playerName)) {
+    if (!tracker.isLoggedIn(playerName)) {
       event.setCancelled(true);
       handleLogin(player, event.getMessage());
     }
@@ -51,13 +51,11 @@ public class Listeners implements Listener {
     }
     ProxiedPlayer player = event.getPlayer();
     String playerName = player.getName();
-    if (loggedInPlayerList.contains(playerName)) {
+    if (tracker.isLoggedIn(playerName)) {
       return;
     }
     try {
-      if (communication.sendConnectRequest(playerName) == 1) {
-        loggedInPlayerList.add(playerName);
-      } else {
+      if (!tracker.markLoggedIn(playerName)) {
         event.setTarget(proxyServer.getServerInfo(loginServerName));
       }
     } catch (Exception e) {
@@ -73,26 +71,21 @@ public class Listeners implements Listener {
       return;
     }
     ProxiedPlayer player = event.getPlayer();
-    if (loggedInPlayerList.contains(player.getName())) {
-      PluginMain.runAsync(() -> communication.sendKeepLoggedInRequest(player.getName()));
+    if (tracker.isLoggedIn(player.getName())) {
+      PluginMain.runAsync(() -> tracker.sendKeepLoggedInRequest(player.getName()));
     }
   }
 
   @EventHandler
   public void onPlayerDisconnect(PlayerDisconnectEvent event) {
-    try {
-      loggedInPlayerList.remove(event.getPlayer().getName());
-    } catch (Exception e) {
-      proxyServer.getLogger().severe("移除玩家时出错: " + e.getMessage());
-    }
+    tracker.markLoggedOut(event.getPlayer().getName());
   }
 
   @EventHandler
   public void onPreLogin(PreLoginEvent event) {
     String playerName = event.getConnection().getName();
     try {
-      if (loggedInPlayerList.contains(playerName)
-          && (communication.sendConnectRequest(playerName) == 1)) {
+      if (tracker.isAlreadyLoggedInElsewhere(playerName)) {
         event.setCancelReason(new TextComponent(MessageKey.ALREADY_LOGGED_IN_PROXY.get()));
         event.setCancelled(true);
       }
@@ -106,12 +99,10 @@ public class Listeners implements Listener {
     String playerName = player.getName();
     PluginMain.runAsync(
         () -> {
-          if (communication.sendConnectRequest(playerName) != 1) {
-            return;
-          }
-          loggedInPlayerList.add(playerName);
-          if (message != null && !message.isEmpty()) {
-            proxyServer.getPluginManager().dispatchCommand(player, message.substring(1));
+          if (tracker.markLoggedIn(playerName)) {
+            if (message != null && !message.isEmpty()) {
+              proxyServer.getPluginManager().dispatchCommand(player, message.substring(1));
+            }
           }
         });
   }

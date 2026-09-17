@@ -1,7 +1,7 @@
 package cc.baka9.catseedlogin.bukkit.task;
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.Config;
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
+import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 public class TaskSendLoginMessage extends Task {
   @Override
   public void run() {
-    if (!Cache.isLoaded) return;
+    if (!PlayerCache.isLoaded) return;
 
     for (Player player : Bukkit.getOnlinePlayers()) {
       sendLoginMessage(player);
@@ -23,8 +23,8 @@ public class TaskSendLoginMessage extends Task {
 
       String message =
           LoginPlayerHelper.isRegister(playerName)
-              ? Config.Language.LOGIN_REQUEST
-              : Config.Language.REGISTER_REQUEST;
+              ? Config.Language.loginRequest
+              : Config.Language.registerRequest;
       player.sendMessage(message);
     } catch (Exception e) {
       e.printStackTrace();

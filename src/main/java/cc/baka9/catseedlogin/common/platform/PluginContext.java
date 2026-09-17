@@ -1,4 +1,4 @@
-package cc.baka9.catseedlogin.common.config;
+package cc.baka9.catseedlogin.common.platform;
 
 import java.io.File;
 import java.io.InputStream;

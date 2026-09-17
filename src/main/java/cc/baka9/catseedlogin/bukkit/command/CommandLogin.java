@@ -1,39 +1,33 @@
 package cc.baka9.catseedlogin.bukkit.command;
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
+import cc.baka9.catseedlogin.bukkit.config.Config;
+import cc.baka9.catseedlogin.bukkit.platform.BukkitContext;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerLoginEvent;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.Crypt;
-import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class CommandLogin implements CommandExecutor {
+public class CommandLogin extends AbstractCommandSupport {
   @Override
-  public boolean onCommand(CommandSender sender, Command command, String lable, String[] args) {
-    if (args.length == 0 || !(sender instanceof Player)) return false;
-    Player player = (Player) sender;
+  protected boolean onPlayerCommand(Player player, String[] args) {
+    if (args.length == 0) return false;
     String name = player.getName();
-    if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
-      return true;
     if (LoginPlayerHelper.isLogin(name)) {
-      sender.sendMessage(Config.Language.LOGIN_REPEAT);
+      player.sendMessage(Config.Language.loginRepeat);
       return true;
     }
-    LoginPlayer lp = Cache.getIgnoreCase(name);
+    LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) {
-      sender.sendMessage(Config.Language.LOGIN_NOREGISTER);
+      player.sendMessage(Config.Language.loginNoRegister);
       return true;
     }
     if (!Crypt.match(name, args[0], lp.getPassword().trim())) {
-      handleLoginFail(sender, player, lp);
+      handleLoginFail(player, player, lp);
       return true;
     }
     handleLoginSuccess(player, lp);
@@ -48,10 +42,10 @@ public class CommandLogin implements CommandExecutor {
     CatSeedPlayerLoginEvent loginEvent =
         new CatSeedPlayerLoginEvent(player, lp.getEmail(), CatSeedPlayerLoginEvent.Result.SUCCESS);
     Bukkit.getServer().getPluginManager().callEvent(loginEvent);
-    player.sendMessage(Config.Language.LOGIN_SUCCESS);
+    player.sendMessage(Config.Language.loginSuccess);
     CatScheduler.updateInventory(player);
     LoginPlayerHelper.recordCurrentIP(player, lp);
-    if (Config.Settings.AfterLoginBack && Config.Settings.CanTpSpawnLocation) {
+    if (Config.Settings.afterLoginBack && Config.Settings.canTpSpawnLocation) {
       Config.getOfflineLocation(player)
           .ifPresent(location -> CatScheduler.teleport(player, location));
     }
@@ -61,23 +55,21 @@ public class CommandLogin implements CommandExecutor {
     CatScheduler.runTaskAsync(
         () -> {
           try {
-            LoginPlayer copy = PasswordHelper.updatePassword(lp, rawPassword);
-            PluginContext.getSql().edit(copy);
-            Cache.refresh(copy.getName());
+            LoginPlayerHelper.changePasswordAndPersist(lp, rawPassword);
           } catch (Exception e) {
-            PluginContext.getLogger()
+            BukkitContext.getLogger()
                 .warning("Failed to upgrade password hash to Argon2id for " + lp.getName());
           }
         });
   }
 
   private void handleLoginFail(CommandSender sender, Player player, LoginPlayer lp) {
-    sender.sendMessage(Config.Language.LOGIN_FAIL);
+    sender.sendMessage(Config.Language.loginFail);
     CatSeedPlayerLoginEvent loginEvent =
         new CatSeedPlayerLoginEvent(player, lp.getEmail(), CatSeedPlayerLoginEvent.Result.FAIL);
     Bukkit.getServer().getPluginManager().callEvent(loginEvent);
-    if (Config.EmailVerify.Enable) {
-      sender.sendMessage(Config.Language.LOGIN_FAIL_IF_FORGET);
+    if (Config.EmailVerify.enable) {
+      sender.sendMessage(Config.Language.loginFailIfForget);
     }
   }
 }

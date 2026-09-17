@@ -1,8 +1,11 @@
 package cc.baka9.catseedlogin.velocity;
 
 import cc.baka9.catseedlogin.common.i18n.I18n;
+import cc.baka9.catseedlogin.velocity.command.CommandCatSeedLogin;
 import cc.baka9.catseedlogin.velocity.config.VelocityConfigManager;
 import cc.baka9.catseedlogin.velocity.config.VelocityPlatformAdapter;
+import cc.baka9.catseedlogin.velocity.listener.VelocityListeners;
+import cc.baka9.catseedlogin.velocity.net.VelocityCommunication;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -29,7 +32,7 @@ public class PluginMain {
   private VelocityConfigManager configManager;
   private VelocityPlatformAdapter platformAdapter;
   private VelocityCommunication communication;
-  private Listeners listeners;
+  private VelocityListeners listeners;
 
   @Inject
   public PluginMain(ProxyServer proxyServer, Logger logger, @DataDirectory Path dataDirectory) {
@@ -60,7 +63,7 @@ public class PluginMain {
     configManager = new VelocityConfigManager(this);
     platformAdapter = new VelocityPlatformAdapter(this, configManager.getI18n());
     communication = new VelocityCommunication(configManager, logger);
-    listeners = new Listeners(configManager, communication, proxyServer, logger);
+    listeners = new VelocityListeners(configManager, communication, proxyServer, logger);
     configManager.reload();
 
     proxyServer.getEventManager().register(this, listeners);
@@ -73,7 +76,7 @@ public class PluginMain {
                 .metaBuilder("CatSeedLoginVelocity")
                 .aliases("cslv")
                 .build(),
-            new Commands(configManager, proxyServer, logger));
+            new CommandCatSeedLogin(configManager, proxyServer, logger));
 
     logger.info("CatSeedLogin-Velocity has been enabled!");
   }
@@ -107,7 +110,7 @@ public class PluginMain {
     return communication;
   }
 
-  public Listeners getListeners() {
+  public VelocityListeners getListeners() {
     return listeners;
   }
 }

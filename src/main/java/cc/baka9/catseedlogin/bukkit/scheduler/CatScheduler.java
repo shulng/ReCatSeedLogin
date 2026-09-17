@@ -1,4 +1,4 @@
-package cc.baka9.catseedlogin.bukkit;
+package cc.baka9.catseedlogin.bukkit.scheduler;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -66,23 +66,23 @@ public class CatScheduler {
         .runAtFixedRate(runnable, delay == 0 ? 1 : delay, period);
   }
 
-  public static ScheduledTask runTask(Runnable runnable) {
-    return morePaperLib.scheduling().globalRegionalScheduler().run(runnable);
+  public static void runTask(Runnable runnable) {
+    morePaperLib.scheduling().globalRegionalScheduler().run(runnable);
   }
 
-  public static ScheduledTask runTaskLater(Runnable runnable, long delay) {
-    return morePaperLib.scheduling().globalRegionalScheduler().runDelayed(runnable, delay);
+  public static void runTaskLater(Runnable runnable, long delay) {
+    morePaperLib.scheduling().globalRegionalScheduler().runDelayed(runnable, delay);
   }
 
-  public static ScheduledTask runTaskLaterAsync(Runnable runnable, long delay) {
-    return morePaperLib
+  public static void runTaskLaterAsync(Runnable runnable, long delay) {
+    morePaperLib
         .scheduling()
         .asyncScheduler()
         .runDelayed(runnable, java.time.Duration.ofMillis(delay * 50));
   }
 
-  public static ScheduledTask runTaskTimerAsync(Runnable runnable, long delay, long period) {
-    return morePaperLib
+  public static void runTaskTimerAsync(Runnable runnable, long delay, long period) {
+    morePaperLib
         .scheduling()
         .asyncScheduler()
         .runAtFixedRate(

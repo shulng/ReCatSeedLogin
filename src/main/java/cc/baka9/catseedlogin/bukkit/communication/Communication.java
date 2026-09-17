@@ -1,6 +1,9 @@
-package cc.baka9.catseedlogin.bukkit;
+package cc.baka9.catseedlogin.bukkit.communication;
 
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.platform.BukkitContext;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.common.communication.BaseCommunication;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.CommunicationAuth;
@@ -36,12 +39,12 @@ public class Communication extends BaseCommunication {
 
   public static void socketServerStart() {
     try {
-      serverSocket = new ServerSocket(PluginContext.getConfigManager().getProxyPort(), 50);
+      serverSocket = new ServerSocket(BukkitContext.getConfigManager().getProxyPort(), 50);
       while (!serverSocket.isClosed()) {
         acceptAndHandle();
       }
     } catch (IOException e) {
-      PluginContext.getLogger().warning("无法启动Socket服务器: " + e.getMessage());
+      BukkitContext.getLogger().warning("无法启动Socket服务器: " + e.getMessage());
       e.printStackTrace();
     }
   }
@@ -51,7 +54,7 @@ public class Communication extends BaseCommunication {
       handleRequest(socket);
     } catch (IOException e) {
       if (!serverSocket.isClosed()) {
-        PluginContext.getLogger().warning("Socket连接处理异常: " + e.getMessage());
+        BukkitContext.getLogger().warning("Socket连接处理异常: " + e.getMessage());
       }
     }
   }
@@ -82,12 +85,12 @@ public class Communication extends BaseCommunication {
     if (playerName == null || time == null || sign == null) return;
     String expectedSign =
         CommunicationAuth.encryption(
-            PluginContext.getConfigManager().getAuthKey(), playerName, time);
+            BukkitContext.getConfigManager().getAuthKey(), playerName, time);
     if (!sign.equals(expectedSign)) return;
 
     CatScheduler.runTask(
         () -> {
-          LoginPlayer lp = Cache.getIgnoreCase(playerName);
+          LoginPlayer lp = PlayerCache.getIgnoreCase(playerName);
           if (lp == null) return;
           LoginPlayerHelper.add(lp);
           Player player = Bukkit.getPlayerExact(playerName);
@@ -109,27 +112,27 @@ public class Communication extends BaseCommunication {
 
   @Override
   protected String getProxyHost() {
-    return PluginContext.getConfigManager().getProxyHost();
+    return BukkitContext.getConfigManager().getProxyHost();
   }
 
   @Override
   protected int getProxyPort() {
-    return PluginContext.getConfigManager().getProxyPort();
+    return BukkitContext.getConfigManager().getProxyPort();
   }
 
   @Override
   protected String getAuthKey() {
-    return PluginContext.getConfigManager().getAuthKey();
+    return BukkitContext.getConfigManager().getAuthKey();
   }
 
   @Override
   protected void logError(String message, Exception e) {
-    PluginContext.getLogger().severe(message);
+    BukkitContext.getLogger().severe(message);
     e.printStackTrace();
   }
 
   @Override
   protected void logWarning(String message) {
-    PluginContext.getLogger().warning(message);
+    BukkitContext.getLogger().warning(message);
   }
 }

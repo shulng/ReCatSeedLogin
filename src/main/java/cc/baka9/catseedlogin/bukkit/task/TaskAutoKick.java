@@ -1,7 +1,7 @@
 package cc.baka9.catseedlogin.bukkit.task;
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.Config;
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
+import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,9 +13,9 @@ public class TaskAutoKick extends Task {
 
   @Override
   public void run() {
-    if (!Cache.isLoaded || Config.Settings.AutoKick < 1) return;
+    if (!PlayerCache.isLoaded || Config.Settings.autoKick < 1) return;
 
-    long autoKickMs = Config.Settings.AutoKick * 1000L;
+    long autoKickMs = Config.Settings.autoKick * 1000L;
     long now = System.currentTimeMillis();
 
     for (Player player : Bukkit.getOnlinePlayers()) {
@@ -53,7 +53,7 @@ public class TaskAutoKick extends Task {
       return;
     }
     String kickMessage =
-        Config.Language.AUTO_KICK.replace("{time}", String.valueOf(Config.Settings.AutoKick));
+        Config.Language.autoKick.replace("{time}", String.valueOf(Config.Settings.autoKick));
     player.kickPlayer(kickMessage);
   }
 }

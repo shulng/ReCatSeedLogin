@@ -1,10 +1,11 @@
 package cc.baka9.catseedlogin.bukkit.object;
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
+import cc.baka9.catseedlogin.bukkit.config.Config;
+import cc.baka9.catseedlogin.bukkit.platform.BukkitContext;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
+import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
@@ -35,7 +36,7 @@ public class LoginPlayerHelper {
     try {
       loginPlayers.put(lp.getName(), lp);
     } catch (Exception e) {
-      PluginContext.getLogger().severe("Failed to add LoginPlayer: " + e.getMessage());
+      BukkitContext.getLogger().severe("Failed to add LoginPlayer: " + e.getMessage());
     }
   }
 
@@ -44,7 +45,7 @@ public class LoginPlayerHelper {
     try {
       loginPlayers.remove(lp.getName());
     } catch (Exception e) {
-      PluginContext.getLogger().severe("Failed to remove LoginPlayer: " + e.getMessage());
+      BukkitContext.getLogger().severe("Failed to remove LoginPlayer: " + e.getMessage());
     }
   }
 
@@ -53,7 +54,7 @@ public class LoginPlayerHelper {
     try {
       loginPlayers.remove(name);
     } catch (Exception e) {
-      PluginContext.getLogger()
+      BukkitContext.getLogger()
           .severe("Failed to remove LoginPlayer by name: " + name + " - " + e.getMessage());
     }
   }
@@ -62,14 +63,32 @@ public class LoginPlayerHelper {
     return canBypassLogin(name) || loginPlayers.containsKey(name);
   }
 
+  /** 基岩版(Floodgate)玩家是否启用登录跳过。 */
+  public static boolean isBedrockLoginBypassed(Player player) {
+    return Config.Settings.bedrockLoginBypass && isFloodgatePlayer(player);
+  }
+
+  /**
+   * 更新口令并持久化：升哈希、写库并刷新缓存。
+   *
+   * @return 更新后的 LoginPlayer 副本
+   */
+  public static LoginPlayer changePasswordAndPersist(LoginPlayer lp, String rawPassword)
+      throws Exception {
+    LoginPlayer copy = PasswordHelper.updatePassword(lp, rawPassword);
+    BukkitContext.getSql().edit(copy);
+    PlayerCache.refresh(copy.getName());
+    return copy;
+  }
+
   private static boolean canBypassLogin(String name) {
-    return (Config.Settings.BedrockLoginBypass && isFloodgatePlayer(name))
-        || (Config.Settings.LoginwiththesameIP && recordCurrentIP(name));
+    return (Config.Settings.bedrockLoginBypass && isFloodgatePlayer(name))
+        || (Config.Settings.loginWithSameIp && recordCurrentIP(name));
   }
 
   public static boolean isRegister(String name) {
-    return (Config.Settings.BedrockLoginBypass && isFloodgatePlayer(name))
-        || Cache.getIgnoreCase(name) != null;
+    return (Config.Settings.bedrockLoginBypass && isFloodgatePlayer(name))
+        || PlayerCache.getIgnoreCase(name) != null;
   }
 
   public static boolean recordCurrentIP(String name) {
@@ -81,18 +100,18 @@ public class LoginPlayerHelper {
     String currentIP = getPlayerIP(player);
     if (currentIP == null) return false;
 
-    LoginPlayer storedPlayer = Cache.getIgnoreCase(player.getName());
+    LoginPlayer storedPlayer = PlayerCache.getIgnoreCase(player.getName());
     if (storedPlayer != null) {
       List<String> storedIPs = getStoredIPs(storedPlayer);
       Long exitTime = playerExitTimes.get(player.getName());
 
       if (ValidationUtil.isLoopbackAddress(currentIP)) return false;
-      return Config.Settings.IPTimeout == 0
+      return Config.Settings.ipTimeout == 0
           ? storedIPs.contains(currentIP)
           : exitTime != null
               && storedIPs.contains(currentIP)
               && (System.currentTimeMillis() - exitTime)
-                  <= (long) Config.Settings.IPTimeout * 60 * 1000;
+                  <= (long) Config.Settings.ipTimeout * 60 * 1000;
     }
 
     return false;
@@ -108,11 +127,11 @@ public class LoginPlayerHelper {
 
   public static void recordPlayerExitTime(String playerName) {
     if (playerName == null) return;
-    if (Config.Settings.IPTimeout != 0 && isLogin(playerName)) {
+    if (Config.Settings.ipTimeout != 0 && isLogin(playerName)) {
       try {
         playerExitTimes.put(playerName, System.currentTimeMillis());
       } catch (Exception e) {
-        PluginContext.getLogger()
+        BukkitContext.getLogger()
             .severe("Failed to record player exit time: " + playerName + " - " + e.getMessage());
       }
     }
@@ -148,7 +167,7 @@ public class LoginPlayerHelper {
   }
 
   public static Long getLastLoginTime(String name) {
-    LoginPlayer loginPlayer = Cache.getIgnoreCase(name);
+    LoginPlayer loginPlayer = PlayerCache.getIgnoreCase(name);
     return (loginPlayer != null) ? loginPlayer.getLastAction() : null;
   }
 
@@ -172,7 +191,7 @@ public class LoginPlayerHelper {
 
       savePlayerIPAsync(player, lp);
     } catch (Exception e) {
-      PluginContext.getLogger()
+      BukkitContext.getLogger()
           .warning("Failed to record IP for player: " + player.getName() + " - " + e.getMessage());
     }
   }
@@ -183,15 +202,15 @@ public class LoginPlayerHelper {
 
   private static void savePlayerIP(LoginPlayer lp) {
     try {
-      PluginContext.getSql().edit(lp);
-      Cache.refresh(lp.getName());
+      BukkitContext.getSql().edit(lp);
+      PlayerCache.refresh(lp.getName());
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
   public static void sendBlankInventoryPacket(Player player) {
-    if (!Config.Settings.EmptyBackpack) return;
+    if (!Config.Settings.emptyBackpack) return;
 
     try {
       ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();

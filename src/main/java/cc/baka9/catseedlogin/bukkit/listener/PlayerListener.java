@@ -1,6 +1,9 @@
-package cc.baka9.catseedlogin.bukkit;
+package cc.baka9.catseedlogin.bukkit.listener;
 
+import cc.baka9.catseedlogin.bukkit.cache.PlayerCache;
+import cc.baka9.catseedlogin.bukkit.config.Config;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.task.Task;
 import cc.baka9.catseedlogin.bukkit.task.TaskAutoKick;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
@@ -28,7 +31,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.geysermc.floodgate.api.FloodgateApi;
 
-public class Listeners implements Listener {
+public class PlayerListener implements Listener {
 
   private boolean playerIsNotMinecraftPlayer(Player p) {
     return !p.getClass().getName().matches("org\\.bukkit\\.craftbukkit.*?\\.entity\\.CraftPlayer");
@@ -39,7 +42,7 @@ public class Listeners implements Listener {
     Player player = event.getPlayer();
     if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.getName())) return;
     String input = event.getMessage().toLowerCase();
-    for (Pattern regex : Config.Settings.CommandWhiteList) {
+    for (Pattern regex : Config.Settings.commandWhiteList) {
       if (regex.matcher(input).find()) return;
     }
     event.setCancelled(true);
@@ -47,13 +50,13 @@ public class Listeners implements Listener {
 
   @EventHandler
   public void onPlayerLogin(AsyncPlayerPreLoginEvent event) {
-    if (!Cache.isLoaded) {
+    if (!PlayerCache.isLoaded) {
       event.disallow(
           AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.CACHE_NOT_INITIALIZED.get());
       return;
     }
     String name = event.getName();
-    LoginPlayer lp = Cache.getIgnoreCase(name);
+    LoginPlayer lp = PlayerCache.getIgnoreCase(name);
     if (lp == null) return;
     if (!lp.getName().equals(name)) {
       event.disallow(
@@ -80,7 +83,7 @@ public class Listeners implements Listener {
                   }
                 })
             .count();
-    if (!event.getAddress().isLoopbackAddress() && count >= Config.Settings.IpCountLimit) {
+    if (!event.getAddress().isLoopbackAddress() && count >= Config.Settings.ipCountLimit) {
       event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.TOO_MANY_SAME_IP.get());
     }
   }
@@ -124,7 +127,7 @@ public class Listeners implements Listener {
   // 登陆之前不会受到伤害
   @EventHandler
   public void onEntityDamage(EntityDamageEvent event) {
-    if (!Config.Settings.BeforeLoginNoDamage) return;
+    if (!Config.Settings.beforeLoginNoDamage) return;
     Entity entity = event.getEntity();
     if (entity instanceof Player
         && !playerIsNotMinecraftPlayer((Player) entity)
@@ -138,7 +141,7 @@ public class Listeners implements Listener {
     Player player = event.getPlayer();
     if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.getName())) return;
     if (event.getTo() == null) return;
-    if (Config.Settings.CanTpSpawnLocation && event.getTo().equals(Config.Settings.SpawnLocation))
+    if (Config.Settings.canTpSpawnLocation && event.getTo().equals(Config.Settings.spawnLocation))
       return;
     event.setCancelled(true);
   }
@@ -173,8 +176,8 @@ public class Listeners implements Listener {
         && from.getY() - to.getY() >= 0.0D) {
       return;
     }
-    if (Config.Settings.CanTpSpawnLocation) {
-      CatScheduler.teleport(player, Config.Settings.SpawnLocation);
+    if (Config.Settings.canTpSpawnLocation) {
+      CatScheduler.teleport(player, Config.Settings.spawnLocation);
     } else {
       event.setCancelled(true);
     }
@@ -196,7 +199,7 @@ public class Listeners implements Listener {
                   .warning("Failed to remove player on quit: " + player.getName());
             }
           },
-          Config.Settings.ReenterInterval);
+          Config.Settings.reenterInterval);
     }
     try {
       TaskAutoKick task = Task.getTaskAutoKick();
@@ -213,7 +216,7 @@ public class Listeners implements Listener {
 
   private void saveOfflineLocation(Player player) {
     try {
-      if (!player.isDead() || Config.Settings.DeathStateQuitRecordLocation) {
+      if (!player.isDead() || Config.Settings.deathStateQuitRecordLocation) {
         Config.setOfflineLocation(player);
       }
     } catch (Exception e) {
@@ -224,27 +227,27 @@ public class Listeners implements Listener {
   @EventHandler
   public void onPlayerJoin(PlayerJoinEvent event) {
     Player player = event.getPlayer();
-    if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player)) {
-      player.sendMessage(Config.Language.BEDROCK_LOGIN_BYPASS);
+    if (Config.Settings.bedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player)) {
+      player.sendMessage(Config.Language.bedrockLoginBypass);
       return;
     }
-    if (Config.Settings.LoginwiththesameIP && LoginPlayerHelper.recordCurrentIP(player)) {
-      LoginPlayer lp = Cache.getIgnoreCase(player.getName());
+    if (Config.Settings.loginWithSameIp && LoginPlayerHelper.recordCurrentIP(player)) {
+      LoginPlayer lp = PlayerCache.getIgnoreCase(player.getName());
       if (lp != null) {
         LoginPlayerHelper.add(lp);
       }
-      player.sendMessage(Config.Language.LOGIN_WITH_THE_SAME_IP);
+      player.sendMessage(Config.Language.loginWithTheSameIp);
       teleportToLastLocation(player);
       return;
     }
-    Cache.refresh(player.getName());
-    if (Config.Settings.CanTpSpawnLocation) {
-      CatScheduler.teleport(player, Config.Settings.SpawnLocation);
+    PlayerCache.refresh(player.getName());
+    if (Config.Settings.canTpSpawnLocation) {
+      CatScheduler.teleport(player, Config.Settings.spawnLocation);
     }
   }
 
   private void teleportToLastLocation(Player player) {
-    if (!Config.Settings.AfterLoginBack || !Config.Settings.CanTpSpawnLocation) return;
+    if (!Config.Settings.afterLoginBack || !Config.Settings.canTpSpawnLocation) return;
     Config.getOfflineLocation(player)
         .ifPresent(
             location ->
@@ -255,25 +258,25 @@ public class Listeners implements Listener {
   @EventHandler
   public void onPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
     String name = event.getName();
-    if (Config.Settings.LimitChineseID && !name.matches(Config.Settings.NamePattern)) {
+    if (Config.Settings.limitChineseId && !name.matches(Config.Settings.namePattern)) {
       event.disallow(
           AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.INVALID_NAME_PATTERN.get());
       return;
     }
     if (checkFloodgatePrefixProtect(event, name)) return;
-    if (name.length() < Config.Settings.MinLengthID) {
+    if (name.length() < Config.Settings.minLengthId) {
       event.disallow(
           AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
-          MessageKey.NAME_TOO_SHORT.get(Config.Settings.MinLengthID));
-    } else if (name.length() > Config.Settings.MaxLengthID) {
+          MessageKey.NAME_TOO_SHORT.get(Config.Settings.minLengthId));
+    } else if (name.length() > Config.Settings.maxLengthId) {
       event.disallow(
           AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
-          MessageKey.NAME_TOO_LONG.get(Config.Settings.MaxLengthID));
+          MessageKey.NAME_TOO_LONG.get(Config.Settings.maxLengthId));
     }
   }
 
   private boolean checkFloodgatePrefixProtect(AsyncPlayerPreLoginEvent event, String name) {
-    if (!Config.Settings.FloodgatePrefixProtect
+    if (!Config.Settings.floodgatePrefixProtect
         || Bukkit.getPluginManager().getPlugin("floodgate") == null) {
       return false;
     }
