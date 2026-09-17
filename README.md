@@ -413,7 +413,7 @@ public void onRegister(CatSeedPlayerRegisterEvent event) {
 
 ### 🔌 API接口
 ```java
-import cc.baka9.catseedlogin.bukkit.CatSeedLoginAPI;
+import cc.baka9.catseedlogin.bukkit.api.CatSeedLoginAPI;
 
 // 判断玩家是否已登录
 boolean isLogin = CatSeedLoginAPI.isLogin(playerName);
