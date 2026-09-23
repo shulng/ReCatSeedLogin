@@ -90,11 +90,10 @@ public class Communication extends BaseCommunication {
   }
 
   private static void handleKeepLoggedInRequest(String playerName, String time, String sign) {
-    if (playerName == null || time == null || sign == null) return;
+    if (playerName == null) return;
     String authKey = BukkitContext.getConfigManager().getAuthKey();
     if (authKey == null || authKey.isEmpty()) return;
-    String expectedSign = CommunicationAuth.encryption(authKey, playerName, time);
-    if (!sign.equals(expectedSign)) return;
+    if (!isValidSign(authKey, playerName, time, sign)) return;
 
     CatScheduler.runTask(
         () -> {
