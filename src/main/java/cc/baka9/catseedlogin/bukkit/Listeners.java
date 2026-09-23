@@ -1,10 +1,10 @@
 package cc.baka9.catseedlogin.bukkit;
 
+import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.bukkit.task.Task;
 import cc.baka9.catseedlogin.bukkit.task.TaskAutoKick;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
 import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
