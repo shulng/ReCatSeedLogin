@@ -23,6 +23,29 @@ public class CommunicationAuth {
   private static final char[] HEX_CHARS = "0123456789abcdef".toCharArray();
 
   /**
+   * 签名时间戳允许的最大偏差(毫秒)。代理端与子服时钟需大致同步,超出该偏差的请求视为重放。
+   */
+  public static final long TIMESTAMP_TOLERANCE_MILLIS = 5 * 60 * 1000L;
+
+  /**
+   * 校验签名中的时间戳是否在允许的偏差范围内。
+   *
+   * @param time 请求方发送的毫秒时间戳字符串
+   * @return 时间戳合法且在容差范围内返回 true,否则返回 false
+   */
+  public static boolean isTimestampFresh(String time) {
+    if (time == null) {
+      return false;
+    }
+    try {
+      return Math.abs(System.currentTimeMillis() - Long.parseLong(time))
+          <= TIMESTAMP_TOLERANCE_MILLIS;
+    } catch (NumberFormatException e) {
+      return false;
+    }
+  }
+
+  /**
    * Computes an HMAC-SHA256 signature over the joined {@code data} using {@code key} as the secret.
    *
    * @param key the shared secret (auth-key) used to authenticate the message

@@ -20,11 +20,26 @@ public abstract class BaseCommunication {
 
   protected abstract void logWarning(String message);
 
+  /**
+   * 发送登录态查询请求。已配置 auth-key 时附带时间戳与 HMAC 签名,未配置时以空签名发送(由服务端决定是否放行)。
+   *
+   * @param playerName 待查询的玩家名
+   * @return 服务端返回的登录态(1 已登录 / 0 未登录或校验失败)
+   */
   public int sendConnectRequest(String playerName) {
+    String authKey = getAuthKey();
+    boolean signed = authKey != null && !authKey.isEmpty();
+    if (!signed) {
+      warnAuthKeyMissing();
+    }
+    String time = String.valueOf(System.currentTimeMillis());
+    String sign = signed ? CommunicationAuth.encryption(authKey, playerName, time) : "";
     try (Socket socket = createSocket();
         BufferedWriter writer = createWriter(socket)) {
       writeLine(writer, "Connect");
       writeLine(writer, playerName);
+      writeLine(writer, time);
+      writeLine(writer, sign);
       writer.flush();
       return socket.getInputStream().read();
     } catch (IOException e) {

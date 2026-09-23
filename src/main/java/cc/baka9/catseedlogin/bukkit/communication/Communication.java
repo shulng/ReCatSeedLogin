@@ -14,11 +14,13 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public class Communication extends BaseCommunication {
   private static ServerSocket serverSocket;
+  private static final AtomicBoolean connectAuthFailedWarned = new AtomicBoolean();
 
   public static void socketServerStopAsync() {
     CatScheduler.runTaskAsync(Communication::socketServerStop);
@@ -72,7 +74,9 @@ public class Communication extends BaseCommunication {
       String playerName = bufferedReader.readLine();
       switch (requestType) {
         case "Connect":
-          handleConnectRequest(outputStream, playerName);
+          String connectTime = bufferedReader.readLine();
+          String connectSign = bufferedReader.readLine();
+          handleConnectRequest(outputStream, playerName, connectTime, connectSign);
           break;
         case "KeepLoggedIn":
           String time = bufferedReader.readLine();
@@ -104,10 +108,37 @@ public class Communication extends BaseCommunication {
         });
   }
 
-  private static void handleConnectRequest(OutputStream outputStream, String playerName) {
-    boolean result = LoginPlayerHelper.isLogin(playerName);
+  private static void handleConnectRequest(
+      OutputStream outputStream, String playerName, String time, String sign) {
+    if (playerName == null) {
+      writeConnectResult(outputStream, false);
+      return;
+    }
+    String authKey = BukkitContext.getConfigManager().getAuthKey();
+    if (authKey != null && !authKey.isEmpty() && !isValidSign(authKey, playerName, time, sign)) {
+      warnConnectAuthFailed();
+      writeConnectResult(outputStream, false);
+      return;
+    }
+    writeConnectResult(outputStream, LoginPlayerHelper.isLogin(playerName));
+  }
+
+  private static boolean isValidSign(String authKey, String playerName, String time, String sign) {
+    return sign != null
+        && !sign.isEmpty()
+        && CommunicationAuth.isTimestampFresh(time)
+        && sign.equals(CommunicationAuth.encryption(authKey, playerName, time));
+  }
+
+  private static void warnConnectAuthFailed() {
+    if (connectAuthFailedWarned.compareAndSet(false, true)) {
+      BukkitContext.getLogger().warning(MessageKey.PROXY_CONNECT_AUTH_FAILED.get());
+    }
+  }
+
+  private static void writeConnectResult(OutputStream outputStream, boolean loggedIn) {
     try {
-      outputStream.write(result ? 1 : 0);
+      outputStream.write(loggedIn ? 1 : 0);
       outputStream.flush();
     } catch (IOException e) {
       e.printStackTrace();
