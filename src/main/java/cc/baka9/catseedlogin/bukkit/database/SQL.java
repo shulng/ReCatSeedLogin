@@ -1,6 +1,6 @@
 package cc.baka9.catseedlogin.bukkit.database;
 
-import cc.baka9.catseedlogin.common.model.LoginPlayer;
+import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

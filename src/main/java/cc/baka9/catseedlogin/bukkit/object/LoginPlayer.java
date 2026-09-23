@@ -1,4 +1,4 @@
-package cc.baka9.catseedlogin.common.model;
+package cc.baka9.catseedlogin.bukkit.object;
 
 import cc.baka9.catseedlogin.common.util.Crypt;
 import java.util.ArrayList;

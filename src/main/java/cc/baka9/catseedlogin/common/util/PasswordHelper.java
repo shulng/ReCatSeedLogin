@@ -1,6 +1,6 @@
 package cc.baka9.catseedlogin.common.util;
 
-import cc.baka9.catseedlogin.common.model.LoginPlayer;
+import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
 
 public class PasswordHelper {
 

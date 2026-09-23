@@ -2,7 +2,7 @@ package cc.baka9.catseedlogin.bukkit;
 
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.common.communication.BaseCommunication;
-import cc.baka9.catseedlogin.common.model.LoginPlayer;
+import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.CommunicationAuth;
 import java.io.BufferedReader;
 import java.io.IOException;
