@@ -6,7 +6,7 @@
 
     <groupId>cc.baka9</groupId>
     <artifactId>CatSeedLogin</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
     <packaging>jar</packaging>
 
     <name>CatSeedLogin</name>
@@ -182,13 +182,6 @@
                     <include>**/*.properties</include>
                     <include>**/*.txt</include>
                     <include>*.*</include>
-                </includes>
-            </resource>
-            <resource>
-                <directory>src/main/java</directory>
-                <filtering>true</filtering>
-                <includes>
-                    <include>**/Version.java</include>
                 </includes>
             </resource>
         </resources>

@@ -6,8 +6,6 @@ public interface PlatformAdapter {
 
   String getName();
 
-  String getVersion();
-
   void logInfo(String message);
 
   void logWarn(String message);
