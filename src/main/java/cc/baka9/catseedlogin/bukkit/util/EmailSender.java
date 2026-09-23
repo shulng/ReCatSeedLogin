@@ -30,30 +30,36 @@ public final class EmailSender {
         });
   }
 
-  public static void sendEmail(String receiveMailAccount, String subject, String content) {
+  /**
+   * 同步发送邮件，发送失败时抛出异常由调用方处理。
+   *
+   * @throws EmailException 收件人为空、SMTP 端口非法或发送失败时抛出
+   */
+  public static void sendEmail(String receiveMailAccount, String subject, String content)
+      throws EmailException {
     if (receiveMailAccount == null || receiveMailAccount.isEmpty()) {
-      return;
+      throw new EmailException("Receive mail account is empty");
     }
     HtmlEmail email = new HtmlEmail();
     email.setHostName(Config.EmailVerify.emailSmtpHost);
-    try {
-      email.setSmtpPort(Integer.parseInt(Config.EmailVerify.emailSmtpPort));
-    } catch (NumberFormatException e) {
-      return;
-    }
+    email.setSmtpPort(parseSmtpPort());
     email.setAuthenticator(
         new DefaultAuthenticator(
             Config.EmailVerify.emailAccount, Config.EmailVerify.emailPassword));
     configureSecurity(email);
+    email.setFrom(Config.EmailVerify.emailAccount, Config.EmailVerify.fromPersonal);
+    email.setSubject(subject);
+    email.setHtmlMsg(content);
+    email.addTo(receiveMailAccount);
+    email.setCharset("UTF-8");
+    email.send();
+  }
+
+  private static int parseSmtpPort() throws EmailException {
     try {
-      email.setFrom(Config.EmailVerify.emailAccount, Config.EmailVerify.fromPersonal);
-      email.setSubject(subject);
-      email.setHtmlMsg(content);
-      email.addTo(receiveMailAccount);
-      email.setCharset("UTF-8");
-      email.send();
-    } catch (EmailException e) {
-      e.printStackTrace();
+      return Integer.parseInt(Config.EmailVerify.emailSmtpPort);
+    } catch (NumberFormatException e) {
+      throw new EmailException("Invalid SMTP port: " + Config.EmailVerify.emailSmtpPort, e);
     }
   }
 

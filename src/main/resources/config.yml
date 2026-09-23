@@ -92,7 +92,7 @@ proxy:
   host: "127.0.0.1"
   # 通讯端口
   port: 2333
-  # 验证密钥
+  # 验证密钥 (用于KeepLoggedIn签名验证,代理端与子服必须设置为相同的非空值)
   auth-key: ""
   # 登录服务器名称 (仅代理端需要)
   login-server-name: "lobby"

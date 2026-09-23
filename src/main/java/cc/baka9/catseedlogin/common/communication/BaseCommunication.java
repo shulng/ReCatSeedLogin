@@ -6,8 +6,11 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class BaseCommunication {
+
+  private final AtomicBoolean authKeyMissingWarned = new AtomicBoolean();
 
   protected abstract String getProxyHost();
 
@@ -31,13 +34,18 @@ public abstract class BaseCommunication {
   }
 
   public void sendKeepLoggedInRequest(String playerName) {
+    String authKey = getAuthKey();
+    if (authKey == null || authKey.isEmpty()) {
+      warnAuthKeyMissing();
+      return;
+    }
     try (Socket socket = createSocket();
         BufferedWriter writer = createWriter(socket)) {
       writeLine(writer, "KeepLoggedIn");
       writeLine(writer, playerName);
       String time = String.valueOf(System.currentTimeMillis());
       writeLine(writer, time);
-      String sign = CommunicationAuth.encryption(getAuthKey(), playerName, time);
+      String sign = CommunicationAuth.encryption(authKey, playerName, time);
       writeLine(writer, sign);
       writer.flush();
     } catch (IOException e) {
@@ -46,6 +54,12 @@ public abstract class BaseCommunication {
   }
 
   protected abstract String getAuthKey();
+
+  private void warnAuthKeyMissing() {
+    if (authKeyMissingWarned.compareAndSet(false, true)) {
+      logWarning(MessageKey.PROXY_AUTH_KEY_NOT_SET.get());
+    }
+  }
 
   protected Socket createSocket() throws IOException {
     try {

@@ -5,6 +5,7 @@ import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.bukkit.platform.BukkitContext;
 import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.common.communication.BaseCommunication;
+import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.CommunicationAuth;
 import java.io.BufferedReader;
@@ -38,6 +39,9 @@ public class Communication extends BaseCommunication {
   }
 
   public static void socketServerStart() {
+    if (isAuthKeyBlank()) {
+      BukkitContext.getLogger().warning(MessageKey.PROXY_AUTH_KEY_NOT_SET.get());
+    }
     try {
       serverSocket = new ServerSocket(BukkitContext.getConfigManager().getProxyPort(), 50);
       while (!serverSocket.isClosed()) {
@@ -83,9 +87,9 @@ public class Communication extends BaseCommunication {
 
   private static void handleKeepLoggedInRequest(String playerName, String time, String sign) {
     if (playerName == null || time == null || sign == null) return;
-    String expectedSign =
-        CommunicationAuth.encryption(
-            BukkitContext.getConfigManager().getAuthKey(), playerName, time);
+    String authKey = BukkitContext.getConfigManager().getAuthKey();
+    if (authKey == null || authKey.isEmpty()) return;
+    String expectedSign = CommunicationAuth.encryption(authKey, playerName, time);
     if (!sign.equals(expectedSign)) return;
 
     CatScheduler.runTask(
@@ -108,6 +112,11 @@ public class Communication extends BaseCommunication {
     } catch (IOException e) {
       e.printStackTrace();
     }
+  }
+
+  private static boolean isAuthKeyBlank() {
+    String authKey = BukkitContext.getConfigManager().getAuthKey();
+    return authKey == null || authKey.isEmpty();
   }
 
   @Override

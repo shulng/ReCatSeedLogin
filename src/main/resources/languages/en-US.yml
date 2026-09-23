@@ -85,6 +85,7 @@ PASSWORD_RESET_BY_ADMIN: "&cYour password has been reset by an admin, please log
 ALREADY_LOGGED_IN_PROXY: "&cYou are already logged in, please do not login again."
 ERROR_PLEASE_RETRY: "&cAn error occurred, please try again later."
 CHECK_PROXY_CONFIG: "&cPlease check if the backend server has proxy enabled in config, and if Host and Port match the proxy config"
+PROXY_AUTH_KEY_NOT_SET: "&cProxy auth-key is not set, keep-logged-in requests are skipped. Please set the same auth-key on the proxy and backend servers"
 EMAIL_SUBJECT_RESET_PASSWORD: "Password Reset"
 EMAIL_SUBJECT_BIND_EMAIL: "Email Binding"
 EMAIL_RESET_PASSWORD_CONTENT: "Your verification code is <strong>{0}</strong><br/>Use account {1} on the server and type <strong>/resetpassword re {0} new-password</strong> to reset your password<br/>This code expires in {2} minutes"

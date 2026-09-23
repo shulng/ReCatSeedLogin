@@ -148,15 +148,14 @@ public class CommandResetPassword extends AbstractCommandSupport {
       LoginPlayerHelper.changePasswordAndPersist(lp, pwd);
       LoginPlayerHelper.remove(lp);
       EmailCode.removeByName(name, EmailCode.Type.ResetPassword);
-      Player player = Bukkit.getPlayer(name);
-      notifyResetSuccess(name, player);
+      CatScheduler.runTask(() -> notifyResetSuccess(name));
     } catch (Exception e) {
       sender.sendMessage(MessageKey.DATABASE_ERROR.get());
       e.printStackTrace();
     }
   }
 
-  private void notifyResetSuccess(String name, Player player) {
+  private void notifyResetSuccess(String name) {
     Player p = Bukkit.getPlayer(name);
     if (p == null || !p.isOnline()) return;
 
