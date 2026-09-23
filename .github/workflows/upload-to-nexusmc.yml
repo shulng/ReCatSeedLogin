@@ -1,0 +1,26 @@
+name: Publish to NexusMC
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: mvn -B clean package
+
+      - name: Upload to NexusMC
+        uses: mcio-dev/upload-to-nexusmc@v1
+        with:
+          api_token: ${{ secrets.NEXUSMC_API_TOKEN }}
+          resource_id: ${{ vars.NEXUSMC_RESOURCE_ID }}
+          file_path: target/CatSeedLogin-${{ github.ref_name }}.jar
+          version: ${{ github.ref_name }}
+          version_tag: releases
+          version_title: Release ${{ github.ref_name }}
+          changelog_markdown: ${{ github.event.release.body }}
+          publish_version: true
