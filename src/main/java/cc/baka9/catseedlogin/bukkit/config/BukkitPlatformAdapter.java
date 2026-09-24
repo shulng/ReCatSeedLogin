@@ -2,7 +2,6 @@ package cc.baka9.catseedlogin.bukkit.config;
 
 import cc.baka9.catseedlogin.bukkit.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.CatSeedLogin;
-import cc.baka9.catseedlogin.common.Version;
 import cc.baka9.catseedlogin.common.api.PlatformAdapter;
 import cc.baka9.catseedlogin.common.i18n.I18n;
 import org.bukkit.Bukkit;
@@ -21,11 +20,6 @@ public class BukkitPlatformAdapter implements PlatformAdapter {
   @Override
   public String getName() {
     return "Bukkit";
-  }
-
-  @Override
-  public String getVersion() {
-    return Version.VERSION;
   }
 
   @Override

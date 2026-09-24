@@ -93,30 +93,57 @@ jobs:
         run: |
           echo "date=$(date +'%Y年%m月%d日 %H时%M分%S秒')" >> $GITHUB_OUTPUT
 
+      - name: 生成变更日志
+        id: changelog
+        env:
+          COMMIT_MSG: ${{ steps.get-commit.outputs.commit_msg }}
+          HASH_CONTENT: ${{ steps.file-hashes.outputs.hash_content }}
+        run: |
+          {
+            echo "## 📝 提交信息"
+            echo '```'
+            echo "$COMMIT_MSG"
+            echo '```'
+            echo ''
+            echo "## 🔧 构建详情"
+            echo "- 项目名称: ${{ steps.project-info.outputs.name }}"
+            echo "- 版本号: ${{ steps.project-info.outputs.version }}"
+            echo "- 提交哈希: [${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})"
+            echo "- 构建时间: ${{ steps.get-date.outputs.date }}"
+            echo ''
+            echo "## 🔍 文件校验"
+            echo "$HASH_CONTENT"
+            echo ''
+            echo "> 本发布由 GitHub Actions 自动生成"
+          } > changelog.md
+
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat changelog.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        shell: bash
+
       - name: 创建版本发布
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.project-info.outputs.version }}
           name: ${{ steps.project-info.outputs.name }}-v${{ steps.project-info.outputs.version }}
-          body: |
-            ## 📝 提交信息
-            ```
-            ${{ steps.get-commit.outputs.commit_msg }}
-            ```
-
-            ## 🔧 构建详情
-            - 项目名称: ${{ steps.project-info.outputs.name }}
-            - 版本号: ${{ steps.project-info.outputs.version }}
-            - 提交哈希: [${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
-            - 构建时间: ${{ steps.get-date.outputs.date }}
-
-            ## 🔍 文件校验
-            ${{ steps.file-hashes.outputs.hash_content }}
-
-            > 本发布由 GitHub Actions 自动生成
+          body_path: changelog.md
           files: |
             target/*.jar
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 上传到 NexusMC
+        uses: mcio-dev/upload-to-nexusmc@v1
+        with:
+          api_token: ${{ secrets.NEXUSMC_API_TOKEN }}
+          resource_id: ${{ vars.NEXUSMC_RESOURCE_ID }}
+          file_path: target/CatSeedLogin-${{ steps.project-info.outputs.version }}.jar
+          version: ${{ steps.project-info.outputs.version }}
+          version_tag: releases
+          version_title: Release ${{ steps.project-info.outputs.version }}
+          changelog_markdown: ${{ steps.changelog.outputs.changelog }}
+          publish_version: true
+          operation: update

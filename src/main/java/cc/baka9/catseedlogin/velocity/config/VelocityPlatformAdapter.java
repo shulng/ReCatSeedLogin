@@ -1,6 +1,5 @@
 package cc.baka9.catseedlogin.velocity.config;
 
-import cc.baka9.catseedlogin.common.Version;
 import cc.baka9.catseedlogin.common.api.PlatformAdapter;
 import cc.baka9.catseedlogin.common.i18n.I18n;
 import cc.baka9.catseedlogin.velocity.PluginMain;
@@ -21,11 +20,6 @@ public class VelocityPlatformAdapter implements PlatformAdapter {
   @Override
   public String getName() {
     return "Velocity";
-  }
-
-  @Override
-  public String getVersion() {
-    return Version.VERSION;
   }
 
   @Override
