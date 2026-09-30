@@ -35,16 +35,18 @@
 - ✅ **防止账号被顶替** - 登录后防止他人顶号下线
 
 ### 🛡️ 安全防护
-- 🔒 **登录前限制** - 禁止移动、交互、攻击、发言、使用指令等
+- 🔒 **登录前限制** - 禁止移动、交互、攻击、发言、使用指令等（发言可通过 `before-login-allow-chat` 放行）
 - 🎒 **背包保护** - 登录前隐藏背包，防止物品丢失（需要ProtocolLib）
 - 📍 **位置保护** - 登录前强制传送至安全出生点
 - 🕐 **重入限制** - 下线后可配置tick内禁止重新进入服务器
 - 🌐 **IP限制** - 限制同IP账号注册/登录数量
 - 📝 **指令白名单** - 登录前仅允许执行白名单内的指令（支持正则表达式）
+- 👁️ **登录前失明** - 可配置给未登录玩家施加失明效果，登录或注册成功后自动移除（默认关闭，内置自 CatSeedLoginBlinding）
 
-### 🔄 同IP免登录
+### 🔄 免登录机制
 - 🌐 **同IP跳过登录** - 同一IP在指定时间内重新登录可跳过密码验证
 - ⏱️ **超时控制** - 可配置IP免登录的超时时间（分钟）
+- 🏠 **本地回环跳过登录** - 本地回环地址(127.0.0.1/::1)连接可跳过密码验证（默认关闭）
 
 ### 📧 邮箱功能
 - 📨 **邮箱绑定** - 支持邮箱验证与绑定（两步验证：设置+验证码确认）
@@ -197,6 +199,8 @@ ReCatSeedLogin/
 
 ## 📖 指令大全
 
+> 💡 所有插件指令均支持 TAB 补全：输入子命令时按 TAB 列出可用项，`delPlayer` / `setPwd` 会补全玩家名，`commandWhiteListDel` 会补全已配置的白名单正则。
+
 ### 🛠️ 管理员指令（Bukkit端，别名 `/cslogin`）
 
 | 指令 | 功能描述 |
@@ -228,6 +232,7 @@ ReCatSeedLogin/
 | `/catseedlogin LoginwiththesameIP` | 切换同IP免登录开关 | 关闭 |
 | `/catseedlogin loopbackLoginBypass` | 切换本地回环地址免登录开关 | 关闭 |
 | `/catseedlogin beforeLoginAllowChat` | 切换登录前允许发消息开关 | 关闭 |
+| `/catseedlogin blindingBeforeLogin` | 切换登录前失明效果开关 | 关闭 |
 | `/catseedlogin beforeLoginNoDamage` | 切换登录前免伤开关 | 开启 |
 | `/catseedlogin afterLoginBack` | 切换登录后返回开关 | 开启 |
 | `/catseedlogin canTpSpawnLocation` | 切换强制登录点开关 | 开启 |
@@ -265,6 +270,7 @@ settings:
   death-state-quit-record-location: true  # 死亡状态退出是否记录位置
   loopback-login-bypass: false     # 本地回环地址(127.0.0.1/::1)连接时跳过登录
   before-login-allow-chat: false   # 登录前是否允许发消息
+  blinding-before-login: false     # 登录前给未登录玩家施加失明效果
   name-pattern: "^\\w+$"           # 游戏名正则表达式
   command-white-list:              # 登录前允许执行的指令 (支持正则)
     - "/(?i)l(ogin)?(\\z| .*)"

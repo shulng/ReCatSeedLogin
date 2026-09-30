@@ -45,6 +45,9 @@ public interface CoreConfig {
   /** 登录前是否允许发消息。 */
   boolean isBeforeLoginAllowChat();
 
+  /** 登录前是否给未登录玩家施加失明效果。 */
+  boolean isBlindingBeforeLogin();
+
   List<Pattern> getCommandWhiteList();
 
   interface SpawnLocation {

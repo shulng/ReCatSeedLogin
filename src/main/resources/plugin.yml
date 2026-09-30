@@ -51,6 +51,7 @@ commands:
       §c/<command> LoginwiththesameIP §9打开/关闭 同IP登录跳过 (默认关闭)
       §c/<command> loopbackLoginBypass §9打开/关闭 本地回环地址登录跳过 (默认关闭)
       §c/<command> beforeLoginAllowChat §9打开/关闭 登陆之前允许发消息 (默认关闭)
+      §c/<command> blindingBeforeLogin §9打开/关闭 登陆之前失明效果 (默认关闭)
       §c/<command> beforeLoginNoDamage §9打开/关闭 登陆之前是否受到伤害 (默认登陆之前不受到伤害)
       §c/<command> afterLoginBack §9打开/关闭 登陆之后是否返回退出地点 (默认打开)
       §c/<command> canTpSpawnLocation §9打开/关闭 登录之前是否强制在登陆地点 (默认打开)

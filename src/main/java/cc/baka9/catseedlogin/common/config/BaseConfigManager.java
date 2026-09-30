@@ -248,6 +248,11 @@ public abstract class BaseConfigManager
   }
 
   @Override
+  public boolean isBlindingBeforeLogin() {
+    return mainConfig.getBoolean(ConfigConstants.Path.SETTINGS_BLINDING_BEFORE_LOGIN, false);
+  }
+
+  @Override
   public List<Pattern> getCommandWhiteList() {
     List<String> patterns =
         mainConfig.getStringList(ConfigConstants.Path.SETTINGS_COMMAND_WHITELIST);

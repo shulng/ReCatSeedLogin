@@ -72,6 +72,7 @@ public class Config {
     public static volatile boolean FloodgatePrefixProtect;
     public static volatile boolean LoopbackLoginBypass;
     public static volatile boolean BeforeLoginAllowChat;
+    public static volatile boolean BlindingBeforeLogin;
 
     public static void load() {
       BukkitConfigManager cm = plugin.getConfigManager();
@@ -96,6 +97,7 @@ public class Config {
       FloodgatePrefixProtect = cm.isFloodgatePrefixProtect();
       LoopbackLoginBypass = cm.isLoopbackLoginBypass();
       BeforeLoginAllowChat = cm.isBeforeLoginAllowChat();
+      BlindingBeforeLogin = cm.isBlindingBeforeLogin();
     }
 
     public static void save() {
@@ -119,6 +121,7 @@ public class Config {
       cm.set(ConfigConstants.Path.SETTINGS_NAME_PATTERN, NamePattern);
       cm.set(ConfigConstants.Path.SETTINGS_LOOPBACK_LOGIN_BYPASS, LoopbackLoginBypass);
       cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_ALLOW_CHAT, BeforeLoginAllowChat);
+      cm.set(ConfigConstants.Path.SETTINGS_BLINDING_BEFORE_LOGIN, BlindingBeforeLogin);
 
       if (CommandWhiteList != null && !CommandWhiteList.isEmpty()) {
         cm.getMainConfig()

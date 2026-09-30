@@ -34,6 +34,8 @@ settings:
   loopback-login-bypass: false
   # 登录前是否允许发消息
   before-login-allow-chat: false
+  # 登录前给未登录玩家施加失明效果 (登录或注册成功后自动移除)
+  blinding-before-login: false
   # 游戏名正则表达式
   name-pattern: "^\\w+$"
   # 登录前允许执行的指令 (支持正则表达式)

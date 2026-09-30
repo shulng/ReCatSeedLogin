@@ -60,6 +60,7 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
     }
 
     getServer().getPluginManager().registerEvents(new Listeners(), this);
+    getServer().getPluginManager().registerEvents(new BlindingListeners(), this);
 
     if (configManager.isEmptyBackpack()) {
       try {

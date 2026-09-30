@@ -56,7 +56,10 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
               "deathStateQuitRecordLocation",
               "commandWhiteListInfo",
               "commandWhiteListAdd",
-              "commandWhiteListDel"));
+              "commandWhiteListDel",
+              "loopbackLoginBypass",
+              "beforeLoginAllowChat",
+              "blindingBeforeLogin"));
 
   @Override
   public boolean onCommand(CommandSender sender, Command command, String lable, String[] args) {
@@ -65,6 +68,7 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
         || delPlayer(sender, args)
         || loopbackLoginBypass(sender, args)
         || beforeLoginAllowChat(sender, args)
+        || blindingBeforeLogin(sender, args)
         || setIpCountLimit(sender, args)
         || limitChineseID(sender, args)
         || bedrockLoginBypass(sender, args)
@@ -258,6 +262,17 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
             () -> Config.Settings.BeforeLoginAllowChat,
             v -> Config.Settings.BeforeLoginAllowChat = v,
             "登陆之前允许发消息"));
+  }
+
+  private boolean blindingBeforeLogin(CommandSender sender, String[] args) {
+    return toggle(
+        sender,
+        args,
+        "blindingBeforeLogin",
+        new BoolSetting(
+            () -> Config.Settings.BlindingBeforeLogin,
+            v -> Config.Settings.BlindingBeforeLogin = v,
+            "登陆之前失明效果"));
   }
 
   // ---- Number Settings ----
