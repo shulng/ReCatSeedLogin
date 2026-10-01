@@ -1,7 +1,8 @@
 package cc.baka9.catseedlogin.common.util;
 
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
+import cc.baka9.catseedlogin.common.model.LoginPlayer;
 
+/** 密码相关的领域工具：统一处理新玩家注册与密码更新时的加密逻辑。 */
 public class PasswordHelper {
 
   public static LoginPlayer updatePassword(LoginPlayer source, String newPassword) {

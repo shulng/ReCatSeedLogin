@@ -1,19 +1,19 @@
 package cc.baka9.catseedlogin.bungee.config;
 
-import cc.baka9.catseedlogin.bungee.PluginMain;
+import cc.baka9.catseedlogin.bungee.BungeePlugin;
 import cc.baka9.catseedlogin.common.api.PlatformAdapter;
-import cc.baka9.catseedlogin.common.i18n.I18n;
+import java.io.File;
+import java.io.InputStream;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
+/** BungeeCord 平台能力适配。 */
 public class BungeePlatformAdapter implements PlatformAdapter {
 
-  private final PluginMain plugin;
-  private final I18n i18n;
+  private final BungeePlugin plugin;
 
-  public BungeePlatformAdapter(PluginMain plugin, I18n i18n) {
+  public BungeePlatformAdapter(BungeePlugin plugin) {
     this.plugin = plugin;
-    this.i18n = i18n;
   }
 
   @Override
@@ -45,8 +45,18 @@ public class BungeePlatformAdapter implements PlatformAdapter {
   }
 
   @Override
+  public File getDataFolder() {
+    return plugin.getDataFolder();
+  }
+
+  @Override
+  public InputStream getResource(String name) {
+    return plugin.getResourceAsStream(name);
+  }
+
+  @Override
   public void runAsync(Runnable task) {
-    PluginMain.runAsync(task);
+    BungeePlugin.runAsync(task);
   }
 
   @Override
@@ -84,19 +94,13 @@ public class BungeePlatformAdapter implements PlatformAdapter {
   }
 
   @Override
-  public I18n getI18n() {
-    return i18n;
-  }
-
-  @Override
   public Object getPlatformPlayer(String name) {
     return ProxyServer.getInstance().getPlayer(name);
   }
 
   @Override
   public boolean isPlayerOnline(String name) {
-    ProxiedPlayer player = ProxyServer.getInstance().getPlayer(name);
-    return player != null;
+    return ProxyServer.getInstance().getPlayer(name) != null;
   }
 
   @Override

@@ -1,6 +1,6 @@
 {
   "id": "catseedlogin",
-  "main": "cc.baka9.catseedlogin.velocity.PluginMain",
+  "main": "cc.baka9.catseedlogin.velocity.VelocityPlugin",
   "name": "CatSeedLogin",
   "version": "${version}",
   "description": "CatSeedLogin的Velocity适配版本，提供跨服登录验证功能",

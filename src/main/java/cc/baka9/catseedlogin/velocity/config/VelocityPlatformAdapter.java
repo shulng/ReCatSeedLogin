@@ -1,20 +1,20 @@
 package cc.baka9.catseedlogin.velocity.config;
 
 import cc.baka9.catseedlogin.common.api.PlatformAdapter;
-import cc.baka9.catseedlogin.common.i18n.I18n;
-import cc.baka9.catseedlogin.velocity.PluginMain;
+import cc.baka9.catseedlogin.velocity.VelocityPlugin;
 import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ProxyServer;
+import java.io.File;
+import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
+import net.kyori.adventure.text.Component;
 
+/** Velocity 平台能力适配。 */
 public class VelocityPlatformAdapter implements PlatformAdapter {
 
-  private final PluginMain plugin;
-  private final I18n i18n;
+  private final VelocityPlugin plugin;
 
-  public VelocityPlatformAdapter(PluginMain plugin, I18n i18n) {
+  public VelocityPlatformAdapter(VelocityPlugin plugin) {
     this.plugin = plugin;
-    this.i18n = i18n;
   }
 
   @Override
@@ -43,8 +43,18 @@ public class VelocityPlatformAdapter implements PlatformAdapter {
   }
 
   @Override
+  public File getDataFolder() {
+    return plugin.getDataDirectory().toFile();
+  }
+
+  @Override
+  public InputStream getResource(String name) {
+    return getClass().getClassLoader().getResourceAsStream(name);
+  }
+
+  @Override
   public void runAsync(Runnable task) {
-    PluginMain.runAsync(task);
+    VelocityPlugin.runAsync(task);
   }
 
   @Override
@@ -84,11 +94,6 @@ public class VelocityPlatformAdapter implements PlatformAdapter {
   }
 
   @Override
-  public I18n getI18n() {
-    return i18n;
-  }
-
-  @Override
   public Object getPlatformPlayer(String name) {
     return plugin.getProxyServer().getPlayer(name).orElse(null);
   }
@@ -103,7 +108,7 @@ public class VelocityPlatformAdapter implements PlatformAdapter {
     plugin
         .getProxyServer()
         .getPlayer(name)
-        .ifPresent(player -> player.disconnect(net.kyori.adventure.text.Component.text(reason)));
+        .ifPresent(player -> player.disconnect(Component.text(reason)));
   }
 
   @Override
@@ -111,14 +116,13 @@ public class VelocityPlatformAdapter implements PlatformAdapter {
     plugin
         .getProxyServer()
         .getPlayer(playerName)
-        .ifPresent(player -> player.sendMessage(net.kyori.adventure.text.Component.text(message)));
+        .ifPresent(player -> player.sendMessage(Component.text(message)));
   }
 
   @Override
   public void broadcast(String message) {
-    ProxyServer proxyServer = plugin.getProxyServer();
-    for (Player player : proxyServer.getAllPlayers()) {
-      player.sendMessage(net.kyori.adventure.text.Component.text(message));
+    for (Player player : plugin.getProxyServer().getAllPlayers()) {
+      player.sendMessage(Component.text(message));
     }
   }
 }

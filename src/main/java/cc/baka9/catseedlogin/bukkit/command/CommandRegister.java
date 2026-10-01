@@ -1,13 +1,13 @@
 package cc.baka9.catseedlogin.bukkit.command;
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
+import cc.baka9.catseedlogin.bukkit.BukkitContext;
+import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
+import cc.baka9.catseedlogin.bukkit.database.Cache;
 import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerRegisterEvent;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
+import cc.baka9.catseedlogin.bukkit.session.LoginPlayerHelper;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
+import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import java.util.List;
@@ -17,9 +17,15 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+/** {@code /register} 玩家注册指令。 */
 public class CommandRegister implements CommandExecutor {
+
+  private static BukkitConfigManager config() {
+    return BukkitContext.getConfigManager();
+  }
+
   @Override
-  public boolean onCommand(CommandSender sender, Command command, String lable, String[] args) {
+  public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
     if (args.length != 2 || !(sender instanceof Player)) return false;
     Player player = (Player) sender;
     String name = sender.getName();
@@ -28,11 +34,11 @@ public class CommandRegister implements CommandExecutor {
       return true;
     }
     if (!args[0].equals(args[1])) {
-      sender.sendMessage(Config.Language.REGISTER_PASSWORD_CONFIRM_FAIL);
+      sender.sendMessage(MessageKey.REGISTER_PASSWORD_CONFIRM_FAIL.get());
       return true;
     }
     if (ValidationUtil.isPasswordTooSimple(args[0])) {
-      sender.sendMessage(Config.Language.COMMON_PASSWORD_SO_SIMPLE);
+      sender.sendMessage(MessageKey.COMMON_PASSWORD_SO_SIMPLE.get());
       return true;
     }
     if (!Cache.isLoaded) return true;
@@ -43,14 +49,15 @@ public class CommandRegister implements CommandExecutor {
   }
 
   private boolean canRegister(Player player, String name) {
-    if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
+    if (config().isBedrockLoginBypass() && LoginPlayerHelper.isFloodgatePlayer(player)) {
       return false;
+    }
     if (LoginPlayerHelper.isLogin(name)) {
-      player.sendMessage(Config.Language.REGISTER_AFTER_LOGIN_ALREADY);
+      player.sendMessage(MessageKey.REGISTER_AFTER_LOGIN_ALREADY.get());
       return false;
     }
     if (LoginPlayerHelper.isRegister(name)) {
-      player.sendMessage(Config.Language.REGISTER_BEFORE_LOGIN_ALREADY);
+      player.sendMessage(MessageKey.REGISTER_BEFORE_LOGIN_ALREADY.get());
       return false;
     }
     return true;
@@ -77,11 +84,12 @@ public class CommandRegister implements CommandExecutor {
   private void processRegistration(
       Player player, String name, String password, String currentIp, boolean isLoopback)
       throws Exception {
-    List<LoginPlayer> loginPlayersByIp = PluginContext.getSql().getLikeByIp(currentIp);
+    List<LoginPlayer> loginPlayersByIp = BukkitContext.getSql().getLikeByIp(currentIp);
 
-    if (!isLoopback && loginPlayersByIp.size() >= Config.Settings.IpRegisterCountLimit) {
+    if (!isLoopback && loginPlayersByIp.size() >= config().getIpRegisterCountLimit()) {
       player.sendMessage(
-          Config.Language.REGISTER_MORE
+          MessageKey.REGISTER_MORE
+              .get()
               .replace("{count}", String.valueOf(loginPlayersByIp.size()))
               .replace(
                   "{accounts}",
@@ -92,7 +100,7 @@ public class CommandRegister implements CommandExecutor {
     }
 
     LoginPlayer lp = PasswordHelper.registerNewPlayer(name, password);
-    PluginContext.getSql().add(lp);
+    BukkitContext.getSql().add(lp);
     Cache.refresh(lp.getName());
     LoginPlayerHelper.add(lp);
     CatScheduler.runTask(
@@ -100,7 +108,7 @@ public class CommandRegister implements CommandExecutor {
           CatSeedPlayerRegisterEvent event = new CatSeedPlayerRegisterEvent(Bukkit.getPlayer(name));
           Bukkit.getServer().getPluginManager().callEvent(event);
         });
-    player.sendMessage(Config.Language.REGISTER_SUCCESS);
+    player.sendMessage(MessageKey.REGISTER_SUCCESS.get());
     CatScheduler.updateInventory(player);
     LoginPlayerHelper.recordCurrentIP(player, lp);
   }

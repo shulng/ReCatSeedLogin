@@ -1,14 +1,14 @@
 package cc.baka9.catseedlogin.bukkit.command;
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
-import cc.baka9.catseedlogin.bukkit.object.EmailCode;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
-import cc.baka9.catseedlogin.bukkit.util.EmailSender;
+import cc.baka9.catseedlogin.bukkit.BukkitContext;
+import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
+import cc.baka9.catseedlogin.bukkit.database.Cache;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
+import cc.baka9.catseedlogin.bukkit.session.LoginPlayerHelper;
+import cc.baka9.catseedlogin.common.email.EmailSender;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
+import cc.baka9.catseedlogin.common.model.EmailCode;
+import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import java.util.Optional;
@@ -18,26 +18,31 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+/** {@code /resetpassword} 通过已绑定邮箱重置密码。 */
 public class CommandResetPassword implements CommandExecutor {
+
   private static final long EMAIL_CODE_DURATION = 1000 * 60 * 5;
 
+  private static BukkitConfigManager config() {
+    return BukkitContext.getConfigManager();
+  }
+
   @Override
-  public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
+  public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
     if (args.length == 0 || !(sender instanceof Player)) return false;
 
     Player player = (Player) sender;
     String name = player.getName();
 
-    if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
-      return true;
+    if (config().isBedrockLoginBypass() && LoginPlayerHelper.isFloodgatePlayer(player)) return true;
 
     LoginPlayer lp = Cache.getIgnoreCase(name);
     if (lp == null) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_NOREGISTER);
+      sender.sendMessage(MessageKey.RESETPASSWORD_NOREGISTER.get());
       return true;
     }
-    if (!Config.EmailVerify.Enable) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_DISABLE);
+    if (!config().isEmailEnable()) {
+      sender.sendMessage(MessageKey.RESETPASSWORD_EMAIL_DISABLE.get());
       return true;
     }
 
@@ -54,16 +59,17 @@ public class CommandResetPassword implements CommandExecutor {
 
   private boolean handleForget(CommandSender sender, String name, LoginPlayer lp) {
     if (lp.getEmail() == null) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_NO_SET);
+      sender.sendMessage(MessageKey.RESETPASSWORD_EMAIL_NO_SET.get());
       return true;
     }
 
     try {
-      Optional<EmailCode> optional = EmailCode.getByName(name, EmailCode.Type.ResetPassword);
+      Optional<EmailCode> optional = EmailCode.getByName(name, EmailCode.Type.RESET_PASSWORD);
       if (optional.isPresent()) {
         sender.sendMessage(
-            Config.Language.RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE.replace(
-                "{email}", optional.get().getEmail()));
+            MessageKey.RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE
+                .get()
+                .replace("{email}", optional.get().getEmail()));
         return true;
       }
     } catch (Exception e) {
@@ -73,14 +79,14 @@ public class CommandResetPassword implements CommandExecutor {
     EmailCode emailCode;
     try {
       emailCode =
-          EmailCode.create(name, lp.getEmail(), EMAIL_CODE_DURATION, EmailCode.Type.ResetPassword);
+          EmailCode.create(name, lp.getEmail(), EMAIL_CODE_DURATION, EmailCode.Type.RESET_PASSWORD);
     } catch (Exception e) {
       sender.sendMessage(MessageKey.INTERNAL_ERROR.get());
       e.printStackTrace();
       return true;
     }
     sender.sendMessage(
-        Config.Language.RESETPASSWORD_EMAIL_SENDING_MESSAGE.replace("{email}", lp.getEmail()));
+        MessageKey.RESETPASSWORD_EMAIL_SENDING_MESSAGE.get().replace("{email}", lp.getEmail()));
 
     sendResetEmailAsync(sender, name, emailCode);
     return true;
@@ -91,8 +97,11 @@ public class CommandResetPassword implements CommandExecutor {
         () -> {
           try {
             String content = buildResetEmailContent(name, emailCode);
-            EmailSender.sendEmail(
-                emailCode.getEmail(), MessageKey.EMAIL_SUBJECT_RESET_PASSWORD.get(), content);
+            EmailSender.send(
+                config(),
+                emailCode.getEmail(),
+                MessageKey.EMAIL_SUBJECT_RESET_PASSWORD.get(),
+                content);
             notifyEmailSent(sender, emailCode.getEmail());
           } catch (Exception e) {
             notifyEmailFailed(sender);
@@ -107,89 +116,74 @@ public class CommandResetPassword implements CommandExecutor {
   }
 
   private void notifyEmailSent(CommandSender sender, String email) {
-    Bukkit.getScheduler()
-        .runTask(
-            PluginContext.getPlugin(),
-            () ->
-                sender.sendMessage(
-                    Config.Language.RESETPASSWORD_EMAIL_SENT_MESSAGE.replace("{email}", email)));
+    CatScheduler.runTask(
+        () ->
+            sender.sendMessage(
+                MessageKey.RESETPASSWORD_EMAIL_SENT_MESSAGE.get().replace("{email}", email)));
   }
 
   private void notifyEmailFailed(CommandSender sender) {
-    Bukkit.getScheduler()
-        .runTask(
-            PluginContext.getPlugin(),
-            () -> sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_WARN));
+    CatScheduler.runTask(() -> sender.sendMessage(MessageKey.RESETPASSWORD_EMAIL_WARN.get()));
   }
 
   private boolean handleReset(Player player, LoginPlayer lp, String code, String pwd) {
-    CommandSender sender = player;
     if (lp.getEmail() == null) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_NO_SET);
+      player.sendMessage(MessageKey.RESETPASSWORD_EMAIL_NO_SET.get());
       return true;
     }
 
     try {
       Optional<EmailCode> optional =
-          EmailCode.getByName(lp.getName(), EmailCode.Type.ResetPassword);
+          EmailCode.getByName(lp.getName(), EmailCode.Type.RESET_PASSWORD);
       if (!optional.isPresent()) {
-        sender.sendMessage(Config.Language.RESETPASSWORD_FAIL);
+        player.sendMessage(MessageKey.RESETPASSWORD_FAIL.get());
         return true;
       }
       if (!optional.get().getCode().equals(code)) {
-        sender.sendMessage(Config.Language.RESETPASSWORD_EMAILCODE_INCORRECT);
+        player.sendMessage(MessageKey.RESETPASSWORD_EMAILCODE_INCORRECT.get());
         return true;
       }
     } catch (Exception e) {
       e.printStackTrace();
-      sender.sendMessage(Config.Language.RESETPASSWORD_FAIL);
+      player.sendMessage(MessageKey.RESETPASSWORD_FAIL.get());
       return true;
     }
 
     if (ValidationUtil.isPasswordTooSimple(pwd)) {
-      sender.sendMessage(Config.Language.COMMON_PASSWORD_SO_SIMPLE);
+      player.sendMessage(MessageKey.COMMON_PASSWORD_SO_SIMPLE.get());
       return true;
     }
 
-    sender.sendMessage(MessageKey.RESETTING_PASSWORD.get());
-    processPasswordResetAsync(player, lp, pwd);
+    player.sendMessage(MessageKey.RESETTING_PASSWORD.get());
+    String name = lp.getName();
+    CatScheduler.runTaskAsync(() -> executePasswordReset(name, lp, pwd));
     return true;
   }
 
-  private void processPasswordResetAsync(Player player, LoginPlayer lp, String pwd) {
-    CommandSender sender = player;
-    String name = lp.getName();
-    CatScheduler.runTaskAsync(
-        () -> {
-          executePasswordReset(name, lp, pwd, sender);
-        });
-  }
-
-  private void executePasswordReset(String name, LoginPlayer lp, String pwd, CommandSender sender) {
+  private void executePasswordReset(String name, LoginPlayer lp, String pwd) {
     try {
       LoginPlayer copy = PasswordHelper.updatePassword(lp, pwd);
-      PluginContext.getSql().edit(copy);
+      BukkitContext.getSql().edit(copy);
       Cache.refresh(name);
       LoginPlayerHelper.remove(lp);
-      EmailCode.removeByName(name, EmailCode.Type.ResetPassword);
-      Player player = Bukkit.getPlayer(name);
-      notifyResetSuccess(name, player);
+      EmailCode.removeByName(name, EmailCode.Type.RESET_PASSWORD);
+      notifyResetSuccess(name);
     } catch (Exception e) {
-      sender.sendMessage(MessageKey.DATABASE_ERROR.get());
+      BukkitContext.getLogger().warning("重置玩家密码失败: " + name);
       e.printStackTrace();
     }
   }
 
-  private void notifyResetSuccess(String name, Player player) {
+  private void notifyResetSuccess(String name) {
     Player p = Bukkit.getPlayer(name);
     if (p == null || !p.isOnline()) return;
 
-    if (Config.Settings.CanTpSpawnLocation) {
-      CatScheduler.teleport(p, Config.Settings.SpawnLocation);
+    if (config().isCanTpSpawnLocation()) {
+      CatScheduler.teleport(p, config().getBukkitSpawnLocation());
     }
-    p.sendMessage(Config.Language.RESETPASSWORD_SUCCESS);
+    p.sendMessage(MessageKey.RESETPASSWORD_SUCCESS.get());
 
-    if (PluginContext.isLoadProtocolLib()) {
+    if (BukkitContext.isLoadProtocolLib()) {
       LoginPlayerHelper.sendBlankInventoryPacket(p);
     }
   }

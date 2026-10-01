@@ -18,10 +18,10 @@ public class I18n {
 
   private final File dataFolder;
   private final ResourceProvider resourceProvider;
+  private static final char COLOR_CHAR = '&';
+
   private Locale currentLocale = Locale.SIMPLIFIED_CHINESE;
   private final Map<Locale, Map<String, String>> messages = new ConcurrentHashMap<>();
-  private final Map<String, Object> placeholders = new ConcurrentHashMap<>();
-  private char colorChar = '&';
 
   public interface ResourceProvider {
     InputStream getResource(String name);
@@ -185,39 +185,10 @@ public class I18n {
     return message != null ? message : defaultValue;
   }
 
-  public void setPlaceholder(String key, Object value) {
-    if (key == null) return;
-    try {
-      placeholders.put(key, value);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
-  public void removePlaceholder(String key) {
-    if (key == null) return;
-    try {
-      placeholders.remove(key);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
-  public void clearPlaceholders() {
-    placeholders.clear();
-  }
-
+  /** 把 {@code &} 形式的颜色码转换为 Minecraft 的章节符号。 */
   public String translateColors(String message) {
     if (message == null) return null;
-    return message.replace(colorChar, '\u00A7');
-  }
-
-  public void setColorChar(char colorChar) {
-    this.colorChar = colorChar;
-  }
-
-  public char getColorChar() {
-    return colorChar;
+    return message.replace(COLOR_CHAR, '\u00A7');
   }
 
   public void reload() {

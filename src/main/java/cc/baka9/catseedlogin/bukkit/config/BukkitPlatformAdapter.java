@@ -1,20 +1,20 @@
 package cc.baka9.catseedlogin.bukkit.config;
 
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.CatSeedLogin;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.common.api.PlatformAdapter;
-import cc.baka9.catseedlogin.common.i18n.I18n;
+import java.io.File;
+import java.io.InputStream;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+/** Bukkit / Paper / Folia 平台能力适配。 */
 public class BukkitPlatformAdapter implements PlatformAdapter {
 
   private final CatSeedLogin plugin;
-  private final I18n i18n;
 
-  public BukkitPlatformAdapter(CatSeedLogin plugin, I18n i18n) {
+  public BukkitPlatformAdapter(CatSeedLogin plugin) {
     this.plugin = plugin;
-    this.i18n = i18n;
   }
 
   @Override
@@ -46,6 +46,16 @@ public class BukkitPlatformAdapter implements PlatformAdapter {
   }
 
   @Override
+  public File getDataFolder() {
+    return plugin.getDataFolder();
+  }
+
+  @Override
+  public InputStream getResource(String name) {
+    return plugin.getResource(name);
+  }
+
+  @Override
   public void runAsync(Runnable task) {
     CatScheduler.runTaskAsync(task);
   }
@@ -73,11 +83,6 @@ public class BukkitPlatformAdapter implements PlatformAdapter {
   @Override
   public void runSyncTimer(Runnable task, long delayTicks, long periodTicks) {
     CatScheduler.runTaskTimer(task, delayTicks, periodTicks);
-  }
-
-  @Override
-  public I18n getI18n() {
-    return i18n;
   }
 
   @Override

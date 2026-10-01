@@ -1,12 +1,14 @@
 package cc.baka9.catseedlogin.bukkit.task;
 
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.CatSeedLogin;
+import cc.baka9.catseedlogin.bukkit.BukkitContext;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import space.arim.morepaperlib.scheduling.ScheduledTask;
 
+/** 定时任务基类：统一登记与取消插件内的周期任务。 */
 public abstract class Task implements Runnable {
+
   private static final List<ScheduledTask> scheduledTasks = new CopyOnWriteArrayList<>();
   private static TaskAutoKick taskAutoKick;
   private static TaskSendLoginMessage taskSendLoginMessage;
@@ -33,11 +35,11 @@ public abstract class Task implements Runnable {
     scheduledTasks.clear();
   }
 
-  public static void runTaskTimer(Runnable runnable, long delay) {
+  public static void runTaskTimer(Runnable runnable, long period) {
     try {
-      scheduledTasks.add(CatScheduler.runTaskTimer(runnable, 0, delay));
+      scheduledTasks.add(CatScheduler.runTaskTimer(runnable, 0, period));
     } catch (Exception e) {
-      CatSeedLogin.instance.getLogger().severe(e.getMessage());
+      BukkitContext.getLogger().severe(e.getMessage());
     }
   }
 }

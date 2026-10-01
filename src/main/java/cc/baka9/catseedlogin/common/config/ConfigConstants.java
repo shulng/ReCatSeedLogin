@@ -5,7 +5,10 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class ConfigConstants {
+/** 配置默认值与配置路径常量，避免在各处硬编码字符串。 */
+public final class ConfigConstants {
+
+  private ConfigConstants() {}
 
   public static final String DEFAULT_LANGUAGE = "zh_CN";
   public static final String DEFAULT_PROXY_HOST = "127.0.0.1";
@@ -25,26 +28,7 @@ public class ConfigConstants {
   public static final String DEFAULT_SMTP_PORT = "465";
   public static final String DEFAULT_FROM_NAME = "Server";
 
-  public static final List<String> DEFAULT_COMMAND_WHITELIST = new ArrayList<>();
-
-  static {
-    DEFAULT_COMMAND_WHITELIST.add("/(?i)l(ogin)?(\\z| .*)");
-    DEFAULT_COMMAND_WHITELIST.add("/(?i)reg(ister)?(\\z| .*)");
-    DEFAULT_COMMAND_WHITELIST.add("/(?i)resetpassword?(\\z| .*)");
-    DEFAULT_COMMAND_WHITELIST.add("/(?i)repw?(\\z| .*)");
-  }
-
-  public static Pattern compilePatternOrDefault(String pattern, String defaultPattern) {
-    if (pattern == null || pattern.isEmpty()) {
-      return Pattern.compile(defaultPattern);
-    }
-    try {
-      return Pattern.compile(pattern);
-    } catch (PatternSyntaxException e) {
-      return Pattern.compile(defaultPattern);
-    }
-  }
-
+  /** 把正则字符串列表编译为 Pattern 列表，非法正则直接跳过。 */
   public static List<Pattern> compilePatterns(List<String> patterns) {
     List<Pattern> result = new ArrayList<>();
     if (patterns == null || patterns.isEmpty()) {
@@ -60,7 +44,7 @@ public class ConfigConstants {
     return result;
   }
 
-  public static class Path {
+  public static final class Path {
     public static final String SETTINGS_IP_REGISTER_LIMIT = "settings.ip-register-count-limit";
     public static final String SETTINGS_IP_COUNT_LIMIT = "settings.ip-count-limit";
     public static final String SETTINGS_LIMIT_CHINESE_ID = "settings.limit-chinese-id";
@@ -112,18 +96,7 @@ public class ConfigConstants {
     public static final String PROXY_LOGIN_SERVER_NAME = "proxy.login-server-name";
 
     public static final String LANGUAGE = "language";
-  }
 
-  public static class Comment {
-    public static final String DATABASE_HOST = "数据库主机地址 (MySQL服务器IP)";
-    public static final String DATABASE_PORT = "数据库端口 (MySQL默认3306)";
-    public static final String DATABASE_NAME = "数据库名称";
-    public static final String DATABASE_USER = "数据库用户名";
-    public static final String DATABASE_PASSWORD = "数据库密码";
-
-    public static final String PROXY_HOST = "代理服务器通信地址 (Bukkit用于监听BungeeCord/Velocity连接)";
-    public static final String PROXY_PORT = "代理服务器通信端口 (Bukkit监听端口)";
-    public static final String PROXY_AUTH_KEY = "代理通信认证密钥 (确保Bukkit与代理通信安全)";
-    public static final String PROXY_LOGIN_SERVER_NAME = "登录服服务器名称 (在代理端配置的服务器名)";
+    private Path() {}
   }
 }

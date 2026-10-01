@@ -1,16 +1,18 @@
 package cc.baka9.catseedlogin.bukkit;
 
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.session.LoginPlayerHelper;
 
 /**
- * API
+ * 供其他插件调用的公开 API
  *
  * @author handy
  */
-public class CatSeedLoginAPI {
+public final class CatSeedLoginAPI {
+
+  private CatSeedLoginAPI() {}
 
   /**
-   * 是否登陆
+   * 是否登录
    *
    * @param name 玩家名
    * @return true 是
@@ -30,7 +32,7 @@ public class CatSeedLoginAPI {
   }
 
   /**
-   * 获取最后登陆时间戳
+   * 获取最后登录时间戳
    *
    * @param name 玩家名
    * @return 时间戳- 未注册为null

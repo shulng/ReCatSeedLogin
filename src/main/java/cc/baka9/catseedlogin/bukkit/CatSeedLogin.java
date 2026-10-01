@@ -1,10 +1,15 @@
 package cc.baka9.catseedlogin.bukkit;
 
 import cc.baka9.catseedlogin.bukkit.command.*;
+import cc.baka9.catseedlogin.bukkit.communication.CommunicationServer;
 import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
 import cc.baka9.catseedlogin.bukkit.config.BukkitPlatformAdapter;
 import cc.baka9.catseedlogin.bukkit.database.*;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.listener.BlindingListeners;
+import cc.baka9.catseedlogin.bukkit.listener.BukkitListeners;
+import cc.baka9.catseedlogin.bukkit.listener.ProtocolLibListeners;
+import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
+import cc.baka9.catseedlogin.bukkit.session.LoginPlayerHelper;
 import cc.baka9.catseedlogin.bukkit.task.Task;
 import cc.baka9.catseedlogin.common.i18n.I18n;
 import cc.baka9.catseedlogin.common.util.TabCompleteUtil;
@@ -19,15 +24,16 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import space.arim.morepaperlib.MorePaperLib;
 
+/** Bukkit / Spigot / Paper / Folia 端插件主类。 */
 public class CatSeedLogin extends JavaPlugin implements Listener {
 
   public static volatile CatSeedLogin instance;
-  public static volatile SQL sql;
-  public static volatile boolean loadProtocolLib = false;
-  public static volatile MorePaperLib morePaperLib;
+
+  private static volatile MorePaperLib morePaperLib;
 
   private BukkitConfigManager configManager;
   private BukkitPlatformAdapter platformAdapter;
+  private boolean protocolLibLoaded;
 
   @Override
   public void onEnable() {
@@ -37,21 +43,14 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
     HandySchedulerUtil.init(this);
     getServer().getPluginManager().registerEvents(this, this);
 
-    configManager = new BukkitConfigManager(this);
-    platformAdapter = new BukkitPlatformAdapter(this, configManager.getI18n());
+    platformAdapter = new BukkitPlatformAdapter(this);
+    configManager = new BukkitConfigManager(platformAdapter);
+    configManager.reload();
 
+    SQL sql;
     try {
-      configManager.reload();
-      Config.load();
-    } catch (Exception e) {
-      e.printStackTrace();
-      getServer().getLogger().warning("加载配置文件时出错，请检查你的配置文件。");
-    }
-
-    sql = configManager.isMySQL() ? new MySQL(this) : new SQLite(this);
-    try {
+      sql = configManager.isMySQL() ? new MySQL(this, configManager) : new SQLite(this);
       sql.init();
-      Cache.refreshAll();
     } catch (Exception e) {
       getLogger().warning("§c加载数据库时出错");
       e.printStackTrace();
@@ -59,23 +58,25 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
       return;
     }
 
-    getServer().getPluginManager().registerEvents(new Listeners(), this);
+    BukkitContext.init(this, sql);
+    Cache.refreshAll();
+
+    getServer().getPluginManager().registerEvents(new BukkitListeners(), this);
     getServer().getPluginManager().registerEvents(new BlindingListeners(), this);
 
+    protocolLibLoaded = false;
     if (configManager.isEmptyBackpack()) {
       try {
         Class.forName("com.comphenix.protocol.ProtocolLib");
         ProtocolLibListeners.enable();
-        loadProtocolLib = true;
+        protocolLibLoaded = true;
       } catch (ClassNotFoundException e) {
         getLogger().warning("服务器没有装载ProtocolLib插件，这将无法使用登录前隐藏背包");
       }
     }
 
-    PluginContext.init(this, sql, loadProtocolLib);
-
-    if (configManager.isEnable()) {
-      Communication.socketServerStartAsync();
+    if (configManager.isProxyEnabled()) {
+      CommunicationServer.startAsync();
     }
 
     if (Bukkit.getPluginManager().getPlugin("floodgate") != null
@@ -186,29 +187,29 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
   @Override
   public void onDisable() {
     Task.cancelAll();
-    Bukkit.getOnlinePlayers()
-        .forEach(
-            p -> {
-              if (LoginPlayerHelper.isLogin(p.getName())
-                  && (!p.isDead() || configManager.isDeathStateQuitRecordLocation())) {
-                Config.setOfflineLocationSync(p);
-              }
-            });
+    if (BukkitContext.isInitialized() && configManager != null) {
+      Bukkit.getOnlinePlayers()
+          .forEach(
+              p -> {
+                if (LoginPlayerHelper.isLogin(p.getName())
+                    && (!p.isDead() || configManager.isDeathStateQuitRecordLocation())) {
+                  OfflineLocationStore.saveSync(p);
+                }
+              });
 
-    try {
-      sql.closeConnection();
-    } catch (Exception e) {
-      getLogger().warning("关闭数据库连接时出错");
-      e.printStackTrace();
+      try {
+        BukkitContext.getSql().closeConnection();
+      } catch (Exception e) {
+        getLogger().warning("关闭数据库连接时出错");
+        e.printStackTrace();
+      }
     }
-    Communication.socketServerStop();
+    CommunicationServer.stop();
     super.onDisable();
   }
 
-  public void runTaskAsync(Runnable runnable) {
-    if (runnable != null) {
-      CatScheduler.runTaskAsync(runnable);
-    }
+  public boolean isProtocolLibLoaded() {
+    return protocolLibLoaded;
   }
 
   public BukkitConfigManager getConfigManager() {

@@ -1,25 +1,29 @@
 package cc.baka9.catseedlogin.bukkit.task;
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.BukkitContext;
+import cc.baka9.catseedlogin.bukkit.database.Cache;
+import cc.baka9.catseedlogin.bukkit.session.LoginPlayerHelper;
+import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+/** 自动踢出超时未登录的玩家。 */
 public class TaskAutoKick extends Task {
+
   private final Map<String, Long> playerJoinTime = new ConcurrentHashMap<>();
 
   @Override
   public void run() {
-    if (!Cache.isLoaded || Config.Settings.AutoKick < 1) return;
+    int autoKickSeconds = BukkitContext.getConfigManager().getAutoKick();
+    if (!Cache.isLoaded || autoKickSeconds < 1) return;
 
-    long autoKickMs = Config.Settings.AutoKick * 1000L;
+    long autoKickMs = autoKickSeconds * 1000L;
     long now = System.currentTimeMillis();
 
     for (Player player : Bukkit.getOnlinePlayers()) {
-      checkAndKickPlayer(player, now, autoKickMs);
+      checkAndKickPlayer(player, now, autoKickMs, autoKickSeconds);
     }
   }
 
@@ -27,21 +31,22 @@ public class TaskAutoKick extends Task {
     playerJoinTime.remove(playerName);
   }
 
-  private void checkAndKickPlayer(Player player, long now, long autoKickMs) {
+  private void checkAndKickPlayer(Player player, long now, long autoKickMs, int autoKickSeconds) {
     String playerName = player.getName();
     try {
       if (LoginPlayerHelper.isLogin(playerName)) {
         playerJoinTime.remove(playerName);
         return;
       }
-      checkAndKickTimeoutPlayer(player, now, autoKickMs);
+      checkAndKickTimeoutPlayer(player, now, autoKickMs, autoKickSeconds);
     } catch (Exception e) {
       playerJoinTime.remove(playerName);
       e.printStackTrace();
     }
   }
 
-  private void checkAndKickTimeoutPlayer(Player player, long now, long autoKickMs) {
+  private void checkAndKickTimeoutPlayer(
+      Player player, long now, long autoKickMs, int autoKickSeconds) {
     String playerName = player.getName();
     playerJoinTime.putIfAbsent(playerName, now);
     Long joinTime = playerJoinTime.get(playerName);
@@ -52,8 +57,7 @@ public class TaskAutoKick extends Task {
       playerJoinTime.remove(playerName);
       return;
     }
-    String kickMessage =
-        Config.Language.AUTO_KICK.replace("{time}", String.valueOf(Config.Settings.AutoKick));
-    player.kickPlayer(kickMessage);
+    player.kickPlayer(
+        MessageKey.AUTO_KICK.get().replace("{time}", String.valueOf(autoKickSeconds)));
   }
 }

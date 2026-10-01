@@ -3,10 +3,14 @@ package cc.baka9.catseedlogin.common.config;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 public class YamlConfiguration implements Configuration {
+
+  private static final Logger LOGGER = Logger.getLogger(YamlConfiguration.class.getName());
 
   private final Yaml yaml;
   private final Yaml yamlDumper;
@@ -77,6 +81,15 @@ public class YamlConfiguration implements Configuration {
     try (Writer writer =
         new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
       yamlDumper.dump(data, writer);
+    }
+  }
+
+  /** 保存配置但不向调用方抛出受检异常，仅记录日志。 */
+  public void saveQuietly() {
+    try {
+      save();
+    } catch (IOException e) {
+      LOGGER.log(Level.WARNING, "Failed to save config: " + (file == null ? "<null>" : file), e);
     }
   }
 

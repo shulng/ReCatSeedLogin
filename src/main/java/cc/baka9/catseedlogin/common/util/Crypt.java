@@ -66,7 +66,7 @@ public class Crypt {
     return encrypted.equals(legacyEncrypt(name, password));
   }
 
-  public static String byteArrayToHexString(byte[] args) {
+  private static String byteArrayToHexString(byte[] args) {
     char[] chars = new char[args.length * 2];
     for (int i = 0; i < args.length; i++) {
       chars[(i * 2)] = HEX_CHARS[(args[i] >> 4 & 0xF)];

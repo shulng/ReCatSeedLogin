@@ -79,42 +79,59 @@
 
 ## 🏗️ 项目架构
 
-插件采用单模块Maven架构，编译为一个JAR包，同时支持Bukkit/BungeeCord/Velocity三个平台：
+插件采用单模块Maven架构，编译为一个JAR包，同时支持Bukkit/BungeeCord/Velocity三个平台。
+代码按“平台实现 + 公共内核”划分：`common/` 存放与平台无关的能力，三个平台目录只保留各自的入口、指令、监听与适配代码。
 
 ```
 ReCatSeedLogin/
 ├── pom.xml                      (Maven构建配置，输出单个Shaded JAR)
 ├── src/main/java/cc/baka9/catseedlogin/
+│   ├── common/                  → 跨平台公共内核（不依赖任何服务端 API）
+│   │   ├── api/                 → 平台抽象与配置契约
+│   │   │   ├── PlatformAdapter  → 调度/日志/资源访问的平台适配接口
+│   │   │   ├── CoreConfig       → 核心玩法配置（settings/bedrock/same-ip/spawn）
+│   │   │   ├── DatabaseConfig   → 数据库连接配置
+│   │   │   ├── EmailConfig      → 邮件SMTP配置
+│   │   │   └── ProxyConfig      → 代理通信配置（host/port/auth-key/login-server）
+│   │   ├── communication/       → 代理通信
+│   │   │   ├── ProxyCommunicator→ 代理端Socket客户端（查询登录状态/保活）
+│   │   │   └── CommunicationAuth→ HMAC-SHA256 请求签名
+│   │   ├── config/              → 配置基础设施
+│   │   │   ├── ConfigManager    → config.yml 加载/合并默认值/持久化（三平台共用）
+│   │   │   ├── ConfigConstants  → 配置路径常量与默认值
+│   │   │   ├── ConfigHelper     → 位置字符串解析
+│   │   │   ├── Configuration    → 配置读取抽象接口
+│   │   │   └── YamlConfiguration→ SnakeYAML 实现
+│   │   ├── email/EmailSender    → 邮件发送（SSL / STARTTLS）
+│   │   ├── i18n/                → 国际化引擎（I18n、MessageKey 枚举统一管理文案）
+│   │   ├── model/               → 数据模型（LoginPlayer、EmailCode）
+│   │   └── util/                → 通用工具（Crypt 密码加密、ValidationUtil、TabCompleteUtil…）
 │   ├── bukkit/                  → Bukkit/Spigot/Paper/Folia 服务端实现
-│   │   ├── CatSeedLogin.java    → 服务端插件主类
-│   │   ├── CatSeedLoginAPI.java → 开发者API
-│   │   ├── command/             → 指令实现（登录/注册/改密/邮箱/管理）
-│   │   ├── config/              → Bukkit配置管理
-│   │   ├── database/            → 数据库实现（SQLite/MySQL）
-│   │   ├── event/               → 自定义事件
-│   │   ├── object/              → 登录状态管理、邮箱验证码
+│   │   ├── CatSeedLogin         → 插件主类（plugin.yml 入口）
+│   │   ├── CatSeedLoginAPI      → 开发者 API
+│   │   ├── BukkitContext        → 运行时上下文（插件实例 / 数据源 / 配置）
+│   │   ├── command/             → 登录、注册、改密、绑定邮箱、重置密码、管理指令
+│   │   ├── communication/       → CommunicationServer（供代理端查询的Socket服务端）
+│   │   ├── config/              → Bukkit配置管理与平台适配
+│   │   ├── database/            → SQL 抽象、MySQL/SQLite 实现、账号缓存、离线位置仓储
+│   │   ├── event/               → CatSeedPlayerLoginEvent / RegisterEvent
+│   │   ├── listener/            → 登录前限制、失明效果、ProtocolLib 背包隐藏
+│   │   ├── scheduler/           → CatScheduler（Folia 异步调度兼容）
+│   │   ├── session/             → LoginPlayerHelper 登录会话状态
 │   │   ├── task/                → 定时任务（自动踢出、登录提示）
-│   │   └── util/                → 邮件发送工具
+│   │   └── util/                → 世界与位置序列化工具
 │   ├── bungee/                  → BungeeCord 代理端实现
-│   │   ├── PluginMain.java      → BungeeCord插件主类
-│   │   ├── BungeeCommunication.java → Socket通信客户端
-│   │   ├── BungeeCommands.java  → 代理端指令
-│   │   ├── Listeners.java       → 代理端事件监听
-│   │   └── config/              → BungeeCord配置管理
-│   ├── velocity/                → Velocity 代理端实现
-│   │   ├── PluginMain.java      → Velocity插件主类
-│   │   ├── VelocityCommunication.java → Socket通信客户端
-│   │   ├── Commands.java        → 代理端指令
-│   │   ├── Listeners.java       → 代理端事件监听
-│   │   └── config/              → Velocity配置管理
-│   └── common/                  → 跨平台共享代码
-│       ├── api/                 → 平台抽象接口（PlatformAdapter、配置接口）
-│       ├── communication/       → Socket通信基类
-│       ├── config/              → 配置管理基类、YAML解析
-│       ├── database/            → 数据库连接抽象
-│       ├── i18n/                → 国际化引擎（I18n、MessageKey）
-│       ├── model/               → 数据模型（LoginPlayer）
-│       └── util/                → 加密、验证、日期工具类
+│   │   ├── BungeePlugin         → 插件主类（bungee.yml 入口）
+│   │   ├── command/             → BungeeCommands（/cslb）
+│   │   ├── communication/       → BungeeCommunication
+│   │   ├── config/              → BungeePlatformAdapter
+│   │   └── listener/            → BungeeListeners
+│   └── velocity/                → Velocity 代理端实现
+│       ├── VelocityPlugin       → 插件主类（velocity-plugin.json 入口）
+│       ├── command/             → VelocityCommands（/cslv）
+│       ├── communication/       → VelocityCommunication
+│       ├── config/              → VelocityPlatformAdapter
+│       └── listener/            → VelocityListeners
 └── src/main/resources/
     ├── plugin.yml               → Bukkit插件描述文件
     ├── bungee.yml               → BungeeCord插件描述文件
@@ -126,9 +143,14 @@ ReCatSeedLogin/
 ### 架构说明
 - **单JAR部署** - 所有平台代码打包为一个Shaded JAR，每个平台自动加载对应的入口类
 - **Bukkit端** - 服务端插件，实现注册/登录/管理等核心功能，同时运行Socket服务器供代理端查询登录状态
-- **BungeeCord端** - 代理端插件，通过TCP Socket与Bukkit端通信，实现跨服登录状态同步
-- **Velocity端** - 代理端插件，通过TCP Socket与Bukkit端通信，实现跨服登录状态同步
-- **common包** - 跨平台共享代码，提供 `PlatformAdapter`、`CoreConfig` 等平台无关接口
+- **BungeeCord端 / Velocity端** - 代理端插件，通过TCP Socket与Bukkit端通信，实现跨服登录状态同步
+- **common包** - 跨平台共享代码。`PlatformAdapter` 统一抽象各平台的调度与资源访问，`ConfigManager` 统一读取 config.yml
+
+### 命名与分层约定
+- 平台主类统一为 `<Platform>Plugin`；指令 `<Platform>Commands`；监听 `<Platform>Listeners`；通信 `<Platform>Communication`
+- 三个平台目录保持同构的子包划分：`command/`、`communication/`、`config/`、`listener/`
+- 配置读取统一走 `ConfigManager`（类型安全 getter），不再有静态配置镜像类
+- 消息文案统一通过 `MessageKey` 枚举取用，语言文件仍是唯一数据源
 
 ## 📥 下载安装
 

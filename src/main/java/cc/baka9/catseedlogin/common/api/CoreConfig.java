@@ -49,20 +49,4 @@ public interface CoreConfig {
   boolean isBlindingBeforeLogin();
 
   List<Pattern> getCommandWhiteList();
-
-  interface SpawnLocation {
-    String getWorld();
-
-    double getX();
-
-    double getY();
-
-    double getZ();
-
-    float getYaw();
-
-    float getPitch();
-  }
-
-  SpawnLocation getSpawnLocation();
 }

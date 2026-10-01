@@ -1,16 +1,20 @@
 package cc.baka9.catseedlogin.bukkit.database;
 
-import cc.baka9.catseedlogin.bukkit.Config;
+import cc.baka9.catseedlogin.common.api.DatabaseConfig;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import org.bukkit.plugin.java.JavaPlugin;
 
+/** MySQL 实现，连接参数来自 {@link DatabaseConfig}。 */
 public class MySQL extends SQL {
+
+  private final DatabaseConfig config;
   private Connection connection;
 
-  public MySQL(JavaPlugin javaPlugin) {
+  public MySQL(JavaPlugin javaPlugin, DatabaseConfig config) {
     super(javaPlugin.getLogger());
+    this.config = config;
   }
 
   @Override
@@ -24,14 +28,14 @@ public class MySQL extends SQL {
       this.connection =
           DriverManager.getConnection(
               "jdbc:mysql://"
-                  + Config.MySQL.Host
+                  + config.getDatabaseHost()
                   + ":"
-                  + Config.MySQL.Port
+                  + config.getDatabasePort()
                   + "/"
-                  + Config.MySQL.Database
+                  + config.getDatabaseName()
                   + "?characterEncoding=UTF-8",
-              Config.MySQL.User,
-              Config.MySQL.Password);
+              config.getDatabaseUser(),
+              config.getDatabasePassword());
       return this.connection;
     } catch (ClassNotFoundException | SQLException e) {
       throw new SQLException(e);
@@ -57,7 +61,7 @@ public class MySQL extends SQL {
         this.connection.close();
       }
     } catch (SQLException e) {
-      e.printStackTrace();
+      logger.warning("关闭MySQL连接时出错: " + e.getMessage());
     }
     this.connection = null;
   }
