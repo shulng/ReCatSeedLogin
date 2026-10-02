@@ -11,6 +11,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -21,6 +22,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -141,6 +143,14 @@ public class Listeners implements Listener {
     if (event.getTo() == null) return;
     if (Config.Settings.CanTpSpawnLocation && event.getTo().equals(Config.Settings.SpawnLocation))
       return;
+    event.setCancelled(true);
+  }
+
+  // 登陆之前不能切换游戏模式 (防止使用 F3+F4 游戏模式切换器绕过限制)
+  @EventHandler(priority = EventPriority.LOWEST)
+  public void onPlayerGameModeChange(PlayerGameModeChangeEvent event) {
+    Player player = event.getPlayer();
+    if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.getName())) return;
     event.setCancelled(true);
   }
 
