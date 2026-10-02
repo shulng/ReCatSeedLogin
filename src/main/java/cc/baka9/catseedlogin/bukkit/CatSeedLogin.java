@@ -46,13 +46,7 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
     platformAdapter = new BukkitPlatformAdapter(this);
     configManager = new BukkitConfigManager(platformAdapter);
     configManager.reload();
-    try {
-      // spawn.location 未配置时用世界出生点填充，并回写到 config.yml
-      configManager.ensureSpawnLocationPersisted();
-    } catch (Exception e) {
-      getLogger().warning("初始化登录出生点时出错，将使用世界默认出生点");
-      e.printStackTrace();
-    }
+    configManager.ensureSpawnLocationPersisted();
 
     SQL sql;
     try {
