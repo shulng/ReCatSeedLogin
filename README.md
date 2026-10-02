@@ -9,7 +9,7 @@
 
 **🚀 高性能Minecraft登录插件 | 支持Bukkit/Spigot/Paper/Folia/BungeeCord/Velocity**
 
-> 基于Paper API开发，支持Bukkit/Spigot/Paper/Folia服务端，以及BungeeCord和Velocity代理端
+> 基于Bukkit 1.13 API开发，支持Bukkit/Spigot/Paper/Folia服务端，以及BungeeCord和Velocity代理端
 
 </div>
 
@@ -75,7 +75,7 @@
 
 ### 🏗️ 兼容性
 - 🌿 **Folia支持** - 通过CatScheduler实现Folia异步调度兼容
-- 📦 **Paper支持** - 基于Paper API开发，完整兼容Paper系列服务端
+- 📦 **Bukkit支持** - 基于Bukkit API开发，完整兼容Bukkit系列服务端
 
 ## 🏗️ 项目架构
 
