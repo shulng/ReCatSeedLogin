@@ -3,6 +3,7 @@ package cc.baka9.catseedlogin.bukkit.session;
 import cc.baka9.catseedlogin.bukkit.BukkitContext;
 import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
 import cc.baka9.catseedlogin.bukkit.database.Cache;
+import cc.baka9.catseedlogin.bukkit.lifecycle.BukkitHooks;
 import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
@@ -147,7 +148,7 @@ public final class LoginPlayerHelper {
 
   public static boolean isFloodgatePlayer(Player player) {
     try {
-      return Bukkit.getPluginManager().getPlugin("floodgate") != null
+      return BukkitHooks.isFloodgateEnabled()
           && FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId());
     } catch (Exception e) {
       return false;

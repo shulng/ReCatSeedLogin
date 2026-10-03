@@ -4,6 +4,7 @@ import cc.baka9.catseedlogin.bukkit.BukkitContext;
 import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
 import cc.baka9.catseedlogin.bukkit.database.Cache;
 import cc.baka9.catseedlogin.bukkit.database.OfflineLocationStore;
+import cc.baka9.catseedlogin.bukkit.lifecycle.BukkitHooks;
 import cc.baka9.catseedlogin.bukkit.scheduler.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.session.LoginPlayerHelper;
 import cc.baka9.catseedlogin.bukkit.task.Task;
@@ -209,6 +210,7 @@ public class BukkitListeners implements Listener {
   @EventHandler
   public void onPlayerQuit(PlayerQuitEvent event) {
     Player player = event.getPlayer();
+    LoginPlayerHelper.onPlayerQuit(player.getName());
     if (LoginPlayerHelper.isLogin(player.getName())) {
       saveOfflineLocation(player);
       CatScheduler.runTaskLater(
@@ -323,8 +325,7 @@ public class BukkitListeners implements Listener {
   }
 
   private boolean checkFloodgatePrefixProtect(AsyncPlayerPreLoginEvent event, String name) {
-    if (!config().isFloodgatePrefixProtect()
-        || Bukkit.getPluginManager().getPlugin("floodgate") == null) {
+    if (!config().isFloodgatePrefixProtect() || !BukkitHooks.isFloodgateEnabled()) {
       return false;
     }
     try {
