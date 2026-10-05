@@ -61,41 +61,51 @@ public class ConfigConstants {
   }
 
   public static class Path {
-    public static final String SETTINGS_IP_REGISTER_LIMIT = "settings.ip-register-count-limit";
-    public static final String SETTINGS_IP_COUNT_LIMIT = "settings.ip-count-limit";
-    public static final String SETTINGS_LIMIT_CHINESE_ID = "settings.limit-chinese-id";
-    public static final String SETTINGS_MIN_LENGTH_ID = "settings.min-length-id";
-    public static final String SETTINGS_MAX_LENGTH_ID = "settings.max-length-id";
-    public static final String SETTINGS_BEFORE_LOGIN_NO_DAMAGE = "settings.before-login-no-damage";
-    public static final String SETTINGS_REENTER_INTERVAL = "settings.reenter-interval";
-    public static final String SETTINGS_AFTER_LOGIN_BACK = "settings.after-login-back";
-    public static final String SETTINGS_CAN_TP_SPAWN_LOCATION = "settings.can-tp-spawn-location";
-    public static final String SETTINGS_AUTO_KICK = "settings.auto-kick";
-    public static final String SETTINGS_NAME_PATTERN = "settings.name-pattern";
-    public static final String SETTINGS_DEATH_STATE_QUIT_RECORD =
-        "settings.death-state-quit-record-location";
-    public static final String SETTINGS_COMMAND_WHITELIST = "settings.command-white-list";
-    public static final String SETTINGS_LOOPBACK_LOGIN_BYPASS = "settings.loopback-login-bypass";
+    // ---- settings.account 账号规则 ----
+    public static final String SETTINGS_ACCOUNT_LIMIT_CHINESE_ID =
+        "settings.account.limit-chinese-id";
+    public static final String SETTINGS_ACCOUNT_MIN_LENGTH_ID = "settings.account.min-length-id";
+    public static final String SETTINGS_ACCOUNT_MAX_LENGTH_ID = "settings.account.max-length-id";
+    public static final String SETTINGS_ACCOUNT_NAME_PATTERN = "settings.account.name-pattern";
+
+    // ---- settings.before-login 登录前限制 ----
+    public static final String SETTINGS_BEFORE_LOGIN_NO_DAMAGE = "settings.before-login.no-damage";
+    public static final String SETTINGS_BEFORE_LOGIN_CAN_TP_SPAWN =
+        "settings.before-login.can-tp-spawn-location";
     public static final String SETTINGS_BEFORE_LOGIN_ALLOW_CHAT =
-        "settings.before-login-allow-chat";
-    public static final String SETTINGS_BLINDING_BEFORE_LOGIN = "settings.blinding-before-login";
+        "settings.before-login.allow-chat";
+    public static final String SETTINGS_BEFORE_LOGIN_BLINDING = "settings.before-login.blinding";
+    public static final String SETTINGS_BEFORE_LOGIN_EMPTY_BACKPACK =
+        "settings.before-login.empty-backpack";
+    public static final String SETTINGS_BEFORE_LOGIN_AUTO_KICK = "settings.before-login.auto-kick";
+    public static final String SETTINGS_BEFORE_LOGIN_COMMAND_WHITELIST =
+        "settings.before-login.command-white-list";
+
+    // ---- settings.login 登录流程 ----
+    public static final String SETTINGS_LOGIN_LOOPBACK_BYPASS = "settings.login.loopback-bypass";
+    public static final String SETTINGS_LOGIN_REENTER_INTERVAL = "settings.login.reenter-interval";
+    public static final String SETTINGS_LOGIN_AFTER_LOGIN_BACK = "settings.login.after-login-back";
 
     public static final String BEDROCK_LOGIN_BYPASS = "bedrock.login-bypass";
     public static final String BEDROCK_FLOODGATE_PREFIX = "bedrock.floodgate-prefix-protect";
 
-    public static final String SAME_IP_ENABLED = "same-ip-login.enabled";
-    public static final String SAME_IP_TIMEOUT = "same-ip-login.timeout";
-
-    public static final String EMPTY_BACKPACK = "empty-backpack";
-
     public static final String SPAWN_LOCATION = "spawn.location";
 
+    // ---- database 连接信息 ----
     public static final String DATABASE_MYSQL = "database.mysql";
     public static final String DATABASE_HOST = "database.host";
     public static final String DATABASE_PORT = "database.port";
     public static final String DATABASE_NAME = "database.database";
     public static final String DATABASE_USER = "database.user";
     public static final String DATABASE_PASSWORD = "database.password";
+
+    // ---- database 数据存储相关 ----
+    public static final String DATABASE_IP_REGISTER_LIMIT = "database.ip-register-count-limit";
+    public static final String DATABASE_IP_COUNT_LIMIT = "database.ip-count-limit";
+    public static final String DATABASE_DEATH_STATE_QUIT_RECORD =
+        "database.death-state-quit-record-location";
+    public static final String DATABASE_SAME_IP_ENABLED = "database.same-ip-login.enabled";
+    public static final String DATABASE_SAME_IP_TIMEOUT = "database.same-ip-login.timeout";
 
     public static final String EMAIL_ENABLED = "email.enabled";
     public static final String EMAIL_ACCOUNT = "email.account";

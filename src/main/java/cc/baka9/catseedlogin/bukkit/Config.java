@@ -102,31 +102,31 @@ public class Config {
 
     public static void save() {
       BukkitConfigManager cm = plugin.getConfigManager();
-      cm.set(ConfigConstants.Path.SETTINGS_IP_REGISTER_LIMIT, IpRegisterCountLimit);
-      cm.set(ConfigConstants.Path.SETTINGS_IP_COUNT_LIMIT, IpCountLimit);
-      cm.set(ConfigConstants.Path.SETTINGS_LIMIT_CHINESE_ID, LimitChineseID);
+      cm.set(ConfigConstants.Path.DATABASE_IP_REGISTER_LIMIT, IpRegisterCountLimit);
+      cm.set(ConfigConstants.Path.DATABASE_IP_COUNT_LIMIT, IpCountLimit);
+      cm.set(ConfigConstants.Path.SETTINGS_ACCOUNT_LIMIT_CHINESE_ID, LimitChineseID);
       cm.set(ConfigConstants.Path.BEDROCK_LOGIN_BYPASS, BedrockLoginBypass);
-      cm.set(ConfigConstants.Path.SAME_IP_ENABLED, LoginwiththesameIP);
-      cm.set(ConfigConstants.Path.EMPTY_BACKPACK, EmptyBackpack);
-      cm.set(ConfigConstants.Path.SAME_IP_TIMEOUT, IPTimeout);
-      cm.set(ConfigConstants.Path.SETTINGS_MIN_LENGTH_ID, MinLengthID);
-      cm.set(ConfigConstants.Path.SETTINGS_MAX_LENGTH_ID, MaxLengthID);
+      cm.set(ConfigConstants.Path.DATABASE_SAME_IP_ENABLED, LoginwiththesameIP);
+      cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_EMPTY_BACKPACK, EmptyBackpack);
+      cm.set(ConfigConstants.Path.DATABASE_SAME_IP_TIMEOUT, IPTimeout);
+      cm.set(ConfigConstants.Path.SETTINGS_ACCOUNT_MIN_LENGTH_ID, MinLengthID);
+      cm.set(ConfigConstants.Path.SETTINGS_ACCOUNT_MAX_LENGTH_ID, MaxLengthID);
       cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_NO_DAMAGE, BeforeLoginNoDamage);
-      cm.set(ConfigConstants.Path.SETTINGS_REENTER_INTERVAL, ReenterInterval);
-      cm.set(ConfigConstants.Path.SETTINGS_AFTER_LOGIN_BACK, AfterLoginBack);
-      cm.set(ConfigConstants.Path.SETTINGS_CAN_TP_SPAWN_LOCATION, CanTpSpawnLocation);
-      cm.set(ConfigConstants.Path.SETTINGS_AUTO_KICK, AutoKick);
-      cm.set(ConfigConstants.Path.SETTINGS_DEATH_STATE_QUIT_RECORD, DeathStateQuitRecordLocation);
+      cm.set(ConfigConstants.Path.SETTINGS_LOGIN_REENTER_INTERVAL, ReenterInterval);
+      cm.set(ConfigConstants.Path.SETTINGS_LOGIN_AFTER_LOGIN_BACK, AfterLoginBack);
+      cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_CAN_TP_SPAWN, CanTpSpawnLocation);
+      cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_AUTO_KICK, AutoKick);
+      cm.set(ConfigConstants.Path.DATABASE_DEATH_STATE_QUIT_RECORD, DeathStateQuitRecordLocation);
       cm.set(ConfigConstants.Path.BEDROCK_FLOODGATE_PREFIX, FloodgatePrefixProtect);
-      cm.set(ConfigConstants.Path.SETTINGS_NAME_PATTERN, NamePattern);
-      cm.set(ConfigConstants.Path.SETTINGS_LOOPBACK_LOGIN_BYPASS, LoopbackLoginBypass);
+      cm.set(ConfigConstants.Path.SETTINGS_ACCOUNT_NAME_PATTERN, NamePattern);
+      cm.set(ConfigConstants.Path.SETTINGS_LOGIN_LOOPBACK_BYPASS, LoopbackLoginBypass);
       cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_ALLOW_CHAT, BeforeLoginAllowChat);
-      cm.set(ConfigConstants.Path.SETTINGS_BLINDING_BEFORE_LOGIN, BlindingBeforeLogin);
+      cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_BLINDING, BlindingBeforeLogin);
 
       if (CommandWhiteList != null && !CommandWhiteList.isEmpty()) {
         cm.getMainConfig()
             .set(
-                ConfigConstants.Path.SETTINGS_COMMAND_WHITELIST,
+                ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_COMMAND_WHITELIST,
                 CommandWhiteList.stream().map(Pattern::toString).collect(Collectors.toList()));
       }
 

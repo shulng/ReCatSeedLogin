@@ -168,7 +168,7 @@ public class YamlConfiguration implements Configuration {
   }
 
   @SuppressWarnings("unchecked")
-  private Object get(String path) {
+  public Object get(String path) {
     try {
       String[] parts = path.split("\\.");
       Map<String, Object> current = data;

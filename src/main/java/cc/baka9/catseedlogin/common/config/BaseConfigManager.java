@@ -44,7 +44,11 @@ public abstract class BaseConfigManager
       if (defaultStream != null) {
         YamlConfiguration defaultConfig = new YamlConfiguration(null);
         defaultConfig.loadFromResource(defaultStream);
-        if (mergeDefaults(config, defaultConfig)) {
+        boolean changed = mergeDefaults(config, defaultConfig);
+        if ("config.yml".equals(fileName) && ConfigMigration.migrate(config)) {
+          changed = true;
+        }
+        if (changed) {
           try {
             config.save();
           } catch (Exception e) {
@@ -146,18 +150,18 @@ public abstract class BaseConfigManager
   @Override
   public int getIpRegisterCountLimit() {
     return mainConfig.getInt(
-        ConfigConstants.Path.SETTINGS_IP_REGISTER_LIMIT, ConfigConstants.DEFAULT_IP_REGISTER_LIMIT);
+        ConfigConstants.Path.DATABASE_IP_REGISTER_LIMIT, ConfigConstants.DEFAULT_IP_REGISTER_LIMIT);
   }
 
   @Override
   public int getIpCountLimit() {
     return mainConfig.getInt(
-        ConfigConstants.Path.SETTINGS_IP_COUNT_LIMIT, ConfigConstants.DEFAULT_IP_LOGIN_LIMIT);
+        ConfigConstants.Path.DATABASE_IP_COUNT_LIMIT, ConfigConstants.DEFAULT_IP_LOGIN_LIMIT);
   }
 
   @Override
   public boolean isLimitChineseID() {
-    return mainConfig.getBoolean(ConfigConstants.Path.SETTINGS_LIMIT_CHINESE_ID, true);
+    return mainConfig.getBoolean(ConfigConstants.Path.SETTINGS_ACCOUNT_LIMIT_CHINESE_ID, true);
   }
 
   @Override
@@ -167,30 +171,32 @@ public abstract class BaseConfigManager
 
   @Override
   public boolean isLoginWithSameIP() {
-    return mainConfig.getBoolean(ConfigConstants.Path.SAME_IP_ENABLED, false);
+    return mainConfig.getBoolean(ConfigConstants.Path.DATABASE_SAME_IP_ENABLED, false);
   }
 
   @Override
   public boolean isEmptyBackpack() {
-    return mainConfig.getBoolean(ConfigConstants.Path.EMPTY_BACKPACK, true);
+    return mainConfig.getBoolean(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_EMPTY_BACKPACK, true);
   }
 
   @Override
   public int getIPTimeout() {
     return mainConfig.getInt(
-        ConfigConstants.Path.SAME_IP_TIMEOUT, ConfigConstants.DEFAULT_IP_TIMEOUT_MINUTES);
+        ConfigConstants.Path.DATABASE_SAME_IP_TIMEOUT, ConfigConstants.DEFAULT_IP_TIMEOUT_MINUTES);
   }
 
   @Override
   public int getMaxLengthID() {
     return mainConfig.getInt(
-        ConfigConstants.Path.SETTINGS_MAX_LENGTH_ID, ConfigConstants.DEFAULT_MAX_NAME_LENGTH);
+        ConfigConstants.Path.SETTINGS_ACCOUNT_MAX_LENGTH_ID,
+        ConfigConstants.DEFAULT_MAX_NAME_LENGTH);
   }
 
   @Override
   public int getMinLengthID() {
     return mainConfig.getInt(
-        ConfigConstants.Path.SETTINGS_MIN_LENGTH_ID, ConfigConstants.DEFAULT_MIN_NAME_LENGTH);
+        ConfigConstants.Path.SETTINGS_ACCOUNT_MIN_LENGTH_ID,
+        ConfigConstants.DEFAULT_MIN_NAME_LENGTH);
   }
 
   @Override
@@ -201,35 +207,36 @@ public abstract class BaseConfigManager
   @Override
   public long getReenterInterval() {
     return mainConfig.getLong(
-        ConfigConstants.Path.SETTINGS_REENTER_INTERVAL,
+        ConfigConstants.Path.SETTINGS_LOGIN_REENTER_INTERVAL,
         ConfigConstants.DEFAULT_REENTER_INTERVAL_TICKS);
   }
 
   @Override
   public boolean isAfterLoginBack() {
-    return mainConfig.getBoolean(ConfigConstants.Path.SETTINGS_AFTER_LOGIN_BACK, true);
+    return mainConfig.getBoolean(ConfigConstants.Path.SETTINGS_LOGIN_AFTER_LOGIN_BACK, true);
   }
 
   @Override
   public boolean isCanTpSpawnLocation() {
-    return mainConfig.getBoolean(ConfigConstants.Path.SETTINGS_CAN_TP_SPAWN_LOCATION, true);
+    return mainConfig.getBoolean(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_CAN_TP_SPAWN, true);
   }
 
   @Override
   public int getAutoKick() {
     return mainConfig.getInt(
-        ConfigConstants.Path.SETTINGS_AUTO_KICK, ConfigConstants.DEFAULT_AUTO_KICK_SECONDS);
+        ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_AUTO_KICK,
+        ConfigConstants.DEFAULT_AUTO_KICK_SECONDS);
   }
 
   @Override
   public String getNamePattern() {
     return mainConfig.getString(
-        ConfigConstants.Path.SETTINGS_NAME_PATTERN, ConfigConstants.DEFAULT_NAME_PATTERN);
+        ConfigConstants.Path.SETTINGS_ACCOUNT_NAME_PATTERN, ConfigConstants.DEFAULT_NAME_PATTERN);
   }
 
   @Override
   public boolean isDeathStateQuitRecordLocation() {
-    return mainConfig.getBoolean(ConfigConstants.Path.SETTINGS_DEATH_STATE_QUIT_RECORD, true);
+    return mainConfig.getBoolean(ConfigConstants.Path.DATABASE_DEATH_STATE_QUIT_RECORD, true);
   }
 
   @Override
@@ -239,7 +246,7 @@ public abstract class BaseConfigManager
 
   @Override
   public boolean isLoopbackLoginBypass() {
-    return mainConfig.getBoolean(ConfigConstants.Path.SETTINGS_LOOPBACK_LOGIN_BYPASS, false);
+    return mainConfig.getBoolean(ConfigConstants.Path.SETTINGS_LOGIN_LOOPBACK_BYPASS, false);
   }
 
   @Override
@@ -249,13 +256,13 @@ public abstract class BaseConfigManager
 
   @Override
   public boolean isBlindingBeforeLogin() {
-    return mainConfig.getBoolean(ConfigConstants.Path.SETTINGS_BLINDING_BEFORE_LOGIN, false);
+    return mainConfig.getBoolean(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_BLINDING, false);
   }
 
   @Override
   public List<Pattern> getCommandWhiteList() {
     List<String> patterns =
-        mainConfig.getStringList(ConfigConstants.Path.SETTINGS_COMMAND_WHITELIST);
+        mainConfig.getStringList(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_COMMAND_WHITELIST);
     return ConfigConstants.compilePatterns(patterns);
   }
 

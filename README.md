@@ -257,39 +257,37 @@ language: "zh_CN"
 
 # 核心设置
 settings:
-  ip-register-count-limit: 2       # 同IP注册数量限制
-  ip-count-limit: 2                # 同IP登录数量限制
-  limit-chinese-id: true           # 是否限制中文ID
-  min-length-id: 2                 # 游戏ID最小长度
-  max-length-id: 15                # 游戏ID最大长度
-  before-login-no-damage: true     # 登录前不受到伤害
-  reenter-interval: 60             # 重入间隔限制 (tick, 20tick=1秒)
-  after-login-back: true           # 登录后是否返回退出地点
-  can-tp-spawn-location: true      # 登录前是否强制在登录地点
-  auto-kick: 120                   # 自动踢出未登录的玩家 (秒, <=0关闭)
-  death-state-quit-record-location: true  # 死亡状态退出是否记录位置
-  loopback-login-bypass: false     # 本地回环地址(127.0.0.1/::1)连接时跳过登录
-  before-login-allow-chat: false   # 登录前是否允许发消息
-  blinding-before-login: false     # 登录前给未登录玩家施加失明效果
-  name-pattern: "^\\w+$"           # 游戏名正则表达式
-  command-white-list:              # 登录前允许执行的指令 (支持正则)
-    - "/(?i)l(ogin)?(\\z| .*)"
-    - "/(?i)reg(ister)?(\\z| .*)"
-    - "/(?i)resetpassword?(\\z| .*)"
-    - "/(?i)repw?(\\z| .*)"
+  # ---- 账号规则 ----
+  account:
+    limit-chinese-id: true           # 是否限制中文ID
+    min-length-id: 2                 # 游戏ID最小长度
+    max-length-id: 15                # 游戏ID最大长度
+    name-pattern: "^\\w+$"           # 游戏名正则表达式
+
+  # ---- 登录前限制 ----
+  before-login:
+    no-damage: true                  # 登录前不受到伤害
+    can-tp-spawn-location: true      # 登录前是否强制停留在登录地点
+    allow-chat: false                # 登录前是否允许发消息
+    blinding: false                  # 登录前施加失明效果
+    empty-backpack: true             # 登录前隐藏背包 (需要ProtocolLib)
+    auto-kick: 120                   # 自动踢出未登录的玩家 (秒, <=0关闭)
+    command-white-list:              # 登录前允许执行的指令 (支持正则)
+      - "/(?i)l(ogin)?(\\z| .*)"
+      - "/(?i)reg(ister)?(\\z| .*)"
+      - "/(?i)resetpassword?(\\z| .*)"
+      - "/(?i)repw?(\\z| .*)"
+
+  # ---- 登录流程 ----
+  login:
+    loopback-bypass: false           # 本地回环地址(127.0.0.1/::1)连接时跳过登录
+    reenter-interval: 60             # 重入间隔限制 (tick, 20tick=1秒)
+    after-login-back: true           # 登录后是否返回退出地点
 
 # 基岩版设置
 bedrock:
   login-bypass: true               # 基岩版(Floodgate)玩家跳过登录
   floodgate-prefix-protect: true   # 防止Java玩家使用基岩版名称前缀
-
-# 同IP免登录设置
-same-ip-login:
-  enabled: false                   # 是否启用同IP免登录
-  timeout: 5                       # IP免登录超时时间 (分钟)
-
-# 登录前隐藏背包 (需要ProtocolLib)
-empty-backpack: true
 
 # 登录点设置
 spawn:
@@ -297,12 +295,21 @@ spawn:
 
 # 数据库设置
 database:
+  # ---- 连接信息 ----
   mysql: false                     # 使用MySQL (false=SQLite)
   host: "127.0.0.1"
   port: 3306
   database: "catseedlogin"
   user: "root"
   password: "password"
+
+  # ---- 数据存储相关 ----
+  ip-register-count-limit: 2       # 同IP注册数量限制 (读取账号表)
+  ip-count-limit: 2                # 同IP登录数量限制 (读取账号表)
+  death-state-quit-record-location: true  # 死亡状态退出是否记录位置
+  same-ip-login:
+    enabled: false                 # 是否启用同IP免登录
+    timeout: 5                     # IP免登录超时时间 (分钟)
 
 # 邮箱验证设置
 email:
@@ -322,6 +329,11 @@ proxy:
   auth-key: ""                     # 验证密钥 (用于KeepLoggedIn签名验证)
   login-server-name: "lobby"       # 登录服务器名称(与代理端配置一致)
 ```
+
+> **升级提示**：配置文件在 v2.0.0 重新归组后，`settings` 拆分为 `account` / `before-login` / `login`，
+> 依赖数据库记录的配置项（`ip-*-count-limit`、`death-state-quit-record-location`、`same-ip-login`）
+> 下沉到 `database` 节点。插件启动时会自动把旧路径上的配置迁移到新路径并移除旧节点，
+> 无需手动修改历史配置文件。
 
 ### 语言文件
 语言文件存放在 `plugins/CatSeedLogin/languages/` 文件夹中：

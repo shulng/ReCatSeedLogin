@@ -8,43 +8,47 @@ language: "zh_CN"
 
 # 核心设置
 settings:
-  # 相同IP注册数量限制
-  ip-register-count-limit: 2
-  # 相同IP登录数量限制
-  ip-count-limit: 2
-  # 是否限制中文ID
-  limit-chinese-id: true
-  # 游戏ID最小长度
-  min-length-id: 2
-  # 游戏ID最大长度
-  max-length-id: 15
-  # 登录前不受到伤害
-  before-login-no-damage: true
-  # 离开服务器重新进入的间隔限制 (单位: tick, 20tick = 1秒)
-  reenter-interval: 60
-  # 登录后是否返回退出地点
-  after-login-back: true
-  # 登录前是否强制在登录地点
-  can-tp-spawn-location: true
-  # 自动踢出未登录的玩家 (秒数, 小于1则关闭)
-  auto-kick: 120
-  # 死亡状态退出游戏是否记录退出位置
-  death-state-quit-record-location: true
-  # 本地回环地址(127.0.0.1 / ::1)连接时跳过登录
-  loopback-login-bypass: false
-  # 登录前是否允许发消息
-  before-login-allow-chat: false
-  # 登录前给未登录玩家施加失明效果 (登录或注册成功后自动移除)
-  blinding-before-login: false
-  # 游戏名正则表达式
-  name-pattern: "^\\w+$"
-  # 登录前允许执行的指令 (支持正则表达式)
-  command-white-list:
-    - "/(?i)l(ogin)?(\\z| .*)"
-    - "/(?i)reg(ister)?(\\z| .*)"
-    - "/(?i)resetpassword?(\\z| .*)"
-    - "/(?i)repw?(\\z| .*)"
-    - "/(?i)worldedit cui"
+  # ============ 账号规则 ============
+  account:
+    # 是否限制中文ID
+    limit-chinese-id: true
+    # 游戏ID最小长度
+    min-length-id: 2
+    # 游戏ID最大长度
+    max-length-id: 15
+    # 游戏名正则表达式
+    name-pattern: "^\\w+$"
+
+  # ============ 登录前限制 ============
+  before-login:
+    # 登录前不受到伤害
+    no-damage: true
+    # 登录前是否强制停留在登录地点
+    can-tp-spawn-location: true
+    # 登录前是否允许发消息
+    allow-chat: false
+    # 登录前给未登录玩家施加失明效果 (登录或注册成功后自动移除)
+    blinding: false
+    # 登录前隐藏背包 (需要ProtocolLib)
+    empty-backpack: true
+    # 自动踢出未登录的玩家 (秒数, 小于1则关闭)
+    auto-kick: 120
+    # 登录前允许执行的指令 (支持正则表达式)
+    command-white-list:
+      - "/(?i)l(ogin)?(\\z| .*)"
+      - "/(?i)reg(ister)?(\\z| .*)"
+      - "/(?i)resetpassword?(\\z| .*)"
+      - "/(?i)repw?(\\z| .*)"
+      - "/(?i)worldedit cui"
+
+  # ============ 登录流程 ============
+  login:
+    # 本地回环地址(127.0.0.1 / ::1)连接时跳过登录
+    loopback-bypass: false
+    # 离开服务器重新进入的间隔限制 (单位: tick, 20tick = 1秒)
+    reenter-interval: 60
+    # 登录后是否返回退出地点
+    after-login-back: true
 
 # 基岩版设置
 bedrock:
@@ -52,16 +56,6 @@ bedrock:
   login-bypass: true
   # Floodgate前缀保护
   floodgate-prefix-protect: true
-
-# 同IP免登录设置
-same-ip-login:
-  # 是否启用同IP免登录
-  enabled: false
-  # IP超时时间 (分钟)
-  timeout: 5
-
-# 登录前隐藏背包 (需要ProtocolLib)
-empty-backpack: true
 
 # 登录点设置
 spawn:
@@ -71,6 +65,7 @@ spawn:
 
 # 数据库设置
 database:
+  # ============ 连接信息 ============
   # 使用MySQL (false = 使用SQLite)
   mysql: false
   host: "127.0.0.1"
@@ -78,6 +73,20 @@ database:
   database: "catseedlogin"
   user: "root"
   password: "password"
+
+  # ============ 数据存储相关 ============
+  # 相同IP注册数量限制 (依赖账号表记录)
+  ip-register-count-limit: 2
+  # 相同IP登录数量限制 (依赖账号表记录)
+  ip-count-limit: 2
+  # 死亡状态退出游戏是否记录退出位置
+  death-state-quit-record-location: true
+  # 同IP免登录 (玩家IP记录在账号表中)
+  same-ip-login:
+    # 是否启用同IP免登录
+    enabled: false
+    # IP记录超时时间 (分钟)
+    timeout: 5
 
 # 邮箱验证设置
 email:
