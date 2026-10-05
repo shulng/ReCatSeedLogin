@@ -238,8 +238,7 @@ public abstract class BaseConfigManager
 
   @Override
   public boolean isDeathStateQuitRecordLocation() {
-    return mainConfig.getBoolean(
-        ConfigConstants.Path.SETTINGS_LOGIN_DEATH_STATE_QUIT_RECORD, true);
+    return mainConfig.getBoolean(ConfigConstants.Path.SETTINGS_LOGIN_DEATH_STATE_QUIT_RECORD, true);
   }
 
   @Override

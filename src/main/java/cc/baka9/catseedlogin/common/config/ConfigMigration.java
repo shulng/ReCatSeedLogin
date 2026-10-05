@@ -8,9 +8,8 @@ import java.util.logging.Logger;
 /**
  * 旧版 config.yml 路径迁移。
  *
- * <p>配置文件重新归组后：settings 拆分为 account / before-login / login 三个子分组， 原先散落在
- * settings 与顶层 same-ip-login 下、依赖账号表记录的配置项（IP 数量限制、死亡退出位置记录、 同IP免登录）作为登录流程的一部分归入
- * settings.login。
+ * <p>配置文件重新归组后：settings 拆分为 account / before-login / login 三个子分组， 原先散落在 settings 与顶层 same-ip-login
+ * 下、依赖账号表记录的配置项（IP 数量限制、死亡退出位置记录、 同IP免登录）作为登录流程的一部分归入 settings.login。
  *
  * <p>旧版配置文件里这些值仍在老路径上，如果直接读取新路径就会静默回退到默认值， 等于用户升级后配置被重置。这里在加载（并补全默认值）之后把旧路径的值搬到新路径。
  */
