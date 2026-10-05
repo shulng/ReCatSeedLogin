@@ -85,6 +85,15 @@ public class ConfigConstants {
     public static final String SETTINGS_LOGIN_LOOPBACK_BYPASS = "settings.login.loopback-bypass";
     public static final String SETTINGS_LOGIN_REENTER_INTERVAL = "settings.login.reenter-interval";
     public static final String SETTINGS_LOGIN_AFTER_LOGIN_BACK = "settings.login.after-login-back";
+    public static final String SETTINGS_LOGIN_DEATH_STATE_QUIT_RECORD =
+        "settings.login.death-state-quit-record-location";
+    public static final String SETTINGS_LOGIN_IP_REGISTER_LIMIT =
+        "settings.login.ip-register-count-limit";
+    public static final String SETTINGS_LOGIN_IP_COUNT_LIMIT = "settings.login.ip-count-limit";
+    public static final String SETTINGS_LOGIN_SAME_IP_ENABLED =
+        "settings.login.same-ip-login.enabled";
+    public static final String SETTINGS_LOGIN_SAME_IP_TIMEOUT =
+        "settings.login.same-ip-login.timeout";
 
     public static final String BEDROCK_LOGIN_BYPASS = "bedrock.login-bypass";
     public static final String BEDROCK_FLOODGATE_PREFIX = "bedrock.floodgate-prefix-protect";
@@ -98,14 +107,6 @@ public class ConfigConstants {
     public static final String DATABASE_NAME = "database.database";
     public static final String DATABASE_USER = "database.user";
     public static final String DATABASE_PASSWORD = "database.password";
-
-    // ---- database 数据存储相关 ----
-    public static final String DATABASE_IP_REGISTER_LIMIT = "database.ip-register-count-limit";
-    public static final String DATABASE_IP_COUNT_LIMIT = "database.ip-count-limit";
-    public static final String DATABASE_DEATH_STATE_QUIT_RECORD =
-        "database.death-state-quit-record-location";
-    public static final String DATABASE_SAME_IP_ENABLED = "database.same-ip-login.enabled";
-    public static final String DATABASE_SAME_IP_TIMEOUT = "database.same-ip-login.timeout";
 
     public static final String EMAIL_ENABLED = "email.enabled";
     public static final String EMAIL_ACCOUNT = "email.account";

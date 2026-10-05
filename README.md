@@ -283,6 +283,12 @@ settings:
     loopback-bypass: false           # 本地回环地址(127.0.0.1/::1)连接时跳过登录
     reenter-interval: 60             # 重入间隔限制 (tick, 20tick=1秒)
     after-login-back: true           # 登录后是否返回退出地点
+    death-state-quit-record-location: true  # 死亡状态退出是否记录位置
+    ip-register-count-limit: 2       # 同IP注册数量限制 (读取账号表)
+    ip-count-limit: 2                # 同IP登录数量限制 (读取账号表)
+    same-ip-login:
+      enabled: false                 # 是否启用同IP免登录
+      timeout: 5                     # IP免登录超时时间 (分钟)
 
 # 基岩版设置
 bedrock:
@@ -295,21 +301,12 @@ spawn:
 
 # 数据库设置
 database:
-  # ---- 连接信息 ----
   mysql: false                     # 使用MySQL (false=SQLite)
   host: "127.0.0.1"
   port: 3306
   database: "catseedlogin"
   user: "root"
   password: "password"
-
-  # ---- 数据存储相关 ----
-  ip-register-count-limit: 2       # 同IP注册数量限制 (读取账号表)
-  ip-count-limit: 2                # 同IP登录数量限制 (读取账号表)
-  death-state-quit-record-location: true  # 死亡状态退出是否记录位置
-  same-ip-login:
-    enabled: false                 # 是否启用同IP免登录
-    timeout: 5                     # IP免登录超时时间 (分钟)
 
 # 邮箱验证设置
 email:
@@ -330,9 +327,10 @@ proxy:
   login-server-name: "lobby"       # 登录服务器名称(与代理端配置一致)
 ```
 
-> **升级提示**：配置文件在 v2.0.0 重新归组后，`settings` 拆分为 `account` / `before-login` / `login`，
-> 依赖数据库记录的配置项（`ip-*-count-limit`、`death-state-quit-record-location`、`same-ip-login`）
-> 下沉到 `database` 节点。插件启动时会自动把旧路径上的配置迁移到新路径并移除旧节点，
+> **升级提示**：配置文件经过重新归组，`settings` 拆分为 `account` / `before-login` / `login`，
+> IP 限制相关配置（`ip-*-count-limit`、`death-state-quit-record-location`、`same-ip-login`）
+> 归入 `settings.login` 节点，`database` 只保留数据库连接信息。
+> 插件启动时会自动把旧路径（`settings.*` / 顶层 `same-ip-login.*`）上的配置迁移到新路径并移除旧节点，
 > 无需手动修改历史配置文件。
 
 ### 语言文件

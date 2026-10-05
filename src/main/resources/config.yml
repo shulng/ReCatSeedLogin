@@ -49,6 +49,18 @@ settings:
     reenter-interval: 60
     # 登录后是否返回退出地点
     after-login-back: true
+    # 死亡状态退出游戏是否记录退出位置
+    death-state-quit-record-location: true
+    # 相同IP注册数量限制 (依赖账号表记录)
+    ip-register-count-limit: 2
+    # 相同IP登录数量限制 (依赖账号表记录)
+    ip-count-limit: 2
+    # 同IP免登录 (玩家IP记录在账号表中)
+    same-ip-login:
+      # 是否启用同IP免登录
+      enabled: false
+      # IP记录超时时间 (分钟)
+      timeout: 5
 
 # 基岩版设置
 bedrock:
@@ -73,20 +85,6 @@ database:
   database: "catseedlogin"
   user: "root"
   password: "password"
-
-  # ============ 数据存储相关 ============
-  # 相同IP注册数量限制 (依赖账号表记录)
-  ip-register-count-limit: 2
-  # 相同IP登录数量限制 (依赖账号表记录)
-  ip-count-limit: 2
-  # 死亡状态退出游戏是否记录退出位置
-  death-state-quit-record-location: true
-  # 同IP免登录 (玩家IP记录在账号表中)
-  same-ip-login:
-    # 是否启用同IP免登录
-    enabled: false
-    # IP记录超时时间 (分钟)
-    timeout: 5
 
 # 邮箱验证设置
 email:

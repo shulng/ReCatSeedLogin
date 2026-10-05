@@ -150,13 +150,14 @@ public abstract class BaseConfigManager
   @Override
   public int getIpRegisterCountLimit() {
     return mainConfig.getInt(
-        ConfigConstants.Path.DATABASE_IP_REGISTER_LIMIT, ConfigConstants.DEFAULT_IP_REGISTER_LIMIT);
+        ConfigConstants.Path.SETTINGS_LOGIN_IP_REGISTER_LIMIT,
+        ConfigConstants.DEFAULT_IP_REGISTER_LIMIT);
   }
 
   @Override
   public int getIpCountLimit() {
     return mainConfig.getInt(
-        ConfigConstants.Path.DATABASE_IP_COUNT_LIMIT, ConfigConstants.DEFAULT_IP_LOGIN_LIMIT);
+        ConfigConstants.Path.SETTINGS_LOGIN_IP_COUNT_LIMIT, ConfigConstants.DEFAULT_IP_LOGIN_LIMIT);
   }
 
   @Override
@@ -171,7 +172,7 @@ public abstract class BaseConfigManager
 
   @Override
   public boolean isLoginWithSameIP() {
-    return mainConfig.getBoolean(ConfigConstants.Path.DATABASE_SAME_IP_ENABLED, false);
+    return mainConfig.getBoolean(ConfigConstants.Path.SETTINGS_LOGIN_SAME_IP_ENABLED, false);
   }
 
   @Override
@@ -182,7 +183,8 @@ public abstract class BaseConfigManager
   @Override
   public int getIPTimeout() {
     return mainConfig.getInt(
-        ConfigConstants.Path.DATABASE_SAME_IP_TIMEOUT, ConfigConstants.DEFAULT_IP_TIMEOUT_MINUTES);
+        ConfigConstants.Path.SETTINGS_LOGIN_SAME_IP_TIMEOUT,
+        ConfigConstants.DEFAULT_IP_TIMEOUT_MINUTES);
   }
 
   @Override
@@ -236,7 +238,8 @@ public abstract class BaseConfigManager
 
   @Override
   public boolean isDeathStateQuitRecordLocation() {
-    return mainConfig.getBoolean(ConfigConstants.Path.DATABASE_DEATH_STATE_QUIT_RECORD, true);
+    return mainConfig.getBoolean(
+        ConfigConstants.Path.SETTINGS_LOGIN_DEATH_STATE_QUIT_RECORD, true);
   }
 
   @Override

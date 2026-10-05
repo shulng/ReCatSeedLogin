@@ -102,13 +102,13 @@ public class Config {
 
     public static void save() {
       BukkitConfigManager cm = plugin.getConfigManager();
-      cm.set(ConfigConstants.Path.DATABASE_IP_REGISTER_LIMIT, IpRegisterCountLimit);
-      cm.set(ConfigConstants.Path.DATABASE_IP_COUNT_LIMIT, IpCountLimit);
+      cm.set(ConfigConstants.Path.SETTINGS_LOGIN_IP_REGISTER_LIMIT, IpRegisterCountLimit);
+      cm.set(ConfigConstants.Path.SETTINGS_LOGIN_IP_COUNT_LIMIT, IpCountLimit);
       cm.set(ConfigConstants.Path.SETTINGS_ACCOUNT_LIMIT_CHINESE_ID, LimitChineseID);
       cm.set(ConfigConstants.Path.BEDROCK_LOGIN_BYPASS, BedrockLoginBypass);
-      cm.set(ConfigConstants.Path.DATABASE_SAME_IP_ENABLED, LoginwiththesameIP);
+      cm.set(ConfigConstants.Path.SETTINGS_LOGIN_SAME_IP_ENABLED, LoginwiththesameIP);
       cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_EMPTY_BACKPACK, EmptyBackpack);
-      cm.set(ConfigConstants.Path.DATABASE_SAME_IP_TIMEOUT, IPTimeout);
+      cm.set(ConfigConstants.Path.SETTINGS_LOGIN_SAME_IP_TIMEOUT, IPTimeout);
       cm.set(ConfigConstants.Path.SETTINGS_ACCOUNT_MIN_LENGTH_ID, MinLengthID);
       cm.set(ConfigConstants.Path.SETTINGS_ACCOUNT_MAX_LENGTH_ID, MaxLengthID);
       cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_NO_DAMAGE, BeforeLoginNoDamage);
@@ -116,7 +116,9 @@ public class Config {
       cm.set(ConfigConstants.Path.SETTINGS_LOGIN_AFTER_LOGIN_BACK, AfterLoginBack);
       cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_CAN_TP_SPAWN, CanTpSpawnLocation);
       cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_AUTO_KICK, AutoKick);
-      cm.set(ConfigConstants.Path.DATABASE_DEATH_STATE_QUIT_RECORD, DeathStateQuitRecordLocation);
+      cm.set(
+          ConfigConstants.Path.SETTINGS_LOGIN_DEATH_STATE_QUIT_RECORD,
+          DeathStateQuitRecordLocation);
       cm.set(ConfigConstants.Path.BEDROCK_FLOODGATE_PREFIX, FloodgatePrefixProtect);
       cm.set(ConfigConstants.Path.SETTINGS_ACCOUNT_NAME_PATTERN, NamePattern);
       cm.set(ConfigConstants.Path.SETTINGS_LOGIN_LOOPBACK_BYPASS, LoopbackLoginBypass);
