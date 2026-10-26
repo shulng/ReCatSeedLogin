@@ -42,7 +42,7 @@ public class Listeners implements Listener {
     if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.getName())) return;
     String input = event.getMessage().toLowerCase();
     for (Pattern regex : Config.Settings.CommandWhiteList) {
-      if (regex.matcher(input).find()) return;
+      if (regex.matcher(input).lookingAt()) return;
     }
     event.setCancelled(true);
   }

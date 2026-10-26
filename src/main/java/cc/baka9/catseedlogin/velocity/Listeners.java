@@ -64,7 +64,7 @@ public class Listeners {
 
   private boolean isCommandAllowed(String input) {
     for (java.util.regex.Pattern regex : configManager.getCommandWhiteList()) {
-      if (regex.matcher(input).find()) return true;
+      if (regex.matcher(input).lookingAt()) return true;
     }
     return false;
   }
