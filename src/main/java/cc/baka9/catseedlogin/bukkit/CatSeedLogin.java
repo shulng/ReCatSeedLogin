@@ -8,7 +8,6 @@ import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.bukkit.task.Task;
 import cc.baka9.catseedlogin.common.i18n.I18n;
 import cc.baka9.catseedlogin.common.util.TabCompleteUtil;
-import cn.handyplus.lib.adapter.HandySchedulerUtil;
 import java.util.Arrays;
 import java.util.Collections;
 import org.bukkit.Bukkit;
@@ -34,7 +33,6 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
     instance = this;
     morePaperLib = new MorePaperLib(this);
     CatScheduler.init(morePaperLib);
-    HandySchedulerUtil.init(this);
     getServer().getPluginManager().registerEvents(this, this);
 
     configManager = new BukkitConfigManager(this);
