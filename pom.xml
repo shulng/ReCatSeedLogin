@@ -72,8 +72,8 @@
             <url>https://mvn-repo.arim.space/lesser-gpl3/</url>
         </repository>
         <repository>
-            <id>handyplus</id>
-            <url>https://repo.handyplus.cn/repository/maven-public/</url>
+            <id>handyplus-maven</id>
+            <url>https://maven.cnb.cool/handyplus/maven/-/packages/</url>
         </repository>
     </repositories>
 
