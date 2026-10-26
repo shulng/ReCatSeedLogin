@@ -32,7 +32,7 @@
         <commons-lang3.version>3.21.0</commons-lang3.version>
         <commons-net.version>3.13.0</commons-net.version>
         <javax-mail.version>1.6.2</javax-mail.version>
-        <floodgate.version>2.0-SNAPSHOT</floodgate.version>
+        <floodgate.version>2.2.5-SNAPSHOT</floodgate.version>
         <morepaperlib.version>0.5.3</morepaperlib.version>
         <argon2.version>2.12</argon2.version>
 
@@ -47,6 +47,10 @@
             <url>https://repo.maven.apache.org/maven2/</url>
         </repository>
         <repository>
+            <id>opencollab-snapshot</id>
+            <url>https://repo.opencollab.dev/main/</url>
+        </repository>
+        <repository>
             <id>papermc</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
@@ -57,14 +61,6 @@
         <repository>
             <id>bungeecord-repo</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </repository>
-        <repository>
-            <id>velocity-repo</id>
-            <url>https://nexus.velocitypowered.com/repository/maven-public/</url>
-        </repository>
-        <repository>
-            <id>opencollab-snapshot</id>
-            <url>https://repo.opencollab.dev/maven-snapshots/</url>
         </repository>
         <repository>
             <id>arim-mvn-lgpl3</id>
