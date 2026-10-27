@@ -6,7 +6,7 @@
 
     <groupId>cc.baka9</groupId>
     <artifactId>CatSeedLogin</artifactId>
-    <version>2.0.1</version>
+    <version>2.1.1</version>
     <packaging>jar</packaging>
 
     <name>CatSeedLogin</name>
@@ -32,8 +32,7 @@
         <commons-lang3.version>3.21.0</commons-lang3.version>
         <commons-net.version>3.13.0</commons-net.version>
         <javax-mail.version>1.6.2</javax-mail.version>
-        <folialib.version>1.3.5</folialib.version>
-        <floodgate.version>2.0-SNAPSHOT</floodgate.version>
+        <floodgate.version>2.2.5-SNAPSHOT</floodgate.version>
         <morepaperlib.version>0.5.3</morepaperlib.version>
         <argon2.version>2.12</argon2.version>
 
@@ -48,6 +47,10 @@
             <url>https://repo.maven.apache.org/maven2/</url>
         </repository>
         <repository>
+            <id>opencollab-snapshot</id>
+            <url>https://repo.opencollab.dev/main/</url>
+        </repository>
+        <repository>
             <id>papermc</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
@@ -60,20 +63,8 @@
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </repository>
         <repository>
-            <id>velocity-repo</id>
-            <url>https://nexus.velocitypowered.com/repository/maven-public/</url>
-        </repository>
-        <repository>
-            <id>opencollab-snapshot</id>
-            <url>https://repo.opencollab.dev/maven-snapshots/</url>
-        </repository>
-        <repository>
             <id>arim-mvn-lgpl3</id>
             <url>https://mvn-repo.arim.space/lesser-gpl3/</url>
-        </repository>
-        <repository>
-            <id>handyplus</id>
-            <url>https://repo.handyplus.cn/repository/maven-public/</url>
         </repository>
     </repositories>
 
@@ -151,11 +142,6 @@
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
             <version>${commons-net.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>cn.handyplus.lib.adapter</groupId>
-            <artifactId>FoliaLib</artifactId>
-            <version>${folialib.version}</version>
         </dependency>
         <dependency>
             <groupId>space.arim.morepaperlib</groupId>
