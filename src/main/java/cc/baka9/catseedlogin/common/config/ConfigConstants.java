@@ -21,6 +21,15 @@ public class ConfigConstants {
   public static final int DEFAULT_AUTO_KICK_SECONDS = 120;
   public static final int DEFAULT_REENTER_INTERVAL_TICKS = 60;
   public static final int DEFAULT_IP_TIMEOUT_MINUTES = 5;
+  public static final boolean DEFAULT_TWO_FACTOR_ENABLED = false;
+  public static final String DEFAULT_TWO_FACTOR_ISSUER = "CatSeedLogin";
+  public static final int DEFAULT_TWO_FACTOR_DIGITS = 6;
+  public static final int DEFAULT_TWO_FACTOR_PERIOD = 30;
+  public static final int DEFAULT_TWO_FACTOR_RECOVERY_CODE_COUNT = 10;
+  public static final int DEFAULT_TWO_FACTOR_MAX_ATTEMPTS = 5;
+  public static final int DEFAULT_TWO_FACTOR_ATTEMPT_WINDOW = 300;
+  public static final int DEFAULT_TWO_FACTOR_PENDING_TIMEOUT = 0;
+
   public static final String DEFAULT_SMTP_HOST = "smtp.example.com";
   public static final String DEFAULT_SMTP_PORT = "465";
   public static final String DEFAULT_FROM_NAME = "Server";
@@ -94,6 +103,16 @@ public class ConfigConstants {
         "settings.login.same-ip-login.enabled";
     public static final String SETTINGS_LOGIN_SAME_IP_TIMEOUT =
         "settings.login.same-ip-login.timeout";
+
+    // ---- two-factor 两步验证 ----
+    public static final String TWO_FACTOR_ENABLED = "two-factor.enabled";
+    public static final String TWO_FACTOR_ISSUER = "two-factor.issuer";
+    public static final String TWO_FACTOR_DIGITS = "two-factor.digits";
+    public static final String TWO_FACTOR_PERIOD = "two-factor.period";
+    public static final String TWO_FACTOR_RECOVERY_CODE_COUNT = "two-factor.recovery-code-count";
+    public static final String TWO_FACTOR_MAX_ATTEMPTS = "two-factor.max-attempts";
+    public static final String TWO_FACTOR_ATTEMPT_WINDOW = "two-factor.attempt-window";
+    public static final String TWO_FACTOR_PENDING_TIMEOUT = "two-factor.pending-timeout";
 
     public static final String BEDROCK_LOGIN_BYPASS = "bedrock.login-bypass";
     public static final String BEDROCK_FLOODGATE_PREFIX = "bedrock.floodgate-prefix-protect";

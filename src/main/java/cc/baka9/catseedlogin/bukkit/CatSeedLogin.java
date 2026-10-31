@@ -6,7 +6,9 @@ import cc.baka9.catseedlogin.bukkit.config.BukkitPlatformAdapter;
 import cc.baka9.catseedlogin.bukkit.database.*;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.bukkit.task.Task;
+import cc.baka9.catseedlogin.bukkit.util.TwoFactorMessageUtil;
 import cc.baka9.catseedlogin.common.i18n.I18n;
+import cc.baka9.catseedlogin.common.util.SecretCodec;
 import cc.baka9.catseedlogin.common.util.TabCompleteUtil;
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,6 +51,8 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
       getServer().getLogger().warning("加载配置文件时出错，请检查你的配置文件。");
     }
 
+    initTwoFactorSupport();
+
     sql = configManager.isMySQL() ? new MySQL(this) : new SQLite(this);
     try {
       sql.init();
@@ -88,6 +92,16 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
     registerCommands();
 
     Task.runAll();
+  }
+
+  /** 两步验证的地基：探测 adventure 可用性，并准备好 TOTP 密钥文件。 */
+  private void initTwoFactorSupport() {
+    TwoFactorMessageUtil.probe();
+    try {
+      SecretCodec.init(getDataFolder());
+    } catch (Exception e) {
+      getLogger().warning("初始化两步验证密钥文件失败，两步验证将不可用: " + e.getMessage());
+    }
   }
 
   /** 登录前失明已内置，若服务器仍安装 CatSeedLoginBlinding 会重复施加失明效果，这里提示管理员移除。 */

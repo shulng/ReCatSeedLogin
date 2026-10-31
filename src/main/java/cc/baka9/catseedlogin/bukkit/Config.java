@@ -73,6 +73,14 @@ public class Config {
     public static volatile boolean LoopbackLoginBypass;
     public static volatile boolean BeforeLoginAllowChat;
     public static volatile boolean BlindingBeforeLogin;
+    public static volatile boolean TwoFactorEnabled;
+    public static volatile String TwoFactorIssuer;
+    public static volatile int TwoFactorDigits;
+    public static volatile int TwoFactorPeriod;
+    public static volatile int TwoFactorRecoveryCodeCount;
+    public static volatile int TwoFactorMaxAttempts;
+    public static volatile int TwoFactorAttemptWindow;
+    public static volatile int TwoFactorPendingTimeout;
 
     public static void load() {
       BukkitConfigManager cm = plugin.getConfigManager();
@@ -98,6 +106,14 @@ public class Config {
       LoopbackLoginBypass = cm.isLoopbackLoginBypass();
       BeforeLoginAllowChat = cm.isBeforeLoginAllowChat();
       BlindingBeforeLogin = cm.isBlindingBeforeLogin();
+      TwoFactorEnabled = cm.isTwoFactorEnabled();
+      TwoFactorIssuer = cm.getTwoFactorIssuer();
+      TwoFactorDigits = cm.getTwoFactorDigits();
+      TwoFactorPeriod = cm.getTwoFactorPeriod();
+      TwoFactorRecoveryCodeCount = cm.getTwoFactorRecoveryCodeCount();
+      TwoFactorMaxAttempts = cm.getTwoFactorMaxAttempts();
+      TwoFactorAttemptWindow = cm.getTwoFactorAttemptWindow();
+      TwoFactorPendingTimeout = cm.getTwoFactorPendingTimeout();
     }
 
     public static void save() {
@@ -124,6 +140,14 @@ public class Config {
       cm.set(ConfigConstants.Path.SETTINGS_LOGIN_LOOPBACK_BYPASS, LoopbackLoginBypass);
       cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_ALLOW_CHAT, BeforeLoginAllowChat);
       cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_BLINDING, BlindingBeforeLogin);
+      cm.set(ConfigConstants.Path.TWO_FACTOR_ENABLED, TwoFactorEnabled);
+      cm.set(ConfigConstants.Path.TWO_FACTOR_ISSUER, TwoFactorIssuer);
+      cm.set(ConfigConstants.Path.TWO_FACTOR_DIGITS, TwoFactorDigits);
+      cm.set(ConfigConstants.Path.TWO_FACTOR_PERIOD, TwoFactorPeriod);
+      cm.set(ConfigConstants.Path.TWO_FACTOR_RECOVERY_CODE_COUNT, TwoFactorRecoveryCodeCount);
+      cm.set(ConfigConstants.Path.TWO_FACTOR_MAX_ATTEMPTS, TwoFactorMaxAttempts);
+      cm.set(ConfigConstants.Path.TWO_FACTOR_ATTEMPT_WINDOW, TwoFactorAttemptWindow);
+      cm.set(ConfigConstants.Path.TWO_FACTOR_PENDING_TIMEOUT, TwoFactorPendingTimeout);
 
       if (CommandWhiteList != null && !CommandWhiteList.isEmpty()) {
         cm.getMainConfig()

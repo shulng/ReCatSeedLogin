@@ -1,6 +1,7 @@
 package cc.baka9.catseedlogin.bukkit.database;
 
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
+import cc.baka9.catseedlogin.bukkit.object.TotpRecoveryCode;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -34,6 +35,23 @@ public abstract class SQL {
     addColumnIfMissing("email");
     addColumnIfMissing("ips");
     addColumnIfMissing("location");
+    addColumnIfMissing("totp_secret");
+    addColumnIfMissing("totp_enabled");
+
+    createRecoveryCodeTable();
+  }
+
+  /** 恢复码单独建表：一个玩家多条码，塞进 accounts 单列会让「标记单条已用」变成读-改-写整串。 */
+  private void createRecoveryCodeTable() {
+    try {
+      flush(
+          new BufferStatement(
+              "CREATE TABLE IF NOT EXISTS totp_recovery_codes (name CHAR(255), code_hash"
+                  + " CHAR(255), used_at TIMESTAMP NULL)"));
+    } catch (SQLException e) {
+      // 两步验证是可选功能，建表失败不应该拖垮整个插件
+      logger.severe("Failed to create totp_recovery_codes table: " + e.getMessage());
+    }
   }
 
   private void addColumnIfMissing(String columnName) {
@@ -237,7 +255,142 @@ public abstract class SQL {
     lp.setEmail(resultSet.getString("email"));
     lp.setIps(resultSet.getString("ips"));
     lp.setLocation(resultSet.getString("location"));
+    lp.setTotpSecret(resultSet.getString("totp_secret"));
+    lp.setTotpEnabled("1".equals(resultSet.getString("totp_enabled")));
     return lp;
+  }
+
+  /**
+   * 更新玩家的 TOTP 密钥。
+   *
+   * @param secret 经 {@link cc.baka9.catseedlogin.common.util.SecretCodec} 加密后的密钥，传 null 表示解绑
+   */
+  public synchronized void updateTotpSecret(String name, String secret) {
+    try {
+      flush(
+          new BufferStatement(
+              "UPDATE accounts SET totp_secret = ? WHERE name = ?", secret, name));
+    } catch (SQLException e) {
+      logger.severe("Failed to update totp secret for player: " + name + " - " + e.getMessage());
+      throw new RuntimeException(e);
+    }
+  }
+
+  /** 更新两步验证启用状态。 */
+  public synchronized void updateTotpEnabled(String name, boolean enabled) {
+    try {
+      flush(
+          new BufferStatement(
+              "UPDATE accounts SET totp_enabled = ? WHERE name = ?", enabled ? "1" : "0", name));
+    } catch (SQLException e) {
+      logger.severe("Failed to update totp state for player: " + name + " - " + e.getMessage());
+      throw new RuntimeException(e);
+    }
+  }
+
+  /** 整批替换玩家的恢复码，旧码一并作废。 */
+  public synchronized void saveRecoveryCodes(String name, List<TotpRecoveryCode> codes) {
+    try {
+      flush(new BufferStatement("DELETE FROM totp_recovery_codes WHERE name = ?", name));
+      if (codes == null) {
+        return;
+      }
+      for (TotpRecoveryCode code : codes) {
+        if (code == null) {
+          continue;
+        }
+        flush(
+            new BufferStatement(
+                "INSERT INTO totp_recovery_codes (name, code_hash) VALUES (?, ?)",
+                name,
+                code.getCodeHash()));
+      }
+    } catch (SQLException e) {
+      logger.severe("Failed to save recovery codes for player: " + name + " - " + e.getMessage());
+      throw new RuntimeException(e);
+    }
+  }
+
+  /** 查询玩家的全部恢复码（含已使用的）。 */
+  public synchronized List<TotpRecoveryCode> getRecoveryCodes(String name) {
+    List<TotpRecoveryCode> codes = new ArrayList<>();
+    String sql = "SELECT name, code_hash, used_at FROM totp_recovery_codes WHERE name = ?";
+    try (PreparedStatement ps = new BufferStatement(sql, name).prepareStatement(getConnection());
+        ResultSet resultSet = ps.executeQuery()) {
+      while (resultSet.next()) {
+        java.sql.Timestamp usedAt = resultSet.getTimestamp("used_at");
+        codes.add(
+            new TotpRecoveryCode(
+                resultSet.getString("name"),
+                resultSet.getString("code_hash"),
+                usedAt == null ? null : usedAt.getTime()));
+      }
+    } catch (SQLException e) {
+      logger.severe("Failed to get recovery codes for player: " + name + " - " + e.getMessage());
+    }
+    return codes;
+  }
+
+  /**
+   * 在玩家未使用的恢复码里查找与输入匹配的那一。
+   *
+   * <p>恢复码用的是 Argon2 哈希，逐条比对有 CPU 开销，调用方应放到异步线程里执行。
+   *
+   * @param rawCode 玩家输入的原始恢复码（可带连字符、大小写不限）
+   * @return 匹配到的恢复码，没有匹配返回 null
+   */
+  public synchronized TotpRecoveryCode findUnusedRecoveryCode(String name, String rawCode) {
+    for (TotpRecoveryCode code : getRecoveryCodes(name)) {
+      if (code.isUsed()) {
+        continue;
+      }
+      if (TotpRecoveryCode.matches(name, rawCode, code.getCodeHash())) {
+        return code;
+      }
+    }
+    return null;
+  }
+
+  /** 把恢复码标记为已使用。 */
+  public synchronized void markRecoveryCodeUsed(String name, String codeHash) {
+    try {
+      flush(
+          new BufferStatement(
+              "UPDATE totp_recovery_codes SET used_at = ? WHERE name = ? AND code_hash = ? AND"
+                  + " used_at IS NULL",
+              new Date(),
+              name,
+              codeHash));
+    } catch (SQLException e) {
+      logger.severe(
+          "Failed to mark recovery code used for player: " + name + " - " + e.getMessage());
+      throw new RuntimeException(e);
+    }
+  }
+
+  /** 作废玩家的全部恢复码（关闭两步验证时使用，保留记录以便追溯）。 */
+  public synchronized void invalidateRecoveryCodes(String name) {
+    try {
+      flush(
+          new BufferStatement(
+              "UPDATE totp_recovery_codes SET used_at = ? WHERE name = ? AND used_at IS NULL",
+              new Date(),
+              name));
+    } catch (SQLException e) {
+      logger.severe(
+          "Failed to invalidate recovery codes for player: " + name + " - " + e.getMessage());
+      throw new RuntimeException(e);
+    }
+  }
+
+  /** 作废玩家的全部恢复码（关闭两步验证或重新绑定时使用）。 */
+  public synchronized void deleteRecoveryCodes(String name) {
+    try {
+      flush(new BufferStatement("DELETE FROM totp_recovery_codes WHERE name = ?", name));
+    } catch (SQLException e) {
+      logger.severe("Failed to delete recovery codes for player: " + name + " - " + e.getMessage());
+      throw new RuntimeException(e);
+    }
   }
 
   /**

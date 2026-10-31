@@ -17,6 +17,12 @@ public class LoginPlayer {
   private long lastAction;
   private String location;
 
+  /** 加密后的 TOTP 密钥，null 表示未绑定。 */
+  private String totpSecret;
+
+  /** 是否已启用两步验证。 */
+  private boolean totpEnabled;
+
   public LoginPlayer(String name, String password) {
     this.name = name;
     this.password = password;
@@ -46,6 +52,8 @@ public class LoginPlayer {
     copy.ips = this.ips;
     copy.lastAction = this.lastAction;
     copy.location = this.location;
+    copy.totpSecret = this.totpSecret;
+    copy.totpEnabled = this.totpEnabled;
     return copy;
   }
 }
