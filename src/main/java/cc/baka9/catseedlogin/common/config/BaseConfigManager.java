@@ -262,6 +262,58 @@ public abstract class BaseConfigManager
   }
 
   @Override
+  public boolean isTwoFactorEnabled() {
+    return mainConfig.getBoolean(
+        ConfigConstants.Path.TWO_FACTOR_ENABLED, ConfigConstants.DEFAULT_TWO_FACTOR_ENABLED);
+  }
+
+  @Override
+  public String getTwoFactorIssuer() {
+    return mainConfig.getString(
+        ConfigConstants.Path.TWO_FACTOR_ISSUER, ConfigConstants.DEFAULT_TWO_FACTOR_ISSUER);
+  }
+
+  @Override
+  public int getTwoFactorDigits() {
+    return mainConfig.getInt(
+        ConfigConstants.Path.TWO_FACTOR_DIGITS, ConfigConstants.DEFAULT_TWO_FACTOR_DIGITS);
+  }
+
+  @Override
+  public int getTwoFactorPeriod() {
+    return mainConfig.getInt(
+        ConfigConstants.Path.TWO_FACTOR_PERIOD, ConfigConstants.DEFAULT_TWO_FACTOR_PERIOD);
+  }
+
+  @Override
+  public int getTwoFactorRecoveryCodeCount() {
+    return mainConfig.getInt(
+        ConfigConstants.Path.TWO_FACTOR_RECOVERY_CODE_COUNT,
+        ConfigConstants.DEFAULT_TWO_FACTOR_RECOVERY_CODE_COUNT);
+  }
+
+  @Override
+  public int getTwoFactorMaxAttempts() {
+    return mainConfig.getInt(
+        ConfigConstants.Path.TWO_FACTOR_MAX_ATTEMPTS,
+        ConfigConstants.DEFAULT_TWO_FACTOR_MAX_ATTEMPTS);
+  }
+
+  @Override
+  public int getTwoFactorAttemptWindow() {
+    return mainConfig.getInt(
+        ConfigConstants.Path.TWO_FACTOR_ATTEMPT_WINDOW,
+        ConfigConstants.DEFAULT_TWO_FACTOR_ATTEMPT_WINDOW);
+  }
+
+  @Override
+  public int getTwoFactorPendingTimeout() {
+    return mainConfig.getInt(
+        ConfigConstants.Path.TWO_FACTOR_PENDING_TIMEOUT,
+        ConfigConstants.DEFAULT_TWO_FACTOR_PENDING_TIMEOUT);
+  }
+
+  @Override
   public List<Pattern> getCommandWhiteList() {
     List<String> patterns =
         mainConfig.getStringList(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_COMMAND_WHITELIST);

@@ -50,6 +50,30 @@ public interface CoreConfig {
 
   List<Pattern> getCommandWhiteList();
 
+  /** 是否启用两步验证 (TOTP)。 */
+  boolean isTwoFactorEnabled();
+
+  /** 验证器中显示的服务名。 */
+  String getTwoFactorIssuer();
+
+  /** TOTP 验证码位数。 */
+  int getTwoFactorDigits();
+
+  /** TOTP 时间步长 (秒)。 */
+  int getTwoFactorPeriod();
+
+  /** 启用两步验证时生成的恢复码数量。 */
+  int getTwoFactorRecoveryCodeCount();
+
+  /** 第二步验证允许的连续失败次数，达到后踢出。 */
+  int getTwoFactorMaxAttempts();
+
+  /** 失败计数的有效窗口 (秒)，超时后清零。 */
+  int getTwoFactorAttemptWindow();
+
+  /** 待验证状态超时 (秒)，0 表示沿用 settings.before-login.auto-kick。 */
+  int getTwoFactorPendingTimeout();
+
   interface SpawnLocation {
     String getWorld();
 
