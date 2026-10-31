@@ -63,15 +63,14 @@ public class CommandRegister implements CommandExecutor {
     }
     String currentIp = player.getAddress().getAddress().getHostAddress();
     boolean isLoopback = player.getAddress().getAddress().isLoopbackAddress();
-    CatScheduler.runTaskAsync(
-        () -> {
-          try {
-            processRegistration(player, name, password, currentIp, isLoopback);
-          } catch (Exception e) {
-            e.printStackTrace();
-            player.sendMessage(MessageKey.INTERNAL_ERROR.get());
-          }
-        });
+    CatScheduler.runTaskAsync(() -> {
+      try {
+        processRegistration(player, name, password, currentIp, isLoopback);
+      } catch (Exception e) {
+        e.printStackTrace();
+        player.sendMessage(MessageKey.INTERNAL_ERROR.get());
+      }
+    });
   }
 
   private void processRegistration(
@@ -95,11 +94,10 @@ public class CommandRegister implements CommandExecutor {
     PluginContext.getSql().add(lp);
     Cache.refresh(lp.getName());
     LoginPlayerHelper.add(lp);
-    CatScheduler.runTask(
-        () -> {
-          CatSeedPlayerRegisterEvent event = new CatSeedPlayerRegisterEvent(Bukkit.getPlayer(name));
-          Bukkit.getServer().getPluginManager().callEvent(event);
-        });
+    CatScheduler.runTask(() -> {
+      CatSeedPlayerRegisterEvent event = new CatSeedPlayerRegisterEvent(Bukkit.getPlayer(name));
+      Bukkit.getServer().getPluginManager().callEvent(event);
+    });
     player.sendMessage(Config.Language.REGISTER_SUCCESS);
     CatScheduler.updateInventory(player);
     LoginPlayerHelper.recordCurrentIP(player, lp);

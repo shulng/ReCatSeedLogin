@@ -75,16 +75,12 @@ public class EmailCode {
   private static void clear() {
     bindMap
         .entrySet()
-        .removeIf(
-            next ->
-                DateUtil.isExpired(
-                    next.getValue().getCreateTime(), next.getValue().getDurability()));
+        .removeIf(next ->
+            DateUtil.isExpired(next.getValue().getCreateTime(), next.getValue().getDurability()));
     resetPasswordMap
         .entrySet()
-        .removeIf(
-            next ->
-                DateUtil.isExpired(
-                    next.getValue().getCreateTime(), next.getValue().getDurability()));
+        .removeIf(next ->
+            DateUtil.isExpired(next.getValue().getCreateTime(), next.getValue().getDurability()));
   }
 
   public boolean isExpired() {
