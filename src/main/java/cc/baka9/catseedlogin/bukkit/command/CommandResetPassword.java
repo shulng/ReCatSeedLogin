@@ -87,18 +87,17 @@ public class CommandResetPassword implements CommandExecutor {
   }
 
   private void sendResetEmailAsync(CommandSender sender, String name, EmailCode emailCode) {
-    CatScheduler.runTaskAsync(
-        () -> {
-          try {
-            String content = buildResetEmailContent(name, emailCode);
-            EmailSender.sendEmail(
-                emailCode.getEmail(), MessageKey.EMAIL_SUBJECT_RESET_PASSWORD.get(), content);
-            notifyEmailSent(sender, emailCode.getEmail());
-          } catch (Exception e) {
-            notifyEmailFailed(sender);
-            e.printStackTrace();
-          }
-        });
+    CatScheduler.runTaskAsync(() -> {
+      try {
+        String content = buildResetEmailContent(name, emailCode);
+        EmailSender.sendEmail(
+            emailCode.getEmail(), MessageKey.EMAIL_SUBJECT_RESET_PASSWORD.get(), content);
+        notifyEmailSent(sender, emailCode.getEmail());
+      } catch (Exception e) {
+        notifyEmailFailed(sender);
+        e.printStackTrace();
+      }
+    });
   }
 
   private String buildResetEmailContent(String name, EmailCode emailCode) {
@@ -159,10 +158,9 @@ public class CommandResetPassword implements CommandExecutor {
   private void processPasswordResetAsync(Player player, LoginPlayer lp, String pwd) {
     CommandSender sender = player;
     String name = lp.getName();
-    CatScheduler.runTaskAsync(
-        () -> {
-          executePasswordReset(name, lp, pwd, sender);
-        });
+    CatScheduler.runTaskAsync(() -> {
+      executePasswordReset(name, lp, pwd, sender);
+    });
   }
 
   private void executePasswordReset(String name, LoginPlayer lp, String pwd, CommandSender sender) {

@@ -116,12 +116,11 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
     Bukkit.getOnlinePlayers().forEach(p -> names.add(p.getName()));
     if (Cache.isLoaded) {
       Cache.getAllLoginPlayer()
-          .forEach(
-              lp -> {
-                if (lp != null && lp.getName() != null) {
-                  names.add(lp.getName());
-                }
-              });
+          .forEach(lp -> {
+            if (lp != null && lp.getName() != null) {
+              names.add(lp.getName());
+            }
+          });
     }
     return new ArrayList<>(names);
   }
@@ -467,29 +466,27 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
   }
 
   private void delPlayerAsync(CommandSender sender, LoginPlayer lp) {
-    CatScheduler.runTaskAsync(
-        () -> {
-          try {
-            PluginContext.getSql().del(lp.getName());
-            Cache.refresh(lp.getName());
-            LoginPlayerHelper.remove(lp);
-            sender.sendMessage(MessageKey.ACCOUNT_DELETED.get(lp.getName()));
-            kickPlayerIfOnline(lp.getName());
-          } catch (Exception e) {
-            sender.sendMessage(MessageKey.DATABASE_ERROR.get());
-            e.printStackTrace();
-          }
-        });
+    CatScheduler.runTaskAsync(() -> {
+      try {
+        PluginContext.getSql().del(lp.getName());
+        Cache.refresh(lp.getName());
+        LoginPlayerHelper.remove(lp);
+        sender.sendMessage(MessageKey.ACCOUNT_DELETED.get(lp.getName()));
+        kickPlayerIfOnline(lp.getName());
+      } catch (Exception e) {
+        sender.sendMessage(MessageKey.DATABASE_ERROR.get());
+        e.printStackTrace();
+      }
+    });
   }
 
   private static void kickPlayerIfOnline(String name) {
-    CatScheduler.runTask(
-        () -> {
-          Player p = Bukkit.getPlayerExact(name);
-          if (p != null && p.isOnline()) {
-            p.kickPlayer(MessageKey.ACCOUNT_DELETED_KICK.get());
-          }
-        });
+    CatScheduler.runTask(() -> {
+      Player p = Bukkit.getPlayerExact(name);
+      if (p != null && p.isOnline()) {
+        p.kickPlayer(MessageKey.ACCOUNT_DELETED_KICK.get());
+      }
+    });
   }
 
   // ---- Set Password ----
@@ -542,16 +539,15 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
   }
 
   private void notifyPlayerPasswordChanged(LoginPlayer lp) {
-    CatScheduler.runTask(
-        () -> {
-          Player p = Bukkit.getPlayer(lp.getName());
-          if (p == null || !p.isOnline()) return;
-          p.sendMessage(MessageKey.PASSWORD_RESET_BY_ADMIN.get());
-          if (!Config.Settings.CanTpSpawnLocation) return;
-          CatScheduler.teleport(p, Config.Settings.SpawnLocation);
-          if (PluginContext.isLoadProtocolLib()) {
-            LoginPlayerHelper.sendBlankInventoryPacket(p);
-          }
-        });
+    CatScheduler.runTask(() -> {
+      Player p = Bukkit.getPlayer(lp.getName());
+      if (p == null || !p.isOnline()) return;
+      p.sendMessage(MessageKey.PASSWORD_RESET_BY_ADMIN.get());
+      if (!Config.Settings.CanTpSpawnLocation) return;
+      CatScheduler.teleport(p, Config.Settings.SpawnLocation);
+      if (PluginContext.isLoadProtocolLib()) {
+        LoginPlayerHelper.sendBlankInventoryPacket(p);
+      }
+    });
   }
 }

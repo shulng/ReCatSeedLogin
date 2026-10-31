@@ -104,15 +104,14 @@ public class Listeners implements Listener {
 
   private void handleLogin(ProxiedPlayer player, String message) {
     String playerName = player.getName();
-    PluginMain.runAsync(
-        () -> {
-          if (communication.sendConnectRequest(playerName) != 1) {
-            return;
-          }
-          loggedInPlayerList.add(playerName);
-          if (message != null && !message.isEmpty()) {
-            proxyServer.getPluginManager().dispatchCommand(player, message.substring(1));
-          }
-        });
+    PluginMain.runAsync(() -> {
+      if (communication.sendConnectRequest(playerName) != 1) {
+        return;
+      }
+      loggedInPlayerList.add(playerName);
+      if (message != null && !message.isEmpty()) {
+        proxyServer.getPluginManager().dispatchCommand(player, message.substring(1));
+      }
+    });
   }
 }

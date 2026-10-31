@@ -265,15 +265,14 @@ public class Config {
 
   public static void setOfflineLocation(Player player) {
     String locStr = loc2String(player.getLocation());
-    plugin.runTaskAsync(
-        () -> {
-          try {
-            CatSeedLogin.sql.updateLocation(player.getName(), locStr);
-          } catch (Exception e) {
-            plugin.getLogger().warning("保存玩家离线位置失败: " + player.getName());
-            e.printStackTrace();
-          }
-        });
+    plugin.runTaskAsync(() -> {
+      try {
+        CatSeedLogin.sql.updateLocation(player.getName(), locStr);
+      } catch (Exception e) {
+        plugin.getLogger().warning("保存玩家离线位置失败: " + player.getName());
+        e.printStackTrace();
+      }
+    });
   }
 
   public static void setOfflineLocationSync(Player player) {

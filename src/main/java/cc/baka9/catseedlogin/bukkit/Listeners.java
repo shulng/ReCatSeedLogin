@@ -72,15 +72,14 @@ public class Listeners implements Listener {
     String hostAddress = event.getAddress().getHostAddress();
     long count =
         Bukkit.getOnlinePlayers().stream()
-            .filter(
-                p -> {
-                  try {
-                    return p.getAddress() != null
-                        && p.getAddress().getAddress().getHostAddress().equals(hostAddress);
-                  } catch (Exception e) {
-                    return false;
-                  }
-                })
+            .filter(p -> {
+              try {
+                return p.getAddress() != null
+                    && p.getAddress().getAddress().getHostAddress().equals(hostAddress);
+              } catch (Exception e) {
+                return false;
+              }
+            })
             .count();
     if (!event.getAddress().isLoopbackAddress() && count >= Config.Settings.IpCountLimit) {
       event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.TOO_MANY_SAME_IP.get());
@@ -266,9 +265,8 @@ public class Listeners implements Listener {
   private void teleportToLastLocation(Player player) {
     if (!Config.Settings.AfterLoginBack || !Config.Settings.CanTpSpawnLocation) return;
     Config.getOfflineLocation(player)
-        .ifPresent(
-            location ->
-                CatScheduler.runTaskLater(() -> CatScheduler.teleport(player, location), 1L));
+        .ifPresent(location ->
+            CatScheduler.runTaskLater(() -> CatScheduler.teleport(player, location), 1L));
   }
 
   // id只能下划线字母数字

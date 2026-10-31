@@ -123,17 +123,16 @@ public class CommandBindEmail implements CommandExecutor {
   }
 
   private void sendEmailCode(CommandSender sender, String name, String mail, EmailCode bindEmail) {
-    CatScheduler.runTaskAsync(
-        () -> {
-          try {
-            String content = buildBindEmailContent(name, bindEmail);
-            EmailSender.sendEmail(mail, MessageKey.EMAIL_SUBJECT_BIND_EMAIL.get(), content);
-            notifyBindEmailSent(sender, mail);
-          } catch (Exception e) {
-            notifyBindEmailFailed(sender);
-            e.printStackTrace();
-          }
-        });
+    CatScheduler.runTaskAsync(() -> {
+      try {
+        String content = buildBindEmailContent(name, bindEmail);
+        EmailSender.sendEmail(mail, MessageKey.EMAIL_SUBJECT_BIND_EMAIL.get(), content);
+        notifyBindEmailSent(sender, mail);
+      } catch (Exception e) {
+        notifyBindEmailFailed(sender);
+        e.printStackTrace();
+      }
+    });
   }
 
   private String buildBindEmailContent(String name, EmailCode bindEmail) {
@@ -142,11 +141,10 @@ public class CommandBindEmail implements CommandExecutor {
   }
 
   private void notifyBindEmailSent(CommandSender sender, String mail) {
-    CatScheduler.runTask(
-        () -> {
-          sender.sendMessage(MessageKey.EMAIL_SENT_CHECK_INBOX.get(mail));
-          sender.sendMessage(MessageKey.CHECK_SPAM_FOLDER.get());
-        });
+    CatScheduler.runTask(() -> {
+      sender.sendMessage(MessageKey.EMAIL_SENT_CHECK_INBOX.get(mail));
+      sender.sendMessage(MessageKey.CHECK_SPAM_FOLDER.get());
+    });
   }
 
   private void notifyBindEmailFailed(CommandSender sender) {
