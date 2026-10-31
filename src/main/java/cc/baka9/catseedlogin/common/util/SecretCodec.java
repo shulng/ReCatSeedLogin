@@ -17,9 +17,8 @@ import javax.crypto.spec.SecretKeySpec;
 /**
  * TOTP 密钥的对称加解密 (AES-256-GCM)。
  *
- * <p>密码用的是 {@link Crypt} 的 Argon2id 单向哈希，但 TOTP 密钥必须完整展示给玩家去扫码，
- * 所以只能可逆加密。密钥本身单独存放在插件数据目录的 {@code 2fa.key}，与账号库分离——
- * 只泄露数据库的情况下仍然拿不到 TOTP 密钥。
+ * <p>密码用的是 {@link Crypt} 的 Argon2id 单向哈希，但 TOTP 密钥必须完整展示给玩家去扫码， 所以只能可逆加密。密钥本身单独存放在插件数据目录的 {@code
+ * 2fa.key}，与账号库分离—— 只泄露数据库的情况下仍然拿不到 TOTP 密钥。
  */
 public final class SecretCodec {
 
