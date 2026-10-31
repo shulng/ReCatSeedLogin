@@ -24,6 +24,9 @@ public final class TwoFactorState {
   /** 待验证的登录：玩家名 -> 待验证信息。 */
   private static final Map<String, PendingLogin> PENDING_LOGIN = new ConcurrentHashMap<>();
 
+  /** 用恢复码登录后需要重新绑定验证器的玩家：玩家名 -> 记录时间。 */
+  private static final Map<String, Long> REBIND_REQUIRED = new ConcurrentHashMap<>();
+
   private TwoFactorState() {}
 
   /** 密码已通过但两步验证还没完成的玩家。 */
@@ -92,9 +95,31 @@ public final class TwoFactorState {
     return name != null && PENDING_LOGIN.containsKey(name);
   }
 
+  /** 标记该玩家需要重新绑定验证器（使用恢复码登录后）。 */
+  public static void setRebindRequired(String name) {
+    if (name == null) {
+      return;
+    }
+    REBIND_REQUIRED.put(name, System.currentTimeMillis());
+  }
+
+  /** 该玩家是否需要重新绑定验证器。 */
+  public static boolean isRebindRequired(String name) {
+    return name != null && REBIND_REQUIRED.containsKey(name);
+  }
+
+  /** 重新绑定完成后清掉标记。 */
+  public static void removeRebindRequired(String name) {
+    if (name == null) {
+      return;
+    }
+    REBIND_REQUIRED.remove(name);
+  }
+
   /** 插件卸载时清空，避免残留。 */
   public static void clear() {
     PENDING_BIND.clear();
     PENDING_LOGIN.clear();
+    REBIND_REQUIRED.clear();
   }
 }

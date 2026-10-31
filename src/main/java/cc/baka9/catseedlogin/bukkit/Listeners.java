@@ -2,6 +2,7 @@ package cc.baka9.catseedlogin.bukkit;
 
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.object.TwoFactorState;
 import cc.baka9.catseedlogin.bukkit.task.Task;
 import cc.baka9.catseedlogin.bukkit.task.TaskAutoKick;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
@@ -245,6 +246,10 @@ public class Listeners implements Listener {
   @EventHandler
   public void onPlayerJoin(PlayerJoinEvent event) {
     Player player = event.getPlayer();
+    if (TwoFactorState.isRebindRequired(player.getName())) {
+      // 用过恢复码之后两步验证是关闭状态，提醒玩家重新绑定
+      player.sendMessage(MessageKey.TWO_FACTOR_REBIND_REQUIRED.get());
+    }
     if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player)) {
       player.sendMessage(Config.Language.BEDROCK_LOGIN_BYPASS);
       return;

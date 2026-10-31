@@ -9,6 +9,7 @@ import cc.baka9.catseedlogin.bukkit.database.MySQL;
 import cc.baka9.catseedlogin.bukkit.database.SQLite;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.object.TwoFactorState;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import cc.baka9.catseedlogin.common.util.TabCompleteUtil;
@@ -59,13 +60,15 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
               "commandWhiteListDel",
               "loopbackLoginBypass",
               "beforeLoginAllowChat",
-              "blindingBeforeLogin"));
+              "blindingBeforeLogin",
+              "2faDisable"));
 
   @Override
   public boolean onCommand(CommandSender sender, Command command, String lable, String[] args) {
     return reload(sender, args)
         || setPwd(sender, args)
         || delPlayer(sender, args)
+        || twoFactorDisable(sender, args)
         || loopbackLoginBypass(sender, args)
         || beforeLoginAllowChat(sender, args)
         || blindingBeforeLogin(sender, args)
@@ -100,7 +103,7 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
     }
     if (args.length == 2) {
       String sub = args[0].toLowerCase();
-      if ("delplayer".equals(sub) || "setpwd".equals(sub)) {
+      if ("delplayer".equals(sub) || "setpwd".equals(sub) || "2fadisable".equals(sub)) {
         return TabCompleteUtil.filter(registeredAndOnlinePlayerNames(), args[1]);
       }
       if ("commandwhitelistdel".equals(sub)) {
@@ -487,6 +490,38 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
         p.kickPlayer(MessageKey.ACCOUNT_DELETED_KICK.get());
       }
     });
+  }
+
+  // ---- Two Factor Disable ----
+
+  /**
+   * 管理员兜底：玩家验证器和恢复码全丢时，强制关闭其两步验证。
+   *
+   * <p>这是绕过玩家本人验证的唯一入口，因此挂在管理指令下、复用现有的管理权限节点。
+   */
+  private boolean twoFactorDisable(CommandSender sender, String[] args) {
+    if (args.length < 2 || !args[0].equalsIgnoreCase("2fadisable")) return false;
+    String name = args[1];
+    LoginPlayer lp = Cache.getIgnoreCase(name);
+    if (lp == null) {
+      sender.sendMessage(MessageKey.ACCOUNT_NOT_EXISTS.get(name));
+      return true;
+    }
+    if (!lp.isTotpEnabled()) {
+      sender.sendMessage(MessageKey.ADMIN_2FA_NOT_ENABLED.get(name));
+      return true;
+    }
+    PluginContext.getSql().updateTotpSecret(name, null);
+    PluginContext.getSql().updateTotpEnabled(name, false);
+    PluginContext.getSql().invalidateRecoveryCodes(name);
+    Cache.refresh(name);
+    TwoFactorState.removePendingLogin(name);
+    sender.sendMessage(MessageKey.ADMIN_2FA_DISABLED.get(name));
+    Player target = Bukkit.getPlayerExact(name);
+    if (target != null && target.isOnline()) {
+      target.sendMessage(MessageKey.TWO_FACTOR_DISABLED_BY_ADMIN.get());
+    }
+    return true;
   }
 
   // ---- Set Password ----
