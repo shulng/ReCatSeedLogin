@@ -32,6 +32,14 @@ commands:
     description: 修改密码
     usage: /<command> 旧密码 新密码 重复新密码
     aliases: [changepw]
+  2fa:
+    description: 两步验证
+    usage:
+      |
+      /<command> enable
+      /<command> verify <验证码>
+      /<command> disable <验证码>
+    aliases: [twofa]
   catseedlogin:
     description: 管理员管理指令
     usage:
