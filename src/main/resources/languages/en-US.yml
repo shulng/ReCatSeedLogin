@@ -127,3 +127,5 @@ TWO_FACTOR_RECOVERY_BEDROCK: "&eBedrock edition cannot click to copy, please wri
 TWO_FACTOR_RECOVERY_COPY_ALL: "&eClick to copy all recovery codes"
 TWO_FACTOR_RECOVERY_COPY_ALL_HOVER: "&7Click to copy all recovery codes"
 TWO_FACTOR_RECOVERY_ITEM_HOVER: "&7Click to copy this recovery code"
+TWO_FACTOR_REQUIRED: "&ePassword accepted, but this account has two-factor authentication enabled. Type &f/2fa verify <code> &eto finish"
+TWO_FACTOR_REQUIRED_REMINDER: "&eType &f/2fa verify <code> &eto finish two-factor authentication"

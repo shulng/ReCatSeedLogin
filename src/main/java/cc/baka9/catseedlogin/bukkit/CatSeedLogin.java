@@ -214,6 +214,7 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
   @Override
   public void onDisable() {
     Task.cancelAll();
+    TwoFactorState.clear();
     Bukkit.getOnlinePlayers()
         .forEach(p -> {
           if (LoginPlayerHelper.isLogin(p.getName())

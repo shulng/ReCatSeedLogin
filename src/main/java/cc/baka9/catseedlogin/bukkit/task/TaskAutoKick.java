@@ -3,6 +3,7 @@ package cc.baka9.catseedlogin.bukkit.task;
 import cc.baka9.catseedlogin.bukkit.Cache;
 import cc.baka9.catseedlogin.bukkit.Config;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.object.TwoFactorState;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
@@ -34,6 +35,17 @@ public class TaskAutoKick extends Task {
         playerJoinTime.remove(playerName);
         return;
       }
+      TwoFactorState.PendingLogin pending = TwoFactorState.getPendingLogin(playerName);
+      if (pending != null) {
+        // 待两步验证的玩家单独计时：正在掏手机时不该被自动踢出打断
+        int pendingSeconds = Config.Settings.TwoFactorPendingTimeout;
+        long pendingMs = pendingSeconds > 0 ? pendingSeconds * 1000L : autoKickMs;
+        if (now - pending.getTimestamp() <= pendingMs) {
+          return;
+        }
+        kickPlayer(player, pendingSeconds > 0 ? pendingSeconds : Config.Settings.AutoKick);
+        return;
+      }
       checkAndKickTimeoutPlayer(player, now, autoKickMs);
     } catch (Exception e) {
       playerJoinTime.remove(playerName);
@@ -52,8 +64,11 @@ public class TaskAutoKick extends Task {
       playerJoinTime.remove(playerName);
       return;
     }
-    String kickMessage =
-        Config.Language.AUTO_KICK.replace("{time}", String.valueOf(Config.Settings.AutoKick));
+    kickPlayer(player, Config.Settings.AutoKick);
+  }
+
+  private void kickPlayer(Player player, int seconds) {
+    String kickMessage = Config.Language.AUTO_KICK.replace("{time}", String.valueOf(seconds));
     player.kickPlayer(kickMessage);
   }
 }
