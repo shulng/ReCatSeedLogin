@@ -47,7 +47,7 @@ public abstract class SQL {
       flush(
           new BufferStatement(
               "CREATE TABLE IF NOT EXISTS totp_recovery_codes (name CHAR(255), code_hash"
-                  + " CHAR(255), salt CHAR(255), used_at TIMESTAMP NULL)"));
+                  + " CHAR(255), used_at TIMESTAMP NULL)"));
     } catch (SQLException e) {
       // 两步验证是可选功能，建表失败不应该拖垮整个插件
       logger.severe("Failed to create totp_recovery_codes table: " + e.getMessage());
@@ -301,10 +301,9 @@ public abstract class SQL {
         }
         flush(
             new BufferStatement(
-                "INSERT INTO totp_recovery_codes (name, code_hash, salt) VALUES (?, ?, ?)",
+                "INSERT INTO totp_recovery_codes (name, code_hash) VALUES (?, ?)",
                 name,
-                code.getCodeHash(),
-                code.getSalt()));
+                code.getCodeHash()));
       }
     } catch (SQLException e) {
       logger.severe("Failed to save recovery codes for player: " + name + " - " + e.getMessage());
@@ -315,7 +314,7 @@ public abstract class SQL {
   /** 查询玩家的全部恢复码（含已使用的）。 */
   public synchronized List<TotpRecoveryCode> getRecoveryCodes(String name) {
     List<TotpRecoveryCode> codes = new ArrayList<>();
-    String sql = "SELECT name, code_hash, salt, used_at FROM totp_recovery_codes WHERE name = ?";
+    String sql = "SELECT name, code_hash, used_at FROM totp_recovery_codes WHERE name = ?";
     try (PreparedStatement ps = new BufferStatement(sql, name).prepareStatement(getConnection());
         ResultSet resultSet = ps.executeQuery()) {
       while (resultSet.next()) {
@@ -324,7 +323,6 @@ public abstract class SQL {
             new TotpRecoveryCode(
                 resultSet.getString("name"),
                 resultSet.getString("code_hash"),
-                resultSet.getString("salt"),
                 usedAt == null ? null : usedAt.getTime()));
       }
     } catch (SQLException e) {
@@ -336,6 +334,8 @@ public abstract class SQL {
   /**
    * 在玩家未使用的恢复码里查找与输入匹配的那一。
    *
+   * <p>恢复码用的是 Argon2 哈希，逐条比对有 CPU 开销，调用方应放到异步线程里执行。
+   *
    * @param rawCode 玩家输入的原始恢复码（可带连字符、大小写不限）
    * @return 匹配到的恢复码，没有匹配返回 null
    */
@@ -344,8 +344,7 @@ public abstract class SQL {
       if (code.isUsed()) {
         continue;
       }
-      String candidate = TotpRecoveryCode.hash(code.getSalt(), rawCode);
-      if (candidate != null && candidate.equals(code.getCodeHash())) {
+      if (TotpRecoveryCode.matches(name, rawCode, code.getCodeHash())) {
         return code;
       }
     }
@@ -365,6 +364,21 @@ public abstract class SQL {
     } catch (SQLException e) {
       logger.severe(
           "Failed to mark recovery code used for player: " + name + " - " + e.getMessage());
+      throw new RuntimeException(e);
+    }
+  }
+
+  /** 作废玩家的全部恢复码（关闭两步验证时使用，保留记录以便追溯）。 */
+  public synchronized void invalidateRecoveryCodes(String name) {
+    try {
+      flush(
+          new BufferStatement(
+              "UPDATE totp_recovery_codes SET used_at = ? WHERE name = ? AND used_at IS NULL",
+              new Date(),
+              name));
+    } catch (SQLException e) {
+      logger.severe(
+          "Failed to invalidate recovery codes for player: " + name + " - " + e.getMessage());
       throw new RuntimeException(e);
     }
   }
