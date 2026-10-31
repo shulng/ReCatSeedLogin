@@ -58,17 +58,16 @@ public class CommandLogin implements CommandExecutor {
   }
 
   private void upgradeToArgon2(LoginPlayer lp, String rawPassword) {
-    CatScheduler.runTaskAsync(
-        () -> {
-          try {
-            LoginPlayer copy = PasswordHelper.updatePassword(lp, rawPassword);
-            PluginContext.getSql().edit(copy);
-            Cache.refresh(copy.getName());
-          } catch (Exception e) {
-            PluginContext.getLogger()
-                .warning("Failed to upgrade password hash to Argon2id for " + lp.getName());
-          }
-        });
+    CatScheduler.runTaskAsync(() -> {
+      try {
+        LoginPlayer copy = PasswordHelper.updatePassword(lp, rawPassword);
+        PluginContext.getSql().edit(copy);
+        Cache.refresh(copy.getName());
+      } catch (Exception e) {
+        PluginContext.getLogger()
+            .warning("Failed to upgrade password hash to Argon2id for " + lp.getName());
+      }
+    });
   }
 
   private void handleLoginFail(CommandSender sender, Player player, LoginPlayer lp) {

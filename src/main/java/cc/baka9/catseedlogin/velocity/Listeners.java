@@ -106,9 +106,8 @@ public class Listeners {
   private void redirectToLoginServer(String loginServerName, ServerPreConnectEvent event) {
     proxyServer
         .getServer(loginServerName)
-        .ifPresent(
-            loginServer ->
-                event.setResult(ServerPreConnectEvent.ServerResult.allowed(loginServer)));
+        .ifPresent(loginServer ->
+            event.setResult(ServerPreConnectEvent.ServerResult.allowed(loginServer)));
   }
 
   @Subscribe

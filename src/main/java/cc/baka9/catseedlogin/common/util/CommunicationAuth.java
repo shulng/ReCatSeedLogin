@@ -11,14 +11,13 @@ public class CommunicationAuth {
   private static final String HMAC_SHA256 = "HmacSHA256";
 
   private static final ThreadLocal<Mac> MAC =
-      ThreadLocal.withInitial(
-          () -> {
-            try {
-              return Mac.getInstance(HMAC_SHA256);
-            } catch (NoSuchAlgorithmException e) {
-              throw new RuntimeException(e);
-            }
-          });
+      ThreadLocal.withInitial(() -> {
+        try {
+          return Mac.getInstance(HMAC_SHA256);
+        } catch (NoSuchAlgorithmException e) {
+          throw new RuntimeException(e);
+        }
+      });
 
   private static final char[] HEX_CHARS = "0123456789abcdef".toCharArray();
 

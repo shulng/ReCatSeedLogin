@@ -85,16 +85,15 @@ public class Communication extends BaseCommunication {
             PluginContext.getConfigManager().getAuthKey(), playerName, time);
     if (!sign.equals(expectedSign)) return;
 
-    CatScheduler.runTask(
-        () -> {
-          LoginPlayer lp = Cache.getIgnoreCase(playerName);
-          if (lp == null) return;
-          LoginPlayerHelper.add(lp);
-          Player player = Bukkit.getPlayerExact(playerName);
-          if (player != null) {
-            player.updateInventory();
-          }
-        });
+    CatScheduler.runTask(() -> {
+      LoginPlayer lp = Cache.getIgnoreCase(playerName);
+      if (lp == null) return;
+      LoginPlayerHelper.add(lp);
+      Player player = Bukkit.getPlayerExact(playerName);
+      if (player != null) {
+        player.updateInventory();
+      }
+    });
   }
 
   private static void handleConnectRequest(OutputStream outputStream, String playerName) {

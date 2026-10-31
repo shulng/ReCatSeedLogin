@@ -27,6 +27,9 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
   public static volatile boolean loadProtocolLib = false;
   public static volatile MorePaperLib morePaperLib;
 
+  /** 旧版独立失明插件，功能已合并到本插件，同时安装会重复施加失明效果。 */
+  private static final String LEGACY_BLINDING_PLUGIN = "CatSeedLoginBlinding";
+
   private BukkitConfigManager configManager;
   private BukkitPlatformAdapter platformAdapter;
 
@@ -62,6 +65,7 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
     }
 
     getServer().getPluginManager().registerEvents(new Listeners(), this);
+    checkBlindingPluginConflict();
     getServer().getPluginManager().registerEvents(new BlindingListeners(), this);
 
     if (configManager.isEmptyBackpack()) {
@@ -100,6 +104,14 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
     }
   }
 
+  /** 登录前失明已内置，若服务器仍安装 CatSeedLoginBlinding 会重复施加失明效果，这里提示管理员移除。 */
+  private void checkBlindingPluginConflict() {
+    if (getServer().getPluginManager().getPlugin(LEGACY_BLINDING_PLUGIN) == null) return;
+    getLogger().warning("检测到 " + LEGACY_BLINDING_PLUGIN + " 插件，与内置的登录前失明功能冲突！");
+    getLogger()
+        .warning("请删除 " + LEGACY_BLINDING_PLUGIN + " 插件，改用 settings.before-login.blinding 控制该功能");
+  }
+
   private void registerCommands() {
     registerLoginCommand();
     registerRegisterCommand();
@@ -122,73 +134,68 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
     PluginCommand cmd = getServer().getPluginCommand("login");
     if (cmd == null) return;
     cmd.setExecutor(new CommandLogin());
-    cmd.setTabCompleter(
-        (commandSender, command, s, args) ->
-            args.length == 1
-                ? TabCompleteUtil.filter(Collections.singletonList("密码"), args[0])
-                : Collections.emptyList());
+    cmd.setTabCompleter((commandSender, command, s, args) ->
+        args.length == 1
+            ? TabCompleteUtil.filter(Collections.singletonList("密码"), args[0])
+            : Collections.emptyList());
   }
 
   private void registerRegisterCommand() {
     PluginCommand cmd = getServer().getPluginCommand("register");
     if (cmd == null) return;
     cmd.setExecutor(new CommandRegister());
-    cmd.setTabCompleter(
-        (commandSender, command, s, args) ->
-            args.length == 1
-                ? TabCompleteUtil.filter(Collections.singletonList("密码 重复密码"), args[0])
-                : Collections.emptyList());
+    cmd.setTabCompleter((commandSender, command, s, args) ->
+        args.length == 1
+            ? TabCompleteUtil.filter(Collections.singletonList("密码 重复密码"), args[0])
+            : Collections.emptyList());
   }
 
   private void registerChangePasswordCommand() {
     PluginCommand cmd = getServer().getPluginCommand("changepassword");
     if (cmd == null) return;
     cmd.setExecutor(new CommandChangePassword());
-    cmd.setTabCompleter(
-        (commandSender, command, s, args) ->
-            args.length == 1
-                ? TabCompleteUtil.filter(Collections.singletonList("旧密码 新密码 重复新密码"), args[0])
-                : Collections.emptyList());
+    cmd.setTabCompleter((commandSender, command, s, args) ->
+        args.length == 1
+            ? TabCompleteUtil.filter(Collections.singletonList("旧密码 新密码 重复新密码"), args[0])
+            : Collections.emptyList());
   }
 
   private void registerBindEmailCommand() {
     PluginCommand bindemail = getServer().getPluginCommand("bindemail");
     if (bindemail == null) return;
     bindemail.setExecutor(new CommandBindEmail());
-    bindemail.setTabCompleter(
-        (commandSender, command, s, args) -> {
-          if (args.length == 1) {
-            return TabCompleteUtil.filter(Arrays.asList("set", "verify"), args[0]);
-          }
-          if (args.length == 2) {
-            if ("set".equalsIgnoreCase(args[0])) {
-              return TabCompleteUtil.filter(Collections.singletonList("需要绑定的邮箱"), args[1]);
-            }
-            if ("verify".equalsIgnoreCase(args[0])) {
-              return TabCompleteUtil.filter(Collections.singletonList("邮箱获取的验证码"), args[1]);
-            }
-          }
-          return Collections.emptyList();
-        });
+    bindemail.setTabCompleter((commandSender, command, s, args) -> {
+      if (args.length == 1) {
+        return TabCompleteUtil.filter(Arrays.asList("set", "verify"), args[0]);
+      }
+      if (args.length == 2) {
+        if ("set".equalsIgnoreCase(args[0])) {
+          return TabCompleteUtil.filter(Collections.singletonList("需要绑定的邮箱"), args[1]);
+        }
+        if ("verify".equalsIgnoreCase(args[0])) {
+          return TabCompleteUtil.filter(Collections.singletonList("邮箱获取的验证码"), args[1]);
+        }
+      }
+      return Collections.emptyList();
+    });
   }
 
   private void registerResetPasswordCommand() {
     PluginCommand resetpassword = getServer().getPluginCommand("resetpassword");
     if (resetpassword == null) return;
     resetpassword.setExecutor(new CommandResetPassword());
-    resetpassword.setTabCompleter(
-        (commandSender, command, s, args) -> {
-          if (args.length == 1) {
-            return TabCompleteUtil.filter(Arrays.asList("forget", "re"), args[0]);
-          }
-          if (args.length == 2 && "re".equalsIgnoreCase(args[0])) {
-            return TabCompleteUtil.filter(Collections.singletonList("验证码"), args[1]);
-          }
-          if (args.length == 3 && "re".equalsIgnoreCase(args[0])) {
-            return TabCompleteUtil.filter(Collections.singletonList("新密码"), args[2]);
-          }
-          return Collections.emptyList();
-        });
+    resetpassword.setTabCompleter((commandSender, command, s, args) -> {
+      if (args.length == 1) {
+        return TabCompleteUtil.filter(Arrays.asList("forget", "re"), args[0]);
+      }
+      if (args.length == 2 && "re".equalsIgnoreCase(args[0])) {
+        return TabCompleteUtil.filter(Collections.singletonList("验证码"), args[1]);
+      }
+      if (args.length == 3 && "re".equalsIgnoreCase(args[0])) {
+        return TabCompleteUtil.filter(Collections.singletonList("新密码"), args[2]);
+      }
+      return Collections.emptyList();
+    });
   }
 
   private void registerCatSeedLoginCommand() {
@@ -208,13 +215,12 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
   public void onDisable() {
     Task.cancelAll();
     Bukkit.getOnlinePlayers()
-        .forEach(
-            p -> {
-              if (LoginPlayerHelper.isLogin(p.getName())
-                  && (!p.isDead() || configManager.isDeathStateQuitRecordLocation())) {
-                Config.setOfflineLocationSync(p);
-              }
-            });
+        .forEach(p -> {
+          if (LoginPlayerHelper.isLogin(p.getName())
+              && (!p.isDead() || configManager.isDeathStateQuitRecordLocation())) {
+            Config.setOfflineLocationSync(p);
+          }
+        });
 
     try {
       sql.closeConnection();
