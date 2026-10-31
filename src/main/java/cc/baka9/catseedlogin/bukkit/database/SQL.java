@@ -268,8 +268,7 @@ public abstract class SQL {
   public synchronized void updateTotpSecret(String name, String secret) {
     try {
       flush(
-          new BufferStatement(
-              "UPDATE accounts SET totp_secret = ? WHERE name = ?", secret, name));
+          new BufferStatement("UPDATE accounts SET totp_secret = ? WHERE name = ?", secret, name));
     } catch (SQLException e) {
       logger.severe("Failed to update totp secret for player: " + name + " - " + e.getMessage());
       throw new RuntimeException(e);
