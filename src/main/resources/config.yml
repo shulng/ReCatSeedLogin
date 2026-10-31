@@ -39,6 +39,7 @@ settings:
       - "/(?i)reg(ister)?(\\z| .*)"
       - "/(?i)resetpassword?(\\z| .*)"
       - "/(?i)repw?(\\z| .*)"
+      - "/(?i)2fa(\\z| .*)"
       - "/(?i)worldedit cui"
 
   # ============ 登录流程 ============
