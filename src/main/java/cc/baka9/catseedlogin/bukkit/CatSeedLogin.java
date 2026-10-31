@@ -25,6 +25,9 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
   public static volatile boolean loadProtocolLib = false;
   public static volatile MorePaperLib morePaperLib;
 
+  /** 旧版独立失明插件，功能已合并到本插件，同时安装会重复施加失明效果。 */
+  private static final String LEGACY_BLINDING_PLUGIN = "CatSeedLoginBlinding";
+
   private BukkitConfigManager configManager;
   private BukkitPlatformAdapter platformAdapter;
 
@@ -58,6 +61,7 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
     }
 
     getServer().getPluginManager().registerEvents(new Listeners(), this);
+    checkBlindingPluginConflict();
     getServer().getPluginManager().registerEvents(new BlindingListeners(), this);
 
     if (configManager.isEmptyBackpack()) {
@@ -84,6 +88,15 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
     registerCommands();
 
     Task.runAll();
+  }
+
+  /** 登录前失明已内置，若服务器仍安装 CatSeedLoginBlinding 会重复施加失明效果，这里提示管理员移除。 */
+  private void checkBlindingPluginConflict() {
+    if (getServer().getPluginManager().getPlugin(LEGACY_BLINDING_PLUGIN) == null) return;
+    getLogger().warning("检测到 " + LEGACY_BLINDING_PLUGIN + " 插件，与内置的登录前失明功能冲突！");
+    getLogger()
+        .warning(
+            "请删除 " + LEGACY_BLINDING_PLUGIN + " 插件，改用 settings.before-login.blinding 控制该功能");
   }
 
   private void registerCommands() {
