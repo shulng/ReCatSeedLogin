@@ -118,7 +118,16 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
     registerChangePasswordCommand();
     registerBindEmailCommand();
     registerResetPasswordCommand();
+    registerTwoFactorCommand();
     registerCatSeedLoginCommand();
+  }
+
+  private void registerTwoFactorCommand() {
+    PluginCommand cmd = getServer().getPluginCommand("2fa");
+    if (cmd == null) return;
+    CommandTwoFactor executor = new CommandTwoFactor();
+    cmd.setExecutor(executor);
+    cmd.setTabCompleter(executor);
   }
 
   private void registerLoginCommand() {
