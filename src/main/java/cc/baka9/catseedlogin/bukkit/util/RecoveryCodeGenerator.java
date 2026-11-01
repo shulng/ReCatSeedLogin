@@ -8,8 +8,7 @@ import java.util.List;
 /**
  * 生成一次性恢复码。
  *
- * <p>格式为 {@code xxxx-xxxx}，字母表剔除了容易看错的 0/O/1/I/L。8 位、30 个字符，熵约 2^39，
- * 配合 Argon2 哈希足以抵抗离线枚举。
+ * <p>格式为 {@code xxxx-xxxx}，字母表剔除了容易看错的 0/O/1/I/L。8 位、30 个字符，熵约 2^39， 配合 Argon2 哈希足以抵抗离线枚举。
  */
 public final class RecoveryCodeGenerator {
 

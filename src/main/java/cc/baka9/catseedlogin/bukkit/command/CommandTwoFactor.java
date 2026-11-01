@@ -26,8 +26,8 @@ import org.bukkit.entity.Player;
 /**
  * 两步验证指令。
  *
- * <p>本阶段覆盖绑定与关闭：{@code /2fa enable} 生成密钥、{@code /2fa verify} 确认绑定、
- * {@code /2fa disable} 关闭。恢复码只用于第二步验证，不能用于登录第一步或重置密码。
+ * <p>本阶段覆盖绑定与关闭：{@code /2fa enable} 生成密钥、{@code /2fa verify} 确认绑定、 {@code /2fa disable}
+ * 关闭。恢复码只用于第二步验证，不能用于登录第一步或重置密码。
  */
 public class CommandTwoFactor implements CommandExecutor, TabCompleter {
 
@@ -152,13 +152,12 @@ public class CommandTwoFactor implements CommandExecutor, TabCompleter {
     player.sendMessage(MessageKey.TWO_FACTOR_ENABLED.get());
 
     // 恢复码的哈希是 Argon2，耗时较长，放到异步线程里生成，再切回主线程展示
-    CatScheduler.runTaskAsync(
-        () -> {
-          RecoveryCodeGenerator.Generated generated =
-              RecoveryCodeGenerator.generate(name, Config.Settings.TwoFactorRecoveryCodeCount);
-          PluginContext.getSql().saveRecoveryCodes(name, generated.getEntries());
-          CatScheduler.runTask(() -> showRecoveryCodes(player, generated.getRawCodes()));
-        });
+    CatScheduler.runTaskAsync(() -> {
+      RecoveryCodeGenerator.Generated generated =
+          RecoveryCodeGenerator.generate(name, Config.Settings.TwoFactorRecoveryCodeCount);
+      PluginContext.getSql().saveRecoveryCodes(name, generated.getEntries());
+      CatScheduler.runTask(() -> showRecoveryCodes(player, generated.getRawCodes()));
+    });
   }
 
   private void sendSecret(Player player, String secret) {

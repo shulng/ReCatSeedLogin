@@ -110,8 +110,8 @@ public final class TwoFactorMessageUtil {
   /**
    * 走 adventure 发送可点击组件。
    *
-   * <p>这里用反射而不是直接调用 {@link TwoFactorAdventureSender}：直接引用会让类验证阶段就去加载
-   * adventure，在没有 adventure 的服务端上等于直接崩掉。
+   * <p>这里用反射而不是直接调用 {@link TwoFactorAdventureSender}：直接引用会让类验证阶段就去加载 adventure，在没有 adventure
+   * 的服务端上等于直接崩掉。
    */
   private static void sendComponent(Player player, List<MessageLine> lines) {
     try {

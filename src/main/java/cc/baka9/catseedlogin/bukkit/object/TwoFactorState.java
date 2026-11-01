@@ -6,9 +6,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 两步验证的临时状态。
  *
- * <p>这里只放「还没落库」的中间态：玩家执行 {@code /2fa enable} 后生成密钥，密钥先放在内存里，
- * 等玩家用验证器确认（{@code /2fa verify}）成功才加密写库。确认之前数据库里不会有任何痕迹，
- * 中途放弃也不会留下半配置的数据。
+ * <p>这里只放「还没落库」的中间态：玩家执行 {@code /2fa enable} 后生成密钥，密钥先放在内存里， 等玩家用验证器确认（{@code /2fa
+ * verify}）成功才加密写库。确认之前数据库里不会有任何痕迹， 中途放弃也不会留下半配置的数据。
  */
 public final class TwoFactorState {
 
