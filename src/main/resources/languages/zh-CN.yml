@@ -127,3 +127,5 @@ TWO_FACTOR_RECOVERY_BEDROCK: "&e基岩版无法点击复制，请手动抄写下
 TWO_FACTOR_RECOVERY_COPY_ALL: "&e点击《复制》复制全部恢复码"
 TWO_FACTOR_RECOVERY_COPY_ALL_HOVER: "&7点击复制全部恢复码"
 TWO_FACTOR_RECOVERY_ITEM_HOVER: "&7点击复制这一条恢复码"
+TWO_FACTOR_REQUIRED: "&e密码正确，但该账号开启了两步验证，请输入 &f/2fa verify <验证码> &e完成验证"
+TWO_FACTOR_REQUIRED_REMINDER: "&e请输入 &f/2fa verify <验证码> &e完成两步验证"

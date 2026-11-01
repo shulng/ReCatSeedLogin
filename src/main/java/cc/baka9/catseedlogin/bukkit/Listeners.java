@@ -41,10 +41,21 @@ public class Listeners implements Listener {
     Player player = event.getPlayer();
     if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.getName())) return;
     String input = event.getMessage().toLowerCase();
+    // 两步验证指令必须始终可用：玩家卡在待验证状态时要能输验证码，
+    // 而指令白名单是可配置的，不能指望管理员记得把它加进去。
+    if (isTwoFactorCommand(input)) return;
     for (Pattern regex : Config.Settings.CommandWhiteList) {
       if (regex.matcher(input).matches()) return;
     }
     event.setCancelled(true);
+  }
+
+  /** 两步验证指令（/2fa 及其别名）不参与白名单匹配。 */
+  private boolean isTwoFactorCommand(String input) {
+    return input.equals("/2fa")
+        || input.startsWith("/2fa ")
+        || input.equals("/twofa")
+        || input.startsWith("/twofa ");
   }
 
   @EventHandler

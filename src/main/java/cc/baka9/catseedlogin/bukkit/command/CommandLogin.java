@@ -7,6 +7,8 @@ import cc.baka9.catseedlogin.bukkit.PluginContext;
 import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerLoginEvent;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.object.TwoFactorState;
+import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.util.Crypt;
 import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import org.bukkit.Bukkit;
@@ -36,25 +38,22 @@ public class CommandLogin implements CommandExecutor {
       handleLoginFail(sender, player, lp);
       return true;
     }
-    handleLoginSuccess(player, lp);
+    if (requiresTwoFactor(lp)) {
+      // 密码已通过但两步验证还没完成：进入待验证状态，登录前的限制继续生效
+      TwoFactorState.setPendingLogin(lp);
+      player.sendMessage(MessageKey.TWO_FACTOR_REQUIRED.get());
+      return true;
+    }
+    LoginPlayerHelper.completeLogin(player, lp);
     if (!Crypt.isArgon2(lp.getPassword().trim())) {
       upgradeToArgon2(lp, args[0]);
     }
     return true;
   }
 
-  private void handleLoginSuccess(Player player, LoginPlayer lp) {
-    LoginPlayerHelper.add(lp);
-    CatSeedPlayerLoginEvent loginEvent =
-        new CatSeedPlayerLoginEvent(player, lp.getEmail(), CatSeedPlayerLoginEvent.Result.SUCCESS);
-    Bukkit.getServer().getPluginManager().callEvent(loginEvent);
-    player.sendMessage(Config.Language.LOGIN_SUCCESS);
-    CatScheduler.updateInventory(player);
-    LoginPlayerHelper.recordCurrentIP(player, lp);
-    if (Config.Settings.AfterLoginBack && Config.Settings.CanTpSpawnLocation) {
-      Config.getOfflineLocation(player)
-          .ifPresent(location -> CatScheduler.teleport(player, location));
-    }
+  /** 该账号是否需要两步验证才能完成登录。 */
+  private boolean requiresTwoFactor(LoginPlayer lp) {
+    return Config.Settings.TwoFactorEnabled && lp.isTotpEnabled();
   }
 
   private void upgradeToArgon2(LoginPlayer lp, String rawPassword) {
