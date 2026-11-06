@@ -9,9 +9,8 @@ import org.bukkit.entity.Player;
 /**
  * 用 adventure 发送可点击复制的消息。
  *
- * <p>这个类只会在探测到服务端存在 adventure 之后才被加载，所以直接引用 adventure 类型是安全的。
- * 但为了避免 {@link TwoFactorMessageUtil} 在类验证阶段就把它连带 adventure 一起加载
- * （在 Spigot 上那会直接 NoClassDefFoundError），那边通过反射调用本类。
+ * <p>这个类只会在探测到服务端存在 adventure 之后才被加载，所以直接引用 adventure 类型是安全的。 但为了避免 {@link TwoFactorMessageUtil}
+ * 在类验证阶段就把它连带 adventure 一起加载 （在 Spigot 上那会直接 NoClassDefFoundError），那边通过反射调用本类。
  */
 public final class TwoFactorAdventureSender {
 

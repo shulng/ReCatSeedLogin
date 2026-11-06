@@ -20,12 +20,12 @@
         <java.version>8</java.version>
         <version>${project.version}</version>
 
-        <paper.version>26.3.build.222-stable</paper.version>
+        <paper.version>26.3.build.235-stable</paper.version>
         <lombok.version>1.18.48</lombok.version>
         <protocollib.version>5.4.0</protocollib.version>
         <bungeecord.version>1.21-R0.4</bungeecord.version>
-        <velocity.version>4.3.0</velocity.version>
-        <sqlite.version>3.53.4.0</sqlite.version>
+        <velocity.version>4.3.1</velocity.version>
+        <sqlite.version>3.54.1.0</sqlite.version>
         <mysql.version>8.0.33</mysql.version>
         <snakeyaml.version>2.7</snakeyaml.version>
         <commons-email.version>1.6.0</commons-email.version>
