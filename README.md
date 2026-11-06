@@ -192,6 +192,31 @@ ReCatSeedLogin/
 /resetpassword re <验证码> <新密码>
 ```
 
+### 🔐 两步验证（TOTP）
+
+需要先在 `config.yml` 里把 `two-factor.enabled` 打开。
+
+```
+# 绑定验证器：生成密钥 → 用验证器 App 添加 → 输入一次当前验证码确认
+/2fa enable
+/2fa verify <验证码>
+
+# 验证器丢了，用一次性恢复码代替第二步验证
+/2fa recover <恢复码>
+
+# 关闭两步验证（只接受 TOTP 验证码）
+/2fa disable <验证码>
+```
+
+- 绑定成功后会展示一组一次性**恢复码**，请立即复制保存，聊天栏里可以直接点击复制
+- **恢复码只用于第二步验证**：不能当密码登录、不能用来重置密码、也不能用来关闭两步验证
+- 用恢复码登录后，两步验证会被关闭并引导你重新执行 `/2fa enable` 绑定
+- 密钥与恢复码都存在数据库里，其中密钥使用 AES-GCM 加密（密钥文件在 `plugins/CatSeedLogin/2fa.key`），恢复码只存哈希
+- 连续输错达到 `two-factor.max-attempts` 次会被踢出，失败计数在 `two-factor.attempt-window` 秒后重置
+
+> ⚠️ 基岩版绕过、同 IP 免登录、回环地址绕过这三条路径不走密码校验，因此不会经过两步验证。
+> 同时开启「同 IP 免登录」和「两步验证」时，后者对同 IP 进服的玩家不起作用。
+
 ### 📋 密码规则
 - 长度：6-16位
 - 必须同时包含字母和数字
@@ -199,7 +224,7 @@ ReCatSeedLogin/
 
 ## 📖 指令大全
 
-> 💡 所有插件指令均支持 TAB 补全：输入子命令时按 TAB 列出可用项，`delPlayer` / `setPwd` 会补全玩家名，`commandWhiteListDel` 会补全已配置的白名单正则。
+> 💡 所有插件指令均支持 TAB 补全：输入子命令时按 TAB 列出可用项，`delPlayer` / `setPwd` / `2faDisable` 会补全玩家名，`commandWhiteListDel` 会补全已配置的白名单正则。
 
 ### 🛠️ 管理员指令（Bukkit端，别名 `/cslogin`）
 
@@ -208,6 +233,7 @@ ReCatSeedLogin/
 | `/catseedlogin reload` | 重载配置文件 |
 | `/catseedlogin delPlayer <玩家名>` | 强制删除玩家账户 |
 | `/catseedlogin setPwd <玩家名> <密码>` | 强制设置玩家密码 |
+| `/catseedlogin 2faDisable <玩家名>` | 强制关闭玩家的两步验证（玩家验证器与恢复码全丢时的兜底） |
 
 ### ⚙️ 配置管理指令
 
@@ -298,6 +324,17 @@ bedrock:
 # 登录点设置
 spawn:
   location: ""                     # 格式: 世界名:x:y:z:yaw:pitch (留空自动使用服务器出生点)
+
+# 两步验证 (TOTP) 设置
+two-factor:
+  enabled: false                   # 是否启用两步验证
+  issuer: "CatSeedLogin"           # 验证器中显示的名称
+  digits: 6                        # 验证码位数
+  period: 30                       # 时间步长 (秒)
+  recovery-code-count: 10          # 启用时生成的恢复码数量
+  max-attempts: 5                  # 第二步验证允许的连续失败次数，达到后踢出
+  attempt-window: 300              # 失败计数的有效窗口 (秒)，超时后清零
+  pending-timeout: 0               # 待验证状态超时 (秒)，0 = 沿用 settings.before-login.auto-kick
 
 # 数据库设置
 database:

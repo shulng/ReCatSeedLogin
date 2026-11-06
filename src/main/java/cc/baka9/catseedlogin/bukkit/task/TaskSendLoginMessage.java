@@ -3,6 +3,7 @@ package cc.baka9.catseedlogin.bukkit.task;
 import cc.baka9.catseedlogin.bukkit.Cache;
 import cc.baka9.catseedlogin.bukkit.Config;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.object.TwoFactorLimiter;
 import cc.baka9.catseedlogin.bukkit.object.TwoFactorState;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import org.bukkit.Bukkit;
@@ -12,6 +13,9 @@ public class TaskSendLoginMessage extends Task {
   @Override
   public void run() {
     if (!Cache.isLoaded) return;
+
+    // 清理超过窗口没有失败记录的条目，计数超时清理规则的一部分
+    TwoFactorLimiter.sweep(Config.Settings.TwoFactorAttemptWindow * 1000L);
 
     for (Player player : Bukkit.getOnlinePlayers()) {
       sendLoginMessage(player);

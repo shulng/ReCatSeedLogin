@@ -38,6 +38,7 @@ commands:
       |
       /<command> enable
       /<command> verify <验证码>
+      /<command> recover <恢复码>
       /<command> disable <验证码>
     aliases: [twofa]
   catseedlogin:
@@ -65,6 +66,7 @@ commands:
       §c/<command> canTpSpawnLocation §9打开/关闭 登录之前是否强制在登陆地点 (默认打开)
       §c/<command> deathStateQuitRecordLocation §9打开/关闭 死亡状态退出游戏记录退出位置 (默认打开)
       §e/<command> delPlayer [玩家名] §9管理员强制删除账户
+      §e/<command> 2faDisable [玩家名] §9管理员强制关闭玩家的两步验证
       §e/<command> setPwd [玩家名] [密码] §9管理员强制设置玩家密码
       §3/<command> reload §9重载配置文件
     aliases: [cslogin]
