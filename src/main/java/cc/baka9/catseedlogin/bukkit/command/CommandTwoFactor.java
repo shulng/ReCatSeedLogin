@@ -149,8 +149,7 @@ public class CommandTwoFactor implements CommandExecutor, TabCompleter {
    *
    * <p>恢复码只做这一件事：不能用于登录的第一步，不能用于重置密码，也不能用于关闭两步验证。
    *
-   * <p>成功后该恢复码标记为已用，两步验证关闭并进入重绑流程——玩家此时是正常登录状态，
-   * 可以正常游戏，之后随时执行 {@code /2fa enable} 重新绑定验证器。
+   * <p>成功后该恢复码标记为已用，两步验证关闭并进入重绑流程——玩家此时是正常登录状态， 可以正常游戏，之后随时执行 {@code /2fa enable} 重新绑定验证器。
    */
   private boolean recover(Player player, String[] args) {
     if (args.length < 2) {
@@ -164,17 +163,16 @@ public class CommandTwoFactor implements CommandExecutor, TabCompleter {
       return true;
     }
     // 恢复码是 Argon2 哈希，逐条比对开销不小，放到异步线程
-    CatScheduler.runTaskAsync(
-        () -> {
-          TotpRecoveryCode matched = PluginContext.getSql().findUnusedRecoveryCode(name, args[1]);
-          CatScheduler.runTask(() -> {
-            if (matched == null) {
-              handleVerifyFailure(player);
-              return;
-            }
-            finishRecover(player, pending, matched);
-          });
-        });
+    CatScheduler.runTaskAsync(() -> {
+      TotpRecoveryCode matched = PluginContext.getSql().findUnusedRecoveryCode(name, args[1]);
+      CatScheduler.runTask(() -> {
+        if (matched == null) {
+          handleVerifyFailure(player);
+          return;
+        }
+        finishRecover(player, pending, matched);
+      });
+    });
     return true;
   }
 

@@ -11,10 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <ul>
  *   <li><b>key 用 UUID</b>，不用玩家名：改名、大小写差异都绕不过去；
- *   <li><b>退服不清零</b>：否则「输错 4 次 → 退出重进」可以无限重试，限流形同虚设。
- *       只在验证成功或计数窗口超时之后清理；
- *   <li><b>一次调用只计一次失败</b>：TOTP 校验时 t-1/t/t+1 三个时间步任一命中即通过，
- *       调用方按「一次校验 = 一次失败」计数。如果每个时间步各计一次，
+ *   <li><b>退服不清零</b>：否则「输错 4 次 → 退出重进」可以无限重试，限流形同虚设。 只在验证成功或计数窗口超时之后清理；
+ *   <li><b>一次调用只计一次失败</b>：TOTP 校验时 t-1/t/t+1 三个时间步任一命中即通过， 调用方按「一次校验 = 一次失败」计数。如果每个时间步各计一次，
  *       恰好卡在步长边界上输对的玩家会被快速推到锁定线。
  * </ul>
  */
@@ -77,18 +75,17 @@ public final class TwoFactorLimiter {
   /**
    * 清理超过窗口没有失败的条目。
    *
-   * <p>计数超时是「清零」规则的一部分，这个方法负责把已经无意义的条目从内存里移除，
-   * 否则条目只增不减。
+   * <p>计数超时是「清零」规则的一部分，这个方法负责把已经无意义的条目从内存里移除， 否则条目只增不减。
    */
   public static void sweep(long windowMillis) {
     long now = System.currentTimeMillis();
-    ATTEMPTS.entrySet()
-        .removeIf(
-            entry -> {
-              Attempt attempt = entry.getValue();
-              synchronized (attempt) {
-                return attempt.lastAttempt > 0 && now - attempt.lastAttempt > windowMillis;
-              }
-            });
+    ATTEMPTS
+        .entrySet()
+        .removeIf(entry -> {
+          Attempt attempt = entry.getValue();
+          synchronized (attempt) {
+            return attempt.lastAttempt > 0 && now - attempt.lastAttempt > windowMillis;
+          }
+        });
   }
 }
