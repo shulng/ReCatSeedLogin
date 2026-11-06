@@ -2,7 +2,6 @@
 
 <div align="center">
 
-[![Build Status](https://github.com/shulng/ReCatSeedLogin/actions/workflows/maven.yml/badge.svg)](https://github.com/shulng/ReCatSeedLogin/actions/workflows/maven.yml)
 [![Release](https://img.shields.io/github/v/release/shulng/ReCatSeedLogin)](https://github.com/shulng/ReCatSeedLogin/releases/latest)
 [![License](https://img.shields.io/github/license/shulng/ReCatSeedLogin)](LICENSE)
 [![Downloads](https://img.shields.io/github/downloads/shulng/ReCatSeedLogin/total)](https://github.com/shulng/ReCatSeedLogin/releases)
