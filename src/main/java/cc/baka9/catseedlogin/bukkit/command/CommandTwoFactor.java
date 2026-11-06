@@ -87,8 +87,7 @@ public class CommandTwoFactor implements CommandExecutor, TabCompleter {
   /**
    * 校验验证码。
    *
-   * <p>有两种待验证状态：绑定确认（刚执行过 {@code /2fa enable}）和登录待验证（密码已通过）。
-   * 前者确认后写入密钥并生成恢复码，后者确认后才真正放行登录。
+   * <p>有两种待验证状态：绑定确认（刚执行过 {@code /2fa enable}）和登录待验证（密码已通过）。 前者确认后写入密钥并生成恢复码，后者确认后才真正放行登录。
    */
   private boolean verify(Player player, String[] args) {
     if (args.length < 2) {
