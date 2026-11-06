@@ -4,6 +4,7 @@ import cc.baka9.catseedlogin.bukkit.Cache;
 import cc.baka9.catseedlogin.bukkit.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.Config;
 import cc.baka9.catseedlogin.bukkit.PluginContext;
+import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerLoginEvent;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
@@ -58,6 +59,9 @@ public class LoginPlayerHelper {
   }
 
   public static boolean isLogin(String name) {
+    // 两步验证没通过时一律视为未登录：登录前的所有限制都要继续生效，
+    // 否则玩家输完密码就等于直接放行，第二步形同虚设。
+    if (TwoFactorState.isAwaitingTwoFactor(name)) return false;
     return canBypassLogin(name) || loginPlayers.containsKey(name);
   }
 
@@ -120,6 +124,27 @@ public class LoginPlayerHelper {
 
   public static void onPlayerQuit(String playerName) {
     recordPlayerExitTime(playerName);
+    // 退服后不再处于待验证状态，重连后需要重新走一遍验证
+    TwoFactorState.removePendingLogin(playerName);
+  }
+
+  /**
+   * 登录完成：放行、通知、解除登录前限制。
+   *
+   * <p>密码通过（以及开启两步验证时第二步通过）后统一走这里，保证两种路径的行为完全一致。
+   */
+  public static void completeLogin(Player player, LoginPlayer lp) {
+    add(lp);
+    CatSeedPlayerLoginEvent loginEvent =
+        new CatSeedPlayerLoginEvent(player, lp.getEmail(), CatSeedPlayerLoginEvent.Result.SUCCESS);
+    Bukkit.getServer().getPluginManager().callEvent(loginEvent);
+    player.sendMessage(Config.Language.LOGIN_SUCCESS);
+    CatScheduler.updateInventory(player);
+    recordCurrentIP(player, lp);
+    if (Config.Settings.AfterLoginBack && Config.Settings.CanTpSpawnLocation) {
+      Config.getOfflineLocation(player)
+          .ifPresent(location -> CatScheduler.teleport(player, location));
+    }
   }
 
   public static List<String> getStoredIPs(LoginPlayer lp) {

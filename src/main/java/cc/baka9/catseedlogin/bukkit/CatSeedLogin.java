@@ -5,6 +5,7 @@ import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
 import cc.baka9.catseedlogin.bukkit.config.BukkitPlatformAdapter;
 import cc.baka9.catseedlogin.bukkit.database.*;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.object.TwoFactorState;
 import cc.baka9.catseedlogin.bukkit.task.Task;
 import cc.baka9.catseedlogin.bukkit.util.TwoFactorMessageUtil;
 import cc.baka9.catseedlogin.common.i18n.I18n;
@@ -214,6 +215,7 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
   @Override
   public void onDisable() {
     Task.cancelAll();
+    TwoFactorState.clear();
     Bukkit.getOnlinePlayers()
         .forEach(p -> {
           if (LoginPlayerHelper.isLogin(p.getName())

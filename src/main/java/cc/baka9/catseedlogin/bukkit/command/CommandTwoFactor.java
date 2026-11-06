@@ -84,7 +84,12 @@ public class CommandTwoFactor implements CommandExecutor, TabCompleter {
     return true;
   }
 
-  /** 用当前 TOTP 确认绑定，确认成功才落库并生成恢复码。 */
+  /**
+   * 校验验证码。
+   *
+   * <p>有两种待验证状态：绑定确认（刚执行过 {@code /2fa enable}）和登录待验证（密码已通过）。
+   * 前者确认后写入密钥并生成恢复码，后者确认后才真正放行登录。
+   */
   private boolean verify(Player player, String[] args) {
     if (args.length < 2) {
       player.sendMessage(MessageKey.TWO_FACTOR_USAGE.get());
@@ -92,16 +97,43 @@ public class CommandTwoFactor implements CommandExecutor, TabCompleter {
     }
     String name = player.getName();
     String secret = TwoFactorState.getPendingBind(name);
-    if (secret == null) {
-      player.sendMessage(MessageKey.TWO_FACTOR_NO_PENDING.get());
-      return true;
+    if (secret != null) {
+      return verifyBind(player, name, secret, args[1]);
     }
-    if (!TotpUtil.verify(secret, args[1], System.currentTimeMillis(), digits(), period(), 1)) {
+    TwoFactorState.PendingLogin pending = TwoFactorState.getPendingLogin(name);
+    if (pending != null) {
+      return verifyLogin(player, pending, args[1]);
+    }
+    player.sendMessage(MessageKey.TWO_FACTOR_NO_PENDING.get());
+    return true;
+  }
+
+  /** 确认绑定：校验当前 TOTP，通过才落库并生成恢复码。 */
+  private boolean verifyBind(Player player, String name, String secret, String code) {
+    if (!TotpUtil.verify(secret, code, System.currentTimeMillis(), digits(), period(), 1)) {
       player.sendMessage(MessageKey.TWO_FACTOR_INVALID_CODE.get());
       return true;
     }
     TwoFactorState.removePendingBind(name);
     enableTwoFactor(player, name, secret);
+    return true;
+  }
+
+  /** 完成登录：校验当前 TOTP，通过后才真正放行，之前的登录前限制此时才解除。 */
+  private boolean verifyLogin(Player player, TwoFactorState.PendingLogin pending, String code) {
+    LoginPlayer lp = pending.getLoginPlayer();
+    String secret = SecretCodec.decrypt(lp.getTotpSecret());
+    if (secret == null) {
+      TwoFactorState.removePendingLogin(lp.getName());
+      player.sendMessage(MessageKey.TWO_FACTOR_SECRET_BROKEN.get());
+      return true;
+    }
+    if (!TotpUtil.verify(secret, code, System.currentTimeMillis(), digits(), period(), 1)) {
+      player.sendMessage(MessageKey.TWO_FACTOR_INVALID_CODE.get());
+      return true;
+    }
+    TwoFactorState.removePendingLogin(lp.getName());
+    LoginPlayerHelper.completeLogin(player, lp);
     return true;
   }
 

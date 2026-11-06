@@ -3,6 +3,8 @@ package cc.baka9.catseedlogin.bukkit.task;
 import cc.baka9.catseedlogin.bukkit.Cache;
 import cc.baka9.catseedlogin.bukkit.Config;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
+import cc.baka9.catseedlogin.bukkit.object.TwoFactorState;
+import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -20,6 +22,12 @@ public class TaskSendLoginMessage extends Task {
     try {
       String playerName = player.getName();
       if (LoginPlayerHelper.isLogin(playerName)) return;
+
+      if (TwoFactorState.isAwaitingTwoFactor(playerName)) {
+        // 已经过了密码这一步，别再提示输密码了
+        player.sendMessage(MessageKey.TWO_FACTOR_REQUIRED_REMINDER.get());
+        return;
+      }
 
       String message =
           LoginPlayerHelper.isRegister(playerName)
