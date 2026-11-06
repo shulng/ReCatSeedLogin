@@ -224,6 +224,20 @@
                                     <exclude>org.geysermc.floodgate:api</exclude>
                                 </excludes>
                             </artifactSet>
+                            <relocations>
+                                <!--
+                                    内置的 protobuf 来自 mysql 驱动自带的 X DevAPI 类，不重定位的话会
+                                    和其它插件（例如 PlaceholderAPI 的扩展）形成跨 ClassLoader 的拆包：
+                                    GeneratedMessage$3 由本插件的 ClassLoader 加载，而它的父类
+                                    CachedDescriptorRetriever 由扩展自己的 ClassLoader 加载，
+                                    跨 ClassLoader 访问父类会被 JVM 拒绝，抛 IllegalAccessError。
+                                    这里挪到插件自己的包名下做隔离。
+                                -->
+                                <relocation>
+                                    <pattern>com.google.protobuf</pattern>
+                                    <shadedPattern>cc.baka9.catseedlogin.libs.protobuf</shadedPattern>
+                                </relocation>
+                            </relocations>
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
