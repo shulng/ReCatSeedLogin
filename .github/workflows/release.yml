@@ -18,38 +18,31 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 获取项目信息
-        id: project-info
-        run: |
-          # 从pom.xml提取项目信息
-          PROJECT_NAME=$(mvn help:evaluate -Dexpression=project.name -q -DforceStdout | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-          if [ "$PROJECT_NAME" = "null" ]; then
-            PROJECT_NAME=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
-          fi
-          
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | tr -d '\n')
-          
-          echo "name=${PROJECT_NAME}" >> $GITHUB_OUTPUT
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-
       - name: 设置Java环境
         uses: actions/setup-java@v6
         with:
           java-version: '25'
           distribution: 'temurin'
-          cache: maven
+          cache: gradle
 
-      - name: Maven构建项目
-        run: mvn -B clean package
+      - name: 获取项目信息
+        id: project-info
+        run: |
+          # 由 build.gradle 的 printProjectInfo 任务输出 name/version
+          chmod +x gradlew
+          ./gradlew -q --no-daemon --console=plain printProjectInfo | grep -E '^(name|version)=' >> "$GITHUB_OUTPUT"
+
+      - name: Gradle构建项目
+        run: ./gradlew --no-daemon --console=plain clean build
 
       - name: 验证构建结果
         run: |
-          if [ ! -d "target" ]; then
-            echo "::error::构建失败，未生成target目录"
+          if [ ! -d "build/libs" ]; then
+            echo "::error::构建失败，未生成build/libs目录"
             exit 1
           fi
           echo "=== 构建产物 ==="
-          ls -lh target/
+          ls -lh build/libs/
 
       - name: 获取提交信息
         id: get-commit
@@ -68,7 +61,7 @@ jobs:
           echo '```' >> hashes.md
 
           found_files=false
-          for file in target/*.jar; do
+          for file in build/libs/*.jar; do
             if [[ -f "$file" ]]; then
               hash=$(sha256sum "$file" | awk '{print $1}')
               filename=$(basename "$file")
@@ -129,7 +122,7 @@ jobs:
           name: ${{ steps.project-info.outputs.name }}-v${{ steps.project-info.outputs.version }}
           body_path: changelog.md
           files: |
-            target/*.jar
+            build/libs/*.jar
           draft: false
           prerelease: false
         env:
@@ -140,7 +133,7 @@ jobs:
         with:
           api_token: ${{ secrets.NEXUSMC_API_TOKEN }}
           resource_id: ${{ vars.NEXUSMC_RESOURCE_ID }}
-          file_path: target/CatSeedLogin-${{ steps.project-info.outputs.version }}.jar
+          file_path: build/libs/CatSeedLogin-${{ steps.project-info.outputs.version }}.jar
           version: ${{ steps.project-info.outputs.version }}
           version_tag: releases
           version_title: Release ${{ steps.project-info.outputs.version }}

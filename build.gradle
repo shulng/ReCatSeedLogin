@@ -1,0 +1,108 @@
+import org.gradle.api.attributes.java.TargetJvmVersion
+
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '9.6.1'
+}
+
+group = 'cc.baka9'
+version = '2.1.1'
+description = 'A comprehensive login plugin for Minecraft servers supporting Bukkit, BungeeCord, and Velocity'
+
+def javaTarget = JavaVersion.VERSION_1_8
+def lombokVersion = '1.18.48'
+def pluginVersion = version.toString()
+def pluginName = rootProject.name
+
+java {
+    sourceCompatibility = javaTarget
+    targetCompatibility = javaTarget
+}
+
+base {
+    archivesName = 'CatSeedLogin'
+}
+
+/*
+ * 平台 API（paper-api / velocity-api / ProtocolLib 等）由 Java 25 服务端提供，
+ * 但插件字节码仍编译为 Java 8。Gradle 会按 targetCompatibility 推导依赖的
+ * TargetJvmVersion 变体属性，从而把这些 API 判为「需要 Java 8」而拒绝解析；
+ * 这里显式声明依赖解析面向的运行时 JVM 版本，等价于 Maven 只按坐标取 POM 的行为。
+ */
+def platformJvm = 25
+configurations.configureEach {
+    if (name in ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath']) {
+        attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, platformJvm)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { name = 'opencollabSnapshot'; url = uri('https://repo.opencollab.dev/main/') }
+    maven { name = 'papermc'; url = uri('https://repo.papermc.io/repository/maven-public/') }
+    maven { name = 'dmulloy2'; url = uri('https://repo.dmulloy2.net/repository/public/') }
+    maven { name = 'sonatypeSnapshots'; url = uri('https://oss.sonatype.org/content/repositories/snapshots') }
+    maven { name = 'arimLgpl3'; url = uri('https://mvn-repo.arim.space/lesser-gpl3/') }
+}
+
+dependencies {
+    // 平台 API 与 Lombok 只参与编译，由服务端/代理端提供，不进入最终 JAR
+    compileOnly 'io.papermc.paper:paper-api:26.3.build.244-stable'
+    compileOnly 'net.dmulloy2:ProtocolLib:5.4.0'
+    compileOnly 'net.md-5:bungeecord-api:1.21-R0.4'
+    compileOnly 'com.velocitypowered:velocity-api:4.3.1'
+    compileOnly 'org.geysermc.floodgate:api:2.2.5-SNAPSHOT'
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    // 运行时依赖，全部打进 shaded JAR
+    implementation 'org.xerial:sqlite-jdbc:3.54.1.0'
+    implementation 'mysql:mysql-connector-java:8.0.33'
+    implementation 'org.yaml:snakeyaml:2.7'
+    implementation 'com.sun.mail:javax.mail:1.6.2'
+    implementation 'org.apache.commons:commons-email:1.6.0'
+    implementation 'org.apache.commons:commons-lang3:3.21.0'
+    implementation 'commons-net:commons-net:3.13.0'
+    implementation 'space.arim.morepaperlib:morepaperlib:0.5.3'
+    implementation 'de.mkammerer:argon2-jvm:2.12'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked']
+}
+
+tasks.named('processResources') {
+    filteringCharset = 'UTF-8'
+    inputs.property('pluginVersion', pluginVersion)
+    // 对应原 Maven 的 resources filtering：把插件描述文件里的 ${version} 换成项目版本
+    filesMatching(['plugin.yml', 'bungee.yml', 'velocity-plugin.json']) {
+        filter { String line -> line.replace('${version}', pluginVersion) }
+    }
+}
+
+tasks.named('jar') {
+    // 只发布 shaded JAR，避免同时产出一个不含依赖的普通 JAR
+    enabled = false
+}
+
+tasks.named('shadowJar') {
+    archiveClassifier.set('')
+    // 对应 maven-shade-plugin 的 filters
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+    exclude 'META-INF/LICENSE*', 'LICENSE*', 'NOTICE*'
+    /*
+     * mysql-connector-java 自带的 X DevAPI protobuf 类不重定位时，会和其它插件
+     * （例如 PlaceholderAPI 扩展）形成跨 ClassLoader 拆包，导致 IllegalAccessError。
+     * 这里挪到插件自己的包名下做隔离，与原 shade 配置保持一致。
+     */
+    relocate 'com.google.protobuf', 'cc.baka9.catseedlogin.libs.protobuf'
+}
+
+// 供 GitHub Actions 读取项目名与版本号
+tasks.register('printProjectInfo') {
+    def info = "name=${pluginName}\nversion=${pluginVersion}"
+    doLast {
+        println info
+    }
+}

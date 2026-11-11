@@ -78,11 +78,14 @@
 
 ## 🏗️ 项目架构
 
-插件采用单模块Maven架构，编译为一个JAR包，同时支持Bukkit/BungeeCord/Velocity三个平台：
+插件采用单模块 Gradle 架构，编译为一个 Shaded JAR 包，同时支持Bukkit/BungeeCord/Velocity三个平台：
 
 ```
 ReCatSeedLogin/
-├── pom.xml                      (Maven构建配置，输出单个Shaded JAR)
+├── build.gradle                 (Gradle 构建配置，输出单个 Shaded JAR)
+├── settings.gradle              (项目名称配置)
+├── gradle.properties            (Gradle 运行参数)
+├── gradlew / gradlew.bat        (Gradle Wrapper，无需本地安装 Gradle)
 ├── src/main/java/cc/baka9/catseedlogin/
 │   ├── bukkit/                  → Bukkit/Spigot/Paper/Folia 服务端实现
 │   │   ├── CatSeedLogin.java    → 服务端插件主类
@@ -129,13 +132,24 @@ ReCatSeedLogin/
 - **Velocity端** - 代理端插件，通过TCP Socket与Bukkit端通信，实现跨服登录状态同步
 - **common包** - 跨平台共享代码，提供 `PlatformAdapter`、`CoreConfig` 等平台无关接口
 
+### 🔨 从源码构建
+
+项目使用 Gradle Wrapper，无需预先安装 Gradle；构建环境需要 JDK 25（与 CI 一致，因为 Paper API 由 Java 25 编译），产物的字节码目标仍是 Java 8：
+
+```bash
+./gradlew clean build      # Windows 使用 gradlew.bat clean build
+```
+
+产物为 `build/libs/CatSeedLogin-<版本>.jar`（Shaded JAR），可直接放入 `plugins` 目录。
+`plugin.yml` / `bungee.yml` / `velocity-plugin.json` 中的 `${version}` 会在构建时替换为项目版本。
+
 ## 📥 下载安装
 
 ### 📦 下载地址
 | 版本类型 | 下载链接 |
 |---------|----------|
 | 🔥 **最新稳定版** | [GitHub Releases](https://github.com/shulng/ReCatSeedLogin/releases/latest) |
-| 🔄 **自动构建版** | [GitHub Actions](https://github.com/shulng/ReCatSeedLogin/actions/workflows/maven.yml) |
+| 🔄 **自动构建版** | [GitHub Actions](https://github.com/shulng/ReCatSeedLogin/actions/workflows/ci.yml) |
 
 ### 🚀 安装步骤
 
