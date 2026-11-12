@@ -61,17 +61,6 @@ public final class TwoFactorLimiter {
     ATTEMPTS.remove(uuid);
   }
 
-  /** 当前连续失败次数。 */
-  public static int getFailedCount(UUID uuid) {
-    Attempt attempt = ATTEMPTS.get(uuid);
-    if (attempt == null) {
-      return 0;
-    }
-    synchronized (attempt) {
-      return attempt.failedCount;
-    }
-  }
-
   /**
    * 清理超过窗口没有失败的条目。
    *

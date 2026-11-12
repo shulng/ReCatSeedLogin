@@ -28,8 +28,7 @@ import org.bukkit.entity.Player;
 /**
  * 两步验证指令。
  *
- * <p>本阶段覆盖绑定与关闭：{@code /2fa enable} 生成密钥、{@code /2fa verify} 确认绑定、 {@code /2fa disable}
- * 关闭。恢复码只用于第二步验证，不能用于登录第一步或重置密码。
+ * <p>本阶段覆盖绑定与关闭：{@code /2fa enable} 生成密钥、{@code /2fa verify} 确认绑定、 {@code /2fa disable} 关闭。恢复码只用于第二步验证，不能用于登录第一步或重置密码。
  */
 public class CommandTwoFactor implements CommandExecutor, TabCompleter {
 
@@ -71,12 +70,8 @@ public class CommandTwoFactor implements CommandExecutor, TabCompleter {
       return true;
     }
     String name = player.getName();
-    if (!LoginPlayerHelper.isLogin(name)) {
-      player.sendMessage(MessageKey.TWO_FACTOR_NEED_LOGIN.get());
-      return true;
-    }
     LoginPlayer lp = Cache.getIgnoreCase(name);
-    if (lp == null) {
+    if (lp == null || !LoginPlayerHelper.isLogin(name)) {
       player.sendMessage(MessageKey.TWO_FACTOR_NEED_LOGIN.get());
       return true;
     }
@@ -115,7 +110,7 @@ public class CommandTwoFactor implements CommandExecutor, TabCompleter {
 
   /** 确认绑定：校验当前 TOTP，通过才落库并生成恢复码。 */
   private boolean verifyBind(Player player, String name, String secret, String code) {
-    if (!TotpUtil.verify(secret, code, System.currentTimeMillis(), digits(), period(), 1)) {
+    if (!verifyTotp(secret, code)) {
       handleVerifyFailure(player);
       return true;
     }
@@ -134,7 +129,7 @@ public class CommandTwoFactor implements CommandExecutor, TabCompleter {
       player.sendMessage(MessageKey.TWO_FACTOR_SECRET_BROKEN.get());
       return true;
     }
-    if (!TotpUtil.verify(secret, code, System.currentTimeMillis(), digits(), period(), 1)) {
+    if (!verifyTotp(secret, code)) {
       handleVerifyFailure(player);
       return true;
     }
@@ -163,16 +158,18 @@ public class CommandTwoFactor implements CommandExecutor, TabCompleter {
       return true;
     }
     // 恢复码是 Argon2 哈希，逐条比对开销不小，放到异步线程
-    CatScheduler.runTaskAsync(() -> {
-      TotpRecoveryCode matched = PluginContext.getSql().findUnusedRecoveryCode(name, args[1]);
-      CatScheduler.runTask(() -> {
-        if (matched == null) {
-          handleVerifyFailure(player);
-          return;
-        }
-        finishRecover(player, pending, matched);
-      });
-    });
+    CatScheduler.runTaskAsync(
+        () -> {
+          TotpRecoveryCode matched = PluginContext.getSql().findUnusedRecoveryCode(name, args[1]);
+          CatScheduler.runTask(
+              () -> {
+                if (matched == null) {
+                  handleVerifyFailure(player);
+                  return;
+                }
+                finishRecover(player, pending, matched);
+              });
+        });
     return true;
   }
 
@@ -181,15 +178,10 @@ public class CommandTwoFactor implements CommandExecutor, TabCompleter {
       Player player, TwoFactorState.PendingLogin pending, TotpRecoveryCode matched) {
     String name = pending.getLoginPlayer().getName();
     PluginContext.getSql().markRecoveryCodeUsed(name, matched.getCodeHash());
-    PluginContext.getSql().invalidateRecoveryCodes(name);
-    PluginContext.getSql().updateTotpSecret(name, null);
-    PluginContext.getSql().updateTotpEnabled(name, false);
-    Cache.refresh(name);
-
+    clearTwoFactor(name);
     TwoFactorLimiter.recordSuccess(player.getUniqueId());
     TwoFactorState.removePendingLogin(name);
     TwoFactorState.setRebindRequired(name);
-
     LoginPlayerHelper.completeLogin(player, pending.getLoginPlayer());
     player.sendMessage(MessageKey.TWO_FACTOR_RECOVER_SUCCESS.get());
   }
@@ -205,8 +197,9 @@ public class CommandTwoFactor implements CommandExecutor, TabCompleter {
       player.sendMessage(MessageKey.TWO_FACTOR_INVALID_CODE.get());
       return;
     }
-    player.sendMessage(MessageKey.TWO_FACTOR_MAX_ATTEMPTS.get());
-    player.kickPlayer(MessageKey.TWO_FACTOR_MAX_ATTEMPTS.get());
+    String kickMessage = MessageKey.TWO_FACTOR_MAX_ATTEMPTS.get();
+    player.sendMessage(kickMessage);
+    player.kickPlayer(kickMessage);
   }
 
   /** 关闭两步验证，只接受 TOTP，成功后作废该玩家所有恢复码。 */
@@ -230,17 +223,26 @@ public class CommandTwoFactor implements CommandExecutor, TabCompleter {
       player.sendMessage(MessageKey.TWO_FACTOR_SECRET_BROKEN.get());
       return true;
     }
-    if (!TotpUtil.verify(secret, args[1], System.currentTimeMillis(), digits(), period(), 1)) {
+    if (!verifyTotp(secret, args[1])) {
       handleVerifyFailure(player);
       return true;
     }
     TwoFactorLimiter.recordSuccess(player.getUniqueId());
+    clearTwoFactor(name);
+    player.sendMessage(MessageKey.TWO_FACTOR_DISABLED.get());
+    return true;
+  }
+
+  /** 解绑：清空密钥、关闭开关、作废恢复码并刷新缓存。 */
+  private void clearTwoFactor(String name) {
     PluginContext.getSql().updateTotpSecret(name, null);
     PluginContext.getSql().updateTotpEnabled(name, false);
     PluginContext.getSql().invalidateRecoveryCodes(name);
     Cache.refresh(name);
-    player.sendMessage(MessageKey.TWO_FACTOR_DISABLED.get());
-    return true;
+  }
+
+  private boolean verifyTotp(String secret, String code) {
+    return TotpUtil.verify(secret, code, System.currentTimeMillis(), digits(), period(), 1);
   }
 
   private void enableTwoFactor(Player player, String name, String secret) {
@@ -258,12 +260,13 @@ public class CommandTwoFactor implements CommandExecutor, TabCompleter {
     player.sendMessage(MessageKey.TWO_FACTOR_ENABLED.get());
 
     // 恢复码的哈希是 Argon2，耗时较长，放到异步线程里生成，再切回主线程展示
-    CatScheduler.runTaskAsync(() -> {
-      RecoveryCodeGenerator.Generated generated =
-          RecoveryCodeGenerator.generate(name, Config.Settings.TwoFactorRecoveryCodeCount);
-      PluginContext.getSql().saveRecoveryCodes(name, generated.getEntries());
-      CatScheduler.runTask(() -> showRecoveryCodes(player, generated.getRawCodes()));
-    });
+    CatScheduler.runTaskAsync(
+        () -> {
+          RecoveryCodeGenerator.Generated generated =
+              RecoveryCodeGenerator.generate(name, Config.Settings.TwoFactorRecoveryCodeCount);
+          PluginContext.getSql().saveRecoveryCodes(name, generated.getEntries());
+          CatScheduler.runTask(() -> showRecoveryCodes(player, generated.getRawCodes()));
+        });
   }
 
   private void sendSecret(Player player, String secret) {
@@ -293,22 +296,15 @@ public class CommandTwoFactor implements CommandExecutor, TabCompleter {
     if (LoginPlayerHelper.isFloodgatePlayer(player)) {
       player.sendMessage(MessageKey.TWO_FACTOR_RECOVERY_BEDROCK.get());
     }
-    StringBuilder all = new StringBuilder();
-    for (String code : codes) {
-      if (all.length() > 0) {
-        all.append('\n');
-      }
-      all.append(code);
-    }
     TwoFactorMessageUtil.send(
         player,
         Collections.singletonList(
             new TwoFactorMessageUtil.MessageLine(
                 MessageKey.TWO_FACTOR_RECOVERY_COPY_ALL.get(),
-                all.toString(),
+                String.join("\n", codes),
                 MessageKey.TWO_FACTOR_RECOVERY_COPY_ALL_HOVER.get())));
     for (int i = 0; i < codes.size(); i++) {
-      final String code = codes.get(i);
+      String code = codes.get(i);
       CatScheduler.runTaskLater(
           () ->
               TwoFactorMessageUtil.send(

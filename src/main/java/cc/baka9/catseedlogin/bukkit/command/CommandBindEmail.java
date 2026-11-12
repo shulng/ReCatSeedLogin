@@ -52,7 +52,7 @@ public class CommandBindEmail implements CommandExecutor {
       sender.sendMessage(MessageKey.NOT_LOGGED_IN.get());
       return false;
     }
-    if (!Config.EmailVerify.Enable) {
+    if (!PluginContext.getConfigManager().isEmailEnable()) {
       sender.sendMessage(MessageKey.RESETPASSWORD_EMAIL_DISABLE.get());
       return false;
     }

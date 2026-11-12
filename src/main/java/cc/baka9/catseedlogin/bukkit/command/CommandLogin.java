@@ -26,12 +26,12 @@ public class CommandLogin implements CommandExecutor {
     if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
       return true;
     if (LoginPlayerHelper.isLogin(name)) {
-      sender.sendMessage(Config.Language.LOGIN_REPEAT);
+      sender.sendMessage(MessageKey.LOGIN_REPEAT.get());
       return true;
     }
     LoginPlayer lp = Cache.getIgnoreCase(name);
     if (lp == null) {
-      sender.sendMessage(Config.Language.LOGIN_NOREGISTER);
+      sender.sendMessage(MessageKey.LOGIN_NOREGISTER.get());
       return true;
     }
     if (!Crypt.match(name, args[0], lp.getPassword().trim())) {
@@ -70,12 +70,12 @@ public class CommandLogin implements CommandExecutor {
   }
 
   private void handleLoginFail(CommandSender sender, Player player, LoginPlayer lp) {
-    sender.sendMessage(Config.Language.LOGIN_FAIL);
+    sender.sendMessage(MessageKey.LOGIN_FAIL.get());
     CatSeedPlayerLoginEvent loginEvent =
         new CatSeedPlayerLoginEvent(player, lp.getEmail(), CatSeedPlayerLoginEvent.Result.FAIL);
     Bukkit.getServer().getPluginManager().callEvent(loginEvent);
-    if (Config.EmailVerify.Enable) {
-      sender.sendMessage(Config.Language.LOGIN_FAIL_IF_FORGET);
+    if (PluginContext.getConfigManager().isEmailEnable()) {
+      sender.sendMessage(MessageKey.LOGIN_FAIL_IF_FORGET.get());
     }
   }
 }

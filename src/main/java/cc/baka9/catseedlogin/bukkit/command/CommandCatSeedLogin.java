@@ -17,13 +17,15 @@ import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -63,31 +65,96 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
               "blindingBeforeLogin",
               "2faDisable"));
 
+  /** 布尔开关的统一注册表：新增开关只需在这里登记一次，分发与补全自动生效。 */
+  private static final Map<String, BoolSetting> BOOLEAN_SETTINGS = new LinkedHashMap<>();
+
+  static {
+    register("limitChineseID", () -> Config.Settings.LimitChineseID, v -> Config.Settings.LimitChineseID = v, "限制中文游戏名");
+    register(
+        "bedrockLoginBypass",
+        () -> Config.Settings.BedrockLoginBypass,
+        v -> Config.Settings.BedrockLoginBypass = v,
+        "基岩版玩家登录跳过");
+    register(
+        "LoginwiththesameIP",
+        () -> Config.Settings.LoginwiththesameIP,
+        v -> Config.Settings.LoginwiththesameIP = v,
+        "同IP玩家登录跳过");
+    register(
+        "beforeLoginNoDamage",
+        () -> Config.Settings.BeforeLoginNoDamage,
+        v -> Config.Settings.BeforeLoginNoDamage = v,
+        "登陆之前不受到伤害");
+    register(
+        "afterLoginBack",
+        () -> Config.Settings.AfterLoginBack,
+        v -> Config.Settings.AfterLoginBack = v,
+        "登陆之后返回下线地点");
+    register(
+        "canTpSpawnLocation",
+        () -> Config.Settings.CanTpSpawnLocation,
+        v -> Config.Settings.CanTpSpawnLocation = v,
+        "登录之前强制在登陆地点");
+    register(
+        "deathStateQuitRecordLocation",
+        () -> Config.Settings.DeathStateQuitRecordLocation,
+        v -> Config.Settings.DeathStateQuitRecordLocation = v,
+        "死亡状态退出游戏记录退出位置");
+    register(
+        "loopbackLoginBypass",
+        () -> Config.Settings.LoopbackLoginBypass,
+        v -> Config.Settings.LoopbackLoginBypass = v,
+        "本地回环地址登录跳过");
+    register(
+        "beforeLoginAllowChat",
+        () -> Config.Settings.BeforeLoginAllowChat,
+        v -> Config.Settings.BeforeLoginAllowChat = v,
+        "登陆之前允许发消息");
+    register(
+        "blindingBeforeLogin",
+        () -> Config.Settings.BlindingBeforeLogin,
+        v -> Config.Settings.BlindingBeforeLogin = v,
+        "登陆之前失明效果");
+  }
+
+  private static void register(
+      String key, BooleanSupplier getter, Consumer<Boolean> setter, String label) {
+    BOOLEAN_SETTINGS.put(key.toLowerCase(Locale.ROOT), new BoolSetting(getter, setter, label));
+  }
+
   @Override
-  public boolean onCommand(CommandSender sender, Command command, String lable, String[] args) {
-    return reload(sender, args)
-        || setPwd(sender, args)
-        || delPlayer(sender, args)
-        || twoFactorDisable(sender, args)
-        || loopbackLoginBypass(sender, args)
-        || beforeLoginAllowChat(sender, args)
-        || blindingBeforeLogin(sender, args)
-        || setIpCountLimit(sender, args)
-        || limitChineseID(sender, args)
-        || bedrockLoginBypass(sender, args)
-        || LoginwiththesameIP(sender, args)
-        || setIdLength(sender, args)
-        || beforeLoginNoDamage(sender, args)
-        || setReenterInterval(sender, args)
-        || afterLoginBack(sender, args)
-        || setSpawnLocation(sender, args)
-        || commandWhiteListInfo(sender, args)
-        || commandWhiteListAdd(sender, args)
-        || commandWhiteListDel(sender, args)
-        || canTpSpawnLocation(sender, args)
-        || autoKick(sender, args)
-        || setIpRegCountLimit(sender, args)
-        || deathStateQuitRecordLocation(sender, args);
+  public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    if (args.length == 0) return false;
+    switch (args[0].toLowerCase(Locale.ROOT)) {
+      case "reload":
+        return reload(sender);
+      case "setpwd":
+        return setPwd(sender, args);
+      case "delplayer":
+        return delPlayer(sender, args);
+      case "2fadisable":
+        return twoFactorDisable(sender, args);
+      case "setipcountlimit":
+        return setIpCountLimit(sender, args);
+      case "setipregcountlimit":
+        return setIpRegCountLimit(sender, args);
+      case "setidlength":
+        return setIdLength(sender, args);
+      case "setreenterinterval":
+        return setReenterInterval(sender, args);
+      case "setautokick":
+        return setAutoKick(sender, args);
+      case "setspawnlocation":
+        return setSpawnLocation(sender);
+      case "commandwhitelistinfo":
+        return commandWhiteListInfo(sender);
+      case "commandwhitelistadd":
+        return commandWhiteListAdd(sender, args);
+      case "commandwhitelistdel":
+        return commandWhiteListDel(sender, args);
+      default:
+        return toggle(sender, args[0]);
+    }
   }
 
   // ---- Tab Complete ----
@@ -102,7 +169,7 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
       return TabCompleteUtil.filter(SUB_COMMANDS, args[0]);
     }
     if (args.length == 2) {
-      String sub = args[0].toLowerCase();
+      String sub = args[0].toLowerCase(Locale.ROOT);
       if ("delplayer".equals(sub) || "setpwd".equals(sub) || "2fadisable".equals(sub)) {
         return TabCompleteUtil.filter(registeredAndOnlinePlayerNames(), args[1]);
       }
@@ -133,10 +200,12 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
     if (whiteList == null || whiteList.isEmpty()) {
       return Collections.emptyList();
     }
-    return whiteList.stream().map(Pattern::toString).collect(Collectors.toList());
+    List<String> regexes = new ArrayList<>(whiteList.size());
+    whiteList.forEach(pattern -> regexes.add(pattern.toString()));
+    return regexes;
   }
 
-  // ---- Helper: Boolean Toggle ----
+  // ---- Toggle Settings ----
 
   private static class BoolSetting {
     final BooleanSupplier getter;
@@ -150,8 +219,9 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
     }
   }
 
-  private boolean toggle(CommandSender sender, String[] args, String key, BoolSetting setting) {
-    if (args.length == 0 || !args[0].equalsIgnoreCase(key)) return false;
+  private boolean toggle(CommandSender sender, String key) {
+    BoolSetting setting = BOOLEAN_SETTINGS.get(key.toLowerCase(Locale.ROOT));
+    if (setting == null) return false;
     try {
       setting.setter.accept(!setting.getter.getAsBoolean());
       Config.Settings.save();
@@ -165,201 +235,96 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
     return true;
   }
 
-  // ---- Toggle Settings ----
-
-  private boolean deathStateQuitRecordLocation(CommandSender sender, String[] args) {
-    return toggle(
-        sender,
-        args,
-        "deathStateQuitRecordLocation",
-        new BoolSetting(
-            () -> Config.Settings.DeathStateQuitRecordLocation,
-            v -> Config.Settings.DeathStateQuitRecordLocation = v,
-            "死亡状态退出游戏记录退出位置"));
-  }
-
-  private boolean canTpSpawnLocation(CommandSender sender, String[] args) {
-    return toggle(
-        sender,
-        args,
-        "canTpSpawnLocation",
-        new BoolSetting(
-            () -> Config.Settings.CanTpSpawnLocation,
-            v -> Config.Settings.CanTpSpawnLocation = v,
-            "登录之前强制在登陆地点"));
-  }
-
-  private boolean afterLoginBack(CommandSender sender, String[] args) {
-    return toggle(
-        sender,
-        args,
-        "afterLoginBack",
-        new BoolSetting(
-            () -> Config.Settings.AfterLoginBack,
-            v -> Config.Settings.AfterLoginBack = v,
-            "登陆之后返回下线地点"));
-  }
-
-  private boolean beforeLoginNoDamage(CommandSender sender, String[] args) {
-    return toggle(
-        sender,
-        args,
-        "beforeLoginNoDamage",
-        new BoolSetting(
-            () -> Config.Settings.BeforeLoginNoDamage,
-            v -> Config.Settings.BeforeLoginNoDamage = v,
-            "登陆之前不受到伤害"));
-  }
-
-  private boolean limitChineseID(CommandSender sender, String[] args) {
-    return toggle(
-        sender,
-        args,
-        "limitChineseID",
-        new BoolSetting(
-            () -> Config.Settings.LimitChineseID,
-            v -> Config.Settings.LimitChineseID = v,
-            "限制中文游戏名"));
-  }
-
-  private boolean bedrockLoginBypass(CommandSender sender, String[] args) {
-    return toggle(
-        sender,
-        args,
-        "bedrockLoginBypass",
-        new BoolSetting(
-            () -> Config.Settings.BedrockLoginBypass,
-            v -> Config.Settings.BedrockLoginBypass = v,
-            "基岩版玩家登录跳过"));
-  }
-
-  private boolean LoginwiththesameIP(CommandSender sender, String[] args) {
-    return toggle(
-        sender,
-        args,
-        "LoginwiththesameIP",
-        new BoolSetting(
-            () -> Config.Settings.LoginwiththesameIP,
-            v -> Config.Settings.LoginwiththesameIP = v,
-            "同IP玩家登录跳过"));
-  }
-
-  private boolean loopbackLoginBypass(CommandSender sender, String[] args) {
-    return toggle(
-        sender,
-        args,
-        "loopbackLoginBypass",
-        new BoolSetting(
-            () -> Config.Settings.LoopbackLoginBypass,
-            v -> Config.Settings.LoopbackLoginBypass = v,
-            "本地回环地址登录跳过"));
-  }
-
-  private boolean beforeLoginAllowChat(CommandSender sender, String[] args) {
-    return toggle(
-        sender,
-        args,
-        "beforeLoginAllowChat",
-        new BoolSetting(
-            () -> Config.Settings.BeforeLoginAllowChat,
-            v -> Config.Settings.BeforeLoginAllowChat = v,
-            "登陆之前允许发消息"));
-  }
-
-  private boolean blindingBeforeLogin(CommandSender sender, String[] args) {
-    return toggle(
-        sender,
-        args,
-        "blindingBeforeLogin",
-        new BoolSetting(
-            () -> Config.Settings.BlindingBeforeLogin,
-            v -> Config.Settings.BlindingBeforeLogin = v,
-            "登陆之前失明效果"));
-  }
-
   // ---- Number Settings ----
 
-  private boolean autoKick(CommandSender sender, String[] args) {
-    if (args.length < 2 || !args[0].equalsIgnoreCase("setAutoKick")) return false;
+  private Integer parseNumber(CommandSender sender, String raw) {
     try {
-      Config.Settings.AutoKick = Integer.parseInt(args[1]);
-      Config.Settings.save();
-      sender.sendMessage(
-          Config.Settings.AutoKick > 0
-              ? MessageKey.ADMIN_AUTO_KICK_SET.get(Config.Settings.AutoKick)
-              : MessageKey.ADMIN_AUTO_KICK_DISABLED.get());
+      return Integer.valueOf(raw);
     } catch (NumberFormatException e) {
       sender.sendMessage(MessageKey.ADMIN_ENTER_NUMBER.get());
+      return null;
     }
+  }
+
+  private boolean setAutoKick(CommandSender sender, String[] args) {
+    if (args.length < 2) return false;
+    Integer value = parseNumber(sender, args[1]);
+    if (value == null) return true;
+    Config.Settings.AutoKick = value;
+    Config.Settings.save();
+    sender.sendMessage(
+        value > 0
+            ? MessageKey.ADMIN_AUTO_KICK_SET.get(value)
+            : MessageKey.ADMIN_AUTO_KICK_DISABLED.get());
     return true;
   }
 
   private boolean setReenterInterval(CommandSender sender, String[] args) {
-    if (args.length < 2 || !args[0].equalsIgnoreCase("setReenterInterval")) return false;
+    if (args.length < 2) return false;
+    long value;
     try {
-      Config.Settings.ReenterInterval = Long.parseLong(args[1]);
-      Config.Settings.save();
-      sender.sendMessage(
-          MessageKey.ADMIN_REENTER_INTERVAL_SET.get(Config.Settings.ReenterInterval));
+      value = Long.parseLong(args[1]);
     } catch (NumberFormatException e) {
       sender.sendMessage(MessageKey.ADMIN_ENTER_NUMBER.get());
+      return true;
     }
+    Config.Settings.ReenterInterval = value;
+    Config.Settings.save();
+    sender.sendMessage(MessageKey.ADMIN_REENTER_INTERVAL_SET.get(value));
     return true;
   }
 
   private boolean setIdLength(CommandSender sender, String[] args) {
-    if (args.length < 3 || !args[0].equalsIgnoreCase("setIdLength")) return false;
-    try {
-      Config.Settings.MinLengthID = Integer.parseInt(args[1]);
-      Config.Settings.MaxLengthID = Integer.parseInt(args[2]);
-      Config.Settings.save();
-      sender.sendMessage(
-          MessageKey.ADMIN_ID_LENGTH_SET.get(
-              Config.Settings.MinLengthID, Config.Settings.MaxLengthID));
-    } catch (NumberFormatException e) {
-      sender.sendMessage(MessageKey.ADMIN_ENTER_NUMBER.get());
-    }
+    if (args.length < 3) return false;
+    Integer min = parseNumber(sender, args[1]);
+    if (min == null) return true;
+    Integer max = parseNumber(sender, args[2]);
+    if (max == null) return true;
+    Config.Settings.MinLengthID = min;
+    Config.Settings.MaxLengthID = max;
+    Config.Settings.save();
+    sender.sendMessage(MessageKey.ADMIN_ID_LENGTH_SET.get(min, max));
     return true;
   }
 
   private boolean setIpCountLimit(CommandSender sender, String[] args) {
-    if (args.length < 2 || !args[0].equalsIgnoreCase("setIpCountLimit")) return false;
-    try {
-      Config.Settings.IpCountLimit = Integer.parseInt(args[1]);
-      Config.Settings.save();
-      sender.sendMessage(MessageKey.ADMIN_IP_LOGIN_LIMIT_SET.get(Config.Settings.IpCountLimit));
-    } catch (NumberFormatException e) {
-      sender.sendMessage(MessageKey.ADMIN_ENTER_NUMBER.get());
-    }
+    if (args.length < 2) return false;
+    Integer value = parseNumber(sender, args[1]);
+    if (value == null) return true;
+    Config.Settings.IpCountLimit = value;
+    Config.Settings.save();
+    sender.sendMessage(MessageKey.ADMIN_IP_LOGIN_LIMIT_SET.get(value));
     return true;
   }
 
   private boolean setIpRegCountLimit(CommandSender sender, String[] args) {
-    if (args.length < 2 || !args[0].equalsIgnoreCase("setIpRegCountLimit")) return false;
-    try {
-      Config.Settings.IpRegisterCountLimit = Integer.parseInt(args[1]);
-      Config.Settings.save();
-      sender.sendMessage(
-          MessageKey.ADMIN_IP_REG_LIMIT_SET.get(Config.Settings.IpRegisterCountLimit));
-    } catch (NumberFormatException e) {
-      sender.sendMessage(MessageKey.ADMIN_ENTER_NUMBER.get());
-    }
+    if (args.length < 2) return false;
+    Integer value = parseNumber(sender, args[1]);
+    if (value == null) return true;
+    Config.Settings.IpRegisterCountLimit = value;
+    Config.Settings.save();
+    sender.sendMessage(MessageKey.ADMIN_IP_REG_LIMIT_SET.get(value));
     return true;
   }
 
   // ---- Command Whitelist ----
 
-  private boolean commandWhiteListInfo(CommandSender sender, String[] args) {
-    if (args.length == 0 || !args[0].equalsIgnoreCase("commandWhiteListInfo")) return false;
+  private boolean commandWhiteListInfo(CommandSender sender) {
     sender.sendMessage(MessageKey.ADMIN_COMMAND_WHITELIST_INFO.get());
     Config.Settings.CommandWhiteList.forEach(cmdRegex -> sender.sendMessage(cmdRegex.toString()));
     return true;
   }
 
   private boolean commandWhiteListAdd(CommandSender sender, String[] args) {
-    if (args.length < 2 || !args[0].equalsIgnoreCase("commandWhiteListAdd")) return false;
+    if (args.length < 2) return false;
     String regex = joinArgs(args, 1);
-    Pattern pattern = Pattern.compile(regex);
+    Pattern pattern;
+    try {
+      pattern = Pattern.compile(regex);
+    } catch (Exception e) {
+      sender.sendMessage(MessageKey.ADMIN_SET_FAILED.get(e.getMessage()));
+      return true;
+    }
     if (containsRegex(regex)) {
       sender.sendMessage(MessageKey.ADMIN_COMMAND_WHITELIST_ALREADY_EXISTS.get(regex));
     } else {
@@ -371,10 +336,10 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
   }
 
   private boolean commandWhiteListDel(CommandSender sender, String[] args) {
-    if (args.length < 2 || !args[0].equalsIgnoreCase("commandWhiteListDel")) return false;
+    if (args.length < 2) return false;
     String regex = joinArgs(args, 1);
     if (containsRegex(regex)) {
-      removeRegex(regex);
+      Config.Settings.CommandWhiteList.removeIf(p -> p.toString().equals(regex));
       Config.Settings.save();
       sender.sendMessage(MessageKey.ADMIN_COMMAND_WHITELIST_REMOVED.get(regex));
     } else {
@@ -384,26 +349,16 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
   }
 
   private static String joinArgs(String[] args, int from) {
-    String[] cmd = new String[args.length - from];
-    System.arraycopy(args, from, cmd, 0, cmd.length);
-    return String.join(" ", cmd);
+    return String.join(" ", Arrays.asList(args).subList(from, args.length));
   }
 
   private static boolean containsRegex(String regex) {
-    return Config.Settings.CommandWhiteList.stream()
-        .map(Pattern::toString)
-        .collect(Collectors.toList())
-        .contains(regex);
-  }
-
-  private static void removeRegex(String regex) {
-    Config.Settings.CommandWhiteList.removeIf(p -> p.toString().equals(regex));
+    return Config.Settings.CommandWhiteList.stream().anyMatch(p -> p.toString().equals(regex));
   }
 
   // ---- Spawn Location ----
 
-  private boolean setSpawnLocation(CommandSender sender, String[] args) {
-    if (args.length == 0 || !args[0].equalsIgnoreCase("setSpawnLocation")) return false;
+  private boolean setSpawnLocation(CommandSender sender) {
     if (!(sender instanceof Player)) {
       sender.sendMessage(MessageKey.CANNOT_USE_FROM_CONSOLE.get());
       return true;
@@ -416,8 +371,7 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
 
   // ---- Reload ----
 
-  private boolean reload(CommandSender sender, String[] args) {
-    if (args.length == 0 || !args[0].equalsIgnoreCase("reload")) return false;
+  private boolean reload(CommandSender sender) {
     Config.reload();
     try {
       PluginContext.getSql().closeConnection();
@@ -425,10 +379,9 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
       PluginContext.getLogger().warning("§c关闭旧数据库连接时出错");
       e.printStackTrace();
     }
+    boolean mysql = PluginContext.getConfigManager().isMySQL();
     PluginContext.setSql(
-        Config.MySQL.Enable
-            ? new MySQL(PluginContext.getPlugin())
-            : new SQLite(PluginContext.getPlugin()));
+        mysql ? new MySQL(PluginContext.getPlugin()) : new SQLite(PluginContext.getPlugin()));
     try {
       PluginContext.getSql().init();
       Cache.refreshAllSync();
@@ -442,7 +395,7 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
       PluginContext.getLogger().warning("§c停止通信服务时出错");
       e.printStackTrace();
     }
-    if (Config.BungeeCord.Enable) {
+    if (PluginContext.getConfigManager().isEnable()) {
       try {
         Communication.socketServerStartAsync();
       } catch (Exception e) {
@@ -450,25 +403,20 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
         e.printStackTrace();
       }
     }
-    sender.sendMessage(MessageKey.CONFIG_RELOADED_MSG.get());
+    sender.sendMessage(MessageKey.CONFIG_RELOADED.get());
     return true;
   }
 
   // ---- Delete Player ----
 
   private boolean delPlayer(CommandSender sender, String[] args) {
-    if (args.length < 2 || !args[0].equalsIgnoreCase("delplayer")) return false;
+    if (args.length < 2) return false;
     String name = args[1];
     LoginPlayer lp = Cache.getIgnoreCase(name);
     if (lp == null) {
       sender.sendMessage(MessageKey.ACCOUNT_NOT_EXISTS.get(name));
       return true;
     }
-    delPlayerAsync(sender, lp);
-    return true;
-  }
-
-  private void delPlayerAsync(CommandSender sender, LoginPlayer lp) {
     CatScheduler.runTaskAsync(() -> {
       try {
         PluginContext.getSql().del(lp.getName());
@@ -481,6 +429,7 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
         e.printStackTrace();
       }
     });
+    return true;
   }
 
   private static void kickPlayerIfOnline(String name) {
@@ -500,7 +449,7 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
    * <p>这是绕过玩家本人验证的唯一入口，因此挂在管理指令下、复用现有的管理权限节点。
    */
   private boolean twoFactorDisable(CommandSender sender, String[] args) {
-    if (args.length < 2 || !args[0].equalsIgnoreCase("2fadisable")) return false;
+    if (args.length < 2) return false;
     String name = args[1];
     LoginPlayer lp = Cache.getIgnoreCase(name);
     if (lp == null) {
@@ -511,24 +460,36 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
       sender.sendMessage(MessageKey.ADMIN_2FA_NOT_ENABLED.get(name));
       return true;
     }
-    PluginContext.getSql().updateTotpSecret(name, null);
-    PluginContext.getSql().updateTotpEnabled(name, false);
-    PluginContext.getSql().invalidateRecoveryCodes(name);
-    Cache.refresh(name);
-    TwoFactorState.removePendingLogin(name);
-    sender.sendMessage(MessageKey.ADMIN_2FA_DISABLED.get(name));
-    Player target = Bukkit.getPlayerExact(name);
-    if (target != null && target.isOnline()) {
-      target.sendMessage(MessageKey.TWO_FACTOR_DISABLED_BY_ADMIN.get());
-    }
+    String accountName = lp.getName();
+    CatScheduler.runTaskAsync(() -> {
+      try {
+        PluginContext.getSql().updateTotpSecret(accountName, null);
+        PluginContext.getSql().updateTotpEnabled(accountName, false);
+        PluginContext.getSql().invalidateRecoveryCodes(accountName);
+        Cache.refresh(accountName);
+        TwoFactorState.removePendingLogin(accountName);
+        CatScheduler.runTask(
+            () -> {
+              sender.sendMessage(MessageKey.ADMIN_2FA_DISABLED.get(accountName));
+              Player target = Bukkit.getPlayerExact(accountName);
+              if (target != null && target.isOnline()) {
+                target.sendMessage(MessageKey.TWO_FACTOR_DISABLED_BY_ADMIN.get());
+              }
+            });
+      } catch (Exception e) {
+        CatScheduler.runTask(() -> sender.sendMessage(MessageKey.DATABASE_ERROR.get()));
+        e.printStackTrace();
+      }
+    });
     return true;
   }
 
   // ---- Set Password ----
 
   private boolean setPwd(CommandSender sender, String[] args) {
-    if (args.length < 3 || !args[0].equalsIgnoreCase("setpwd")) return false;
-    String name = args[1], pwd = args[2];
+    if (args.length < 3) return false;
+    String name = args[1];
+    String pwd = args[2];
     if (ValidationUtil.isPasswordTooSimple(pwd)) {
       sender.sendMessage(MessageKey.PASSWORD_TOO_SIMPLE_MSG.get());
       return true;

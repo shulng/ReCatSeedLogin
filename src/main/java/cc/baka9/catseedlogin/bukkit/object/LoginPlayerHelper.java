@@ -5,6 +5,7 @@ import cc.baka9.catseedlogin.bukkit.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.Config;
 import cc.baka9.catseedlogin.bukkit.PluginContext;
 import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerLoginEvent;
+import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
@@ -25,10 +26,6 @@ public class LoginPlayerHelper {
   private static final Map<String, LoginPlayer> loginPlayers = new ConcurrentHashMap<>();
   private static final Map<String, Long> playerExitTimes = new ConcurrentHashMap<>();
   private static final int MAX_STORED_IPS = 10;
-
-  public static List<LoginPlayer> getList() {
-    return new ArrayList<>(loginPlayers.values());
-  }
 
   public static void add(LoginPlayer lp) {
     if (lp == null) return;
@@ -138,7 +135,7 @@ public class LoginPlayerHelper {
     CatSeedPlayerLoginEvent loginEvent =
         new CatSeedPlayerLoginEvent(player, lp.getEmail(), CatSeedPlayerLoginEvent.Result.SUCCESS);
     Bukkit.getServer().getPluginManager().callEvent(loginEvent);
-    player.sendMessage(Config.Language.LOGIN_SUCCESS);
+    player.sendMessage(MessageKey.LOGIN_SUCCESS.get());
     CatScheduler.updateInventory(player);
     recordCurrentIP(player, lp);
     if (Config.Settings.AfterLoginBack && Config.Settings.CanTpSpawnLocation) {
@@ -148,14 +145,7 @@ public class LoginPlayerHelper {
   }
 
   public static List<String> getStoredIPs(LoginPlayer lp) {
-    if (lp == null || lp.getIps() == null) {
-      return new ArrayList<>();
-    }
-    try {
-      return new ArrayList<>(Arrays.asList(lp.getIps().split(";")));
-    } catch (Exception e) {
-      return new ArrayList<>();
-    }
+    return lp == null ? new ArrayList<>() : lp.getIpsList();
   }
 
   /** 判断玩家是否从本地回环地址(127.0.0.1 / ::1 / localhost)连接。 */
@@ -196,8 +186,7 @@ public class LoginPlayerHelper {
         return;
       }
 
-      List<String> ipsList =
-          lp.getIpsList() != null ? new ArrayList<>(lp.getIpsList()) : new ArrayList<>();
+      List<String> ipsList = new ArrayList<>(lp.getIpsList());
       ipsList = ipsList.stream().distinct().collect(Collectors.toList());
       ipsList.remove(currentIp);
       ipsList.add(currentIp);
@@ -206,14 +195,14 @@ public class LoginPlayerHelper {
       }
       lp.setIps(String.join(";", ipsList));
 
-      savePlayerIPAsync(player, lp);
+      savePlayerIPAsync(lp);
     } catch (Exception e) {
       PluginContext.getLogger()
           .warning("Failed to record IP for player: " + player.getName() + " - " + e.getMessage());
     }
   }
 
-  private static void savePlayerIPAsync(Player player, LoginPlayer lp) {
+  private static void savePlayerIPAsync(LoginPlayer lp) {
     CatScheduler.runTaskAsync(() -> savePlayerIP(lp));
   }
 

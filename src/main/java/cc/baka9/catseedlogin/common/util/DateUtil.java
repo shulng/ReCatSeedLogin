@@ -9,16 +9,9 @@ public class DateUtil {
   private static final int DEFAULT_CODE_LENGTH = 10;
 
   public static String generateVerificationCode() {
-    return generateVerificationCode(DEFAULT_CODE_LENGTH);
-  }
-
-  public static String generateVerificationCode(int length) {
-    if (length <= 0) {
-      length = DEFAULT_CODE_LENGTH;
-    }
-    StringBuilder sb = new StringBuilder(length);
+    StringBuilder sb = new StringBuilder(DEFAULT_CODE_LENGTH);
     ThreadLocalRandom random = ThreadLocalRandom.current();
-    for (int i = 0; i < length; i++) {
+    for (int i = 0; i < DEFAULT_CODE_LENGTH; i++) {
       sb.append(VERIFICATION_CODE_CHARS.charAt(random.nextInt(VERIFICATION_CODE_CHARS.length())));
     }
     return sb.toString();
@@ -26,10 +19,5 @@ public class DateUtil {
 
   public static boolean isExpired(long createTime, long durationMillis) {
     return System.currentTimeMillis() - createTime > durationMillis;
-  }
-
-  public static long getRemainingTime(long createTime, long durationMillis) {
-    long elapsed = System.currentTimeMillis() - createTime;
-    return Math.max(0, durationMillis - elapsed);
   }
 }

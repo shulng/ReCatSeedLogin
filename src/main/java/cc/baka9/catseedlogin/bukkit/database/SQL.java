@@ -11,9 +11,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
-/** 抽象数据库操作类，提供通用的 CRUD 方法。 子类需实现 getConnection() 和 closeConnection() 以提供具体连接。 */
+/** 抽象数据库操作类，提供通用的 CRUD 方法。 子类需实现 openConnection() 以提供具体连接。 */
 public abstract class SQL {
-  protected Logger logger;
+  protected final Logger logger;
+  protected volatile Connection connection;
 
   public SQL(Logger logger) {
     this.logger = logger;
@@ -142,7 +143,8 @@ public abstract class SQL {
    */
   public synchronized void updateLocation(String name, String location) {
     try {
-      flush(new BufferStatement("UPDATE accounts SET location = ? WHERE name = ?", location, name));
+      flush(
+          new BufferStatement("UPDATE accounts SET location = ? WHERE name = ?", location, name));
     } catch (SQLException e) {
       logger.severe("Failed to update location for player: " + name + " - " + e.getMessage());
       throw new RuntimeException(e);
@@ -311,7 +313,7 @@ public abstract class SQL {
   }
 
   /** 查询玩家的全部恢复码（含已使用的）。 */
-  public synchronized List<TotpRecoveryCode> getRecoveryCodes(String name) {
+  private synchronized List<TotpRecoveryCode> getRecoveryCodes(String name) {
     List<TotpRecoveryCode> codes = new ArrayList<>();
     String sql = "SELECT name, code_hash, used_at FROM totp_recovery_codes WHERE name = ?";
     try (PreparedStatement ps = new BufferStatement(sql, name).prepareStatement(getConnection());
@@ -382,32 +384,52 @@ public abstract class SQL {
     }
   }
 
-  /** 作废玩家的全部恢复码（关闭两步验证或重新绑定时使用）。 */
-  public synchronized void deleteRecoveryCodes(String name) {
-    try {
-      flush(new BufferStatement("DELETE FROM totp_recovery_codes WHERE name = ?", name));
-    } catch (SQLException e) {
-      logger.severe("Failed to delete recovery codes for player: " + name + " - " + e.getMessage());
-      throw new RuntimeException(e);
-    }
-  }
-
   /**
    * 获取数据库连接。
    *
    * @return Connection 对象
    */
-  public abstract Connection getConnection() throws SQLException;
+  public synchronized Connection getConnection() throws SQLException {
+    if (isConnectionValid()) {
+      return connection;
+    }
+    closeConnection();
+    connection = openConnection();
+    return connection;
+  }
+
+  private boolean isConnectionValid() throws SQLException {
+    if (connection == null || connection.isClosed()) {
+      return false;
+    }
+    try (PreparedStatement ps = connection.prepareStatement("SELECT 1")) {
+      ps.executeQuery();
+      return true;
+    } catch (SQLException e) {
+      return false;
+    }
+  }
+
+  protected abstract Connection openConnection() throws SQLException;
 
   /** 关闭数据库连接。 */
-  public abstract void closeConnection();
+  public synchronized void closeConnection() {
+    try {
+      if (connection != null && !connection.isClosed()) {
+        connection.close();
+      }
+    } catch (SQLException e) {
+      logger.warning("关闭数据库连接时出错: " + e.getMessage());
+    }
+    connection = null;
+  }
 
   /**
    * 执行缓冲语句。
    *
    * @param bufferStatement 缓冲 SQL 语句
    */
-  public synchronized void flush(BufferStatement bufferStatement) throws SQLException {
+  private synchronized void flush(BufferStatement bufferStatement) throws SQLException {
     try (PreparedStatement ps = bufferStatement.prepareStatement(getConnection())) {
       ps.executeUpdate();
     } catch (SQLException e) {

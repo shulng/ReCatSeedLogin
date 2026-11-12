@@ -15,34 +15,27 @@ public class Cache {
   }
 
   public static LoginPlayer getIgnoreCase(String name) {
-    return PLAYER_HASHTABLE.get(name.toLowerCase());
+    return name == null ? null : PLAYER_HASHTABLE.get(name.toLowerCase());
   }
 
   public static void refreshAll() {
     isLoaded = false;
-    CatSeedLogin.instance.runTaskAsync(() -> {
-      try {
-        List<LoginPlayer> newCache = CatSeedLogin.sql.getAll();
-        ConcurrentHashMap<String, LoginPlayer> newMap = new ConcurrentHashMap<>();
-        newCache.forEach(p -> newMap.put(p.getName().toLowerCase(), p));
-        PLAYER_HASHTABLE = newMap;
-        CatSeedLogin.instance.getLogger().info("缓存加载 " + PLAYER_HASHTABLE.size() + " 个数据");
-        isLoaded = true;
-      } catch (Exception e) {
-        CatSeedLogin.instance.getLogger().warning("数据库错误,无法更新缓存!");
-        e.printStackTrace();
-      }
-    });
+    CatSeedLogin.instance.runTaskAsync(Cache::loadAll);
   }
 
   public static void refreshAllSync() {
+    isLoaded = false;
+    loadAll();
+  }
+
+  private static void loadAll() {
     try {
       List<LoginPlayer> newCache = CatSeedLogin.sql.getAll();
       ConcurrentHashMap<String, LoginPlayer> newMap = new ConcurrentHashMap<>();
       newCache.forEach(p -> newMap.put(p.getName().toLowerCase(), p));
       PLAYER_HASHTABLE = newMap;
-      CatSeedLogin.instance.getLogger().info("缓存加载 " + PLAYER_HASHTABLE.size() + " 个数据");
       isLoaded = true;
+      CatSeedLogin.instance.getLogger().info("缓存加载 " + newMap.size() + " 个数据");
     } catch (Exception e) {
       CatSeedLogin.instance.getLogger().warning("数据库错误,无法更新缓存!");
       e.printStackTrace();
@@ -59,7 +52,6 @@ public class Cache {
         } else {
           PLAYER_HASHTABLE.remove(key);
         }
-        CatSeedLogin.instance.getLogger().info("缓存加载 " + PLAYER_HASHTABLE.size() + " 个数据");
       } catch (Exception e) {
         CatSeedLogin.instance.getLogger().warning("数据库错误,无法更新缓存!");
         e.printStackTrace();

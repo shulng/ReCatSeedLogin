@@ -15,8 +15,14 @@ public class EmailCode {
     ResetPassword
   }
 
-  private static Map<String, EmailCode> bindMap = new ConcurrentHashMap<>(10);
-  private static Map<String, EmailCode> resetPasswordMap = new ConcurrentHashMap<>(10);
+  /** 两种用途各一张表，避免同一玩家的绑定码与重置码互相覆盖。 */
+  private static final Map<Type, Map<String, EmailCode>> CODES = new ConcurrentHashMap<>();
+
+  static {
+    CODES.put(Type.Bind, new ConcurrentHashMap<>());
+    CODES.put(Type.ResetPassword, new ConcurrentHashMap<>());
+  }
+
   private String name, email, code;
   private long durability, createTime;
 
@@ -29,65 +35,37 @@ public class EmailCode {
   }
 
   public static EmailCode create(String name, String email, long durability, Type type) {
-    try {
-      EmailCode emailCode = new EmailCode(name, email, durability);
-      clear();
-      if (type == Type.Bind) {
-        bindMap.put(name, emailCode);
-      } else if (type == Type.ResetPassword) {
-        resetPasswordMap.put(name, emailCode);
-      }
-      return emailCode;
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException("Failed to create email code for " + name, e);
-    }
+    EmailCode emailCode = new EmailCode(name, email, durability);
+    clearExpired();
+    CODES.get(type).put(name, emailCode);
+    return emailCode;
   }
 
   public static Optional<EmailCode> getByName(String name, Type type) {
     if (name == null || type == null) {
       return Optional.empty();
     }
-    try {
-      clear();
-      return Optional.ofNullable(getMap(type).get(name));
-    } catch (Exception e) {
-      return Optional.empty();
-    }
+    clearExpired();
+    return Optional.ofNullable(CODES.get(type).get(name));
   }
 
   public static void removeByName(String name, Type type) {
     if (name == null || type == null) {
       return;
     }
-    try {
-      clear();
-      getMap(type).remove(name);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    clearExpired();
+    CODES.get(type).remove(name);
   }
 
-  private static Map<String, EmailCode> getMap(Type type) {
-    return type == Type.Bind ? bindMap : resetPasswordMap;
-  }
-
-  private static void clear() {
-    bindMap
-        .entrySet()
-        .removeIf(next ->
-            DateUtil.isExpired(next.getValue().getCreateTime(), next.getValue().getDurability()));
-    resetPasswordMap
-        .entrySet()
-        .removeIf(next ->
-            DateUtil.isExpired(next.getValue().getCreateTime(), next.getValue().getDurability()));
-  }
-
-  public boolean isExpired() {
-    return DateUtil.isExpired(createTime, durability);
-  }
-
-  public long getRemainingTime() {
-    return DateUtil.getRemainingTime(createTime, durability);
+  private static void clearExpired() {
+    CODES
+        .values()
+        .forEach(
+            map ->
+                map.entrySet()
+                    .removeIf(
+                        next ->
+                            DateUtil.isExpired(
+                                next.getValue().getCreateTime(), next.getValue().getDurability())));
   }
 }

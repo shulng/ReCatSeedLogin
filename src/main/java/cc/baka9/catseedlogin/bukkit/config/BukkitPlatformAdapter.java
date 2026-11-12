@@ -4,8 +4,6 @@ import cc.baka9.catseedlogin.bukkit.CatScheduler;
 import cc.baka9.catseedlogin.bukkit.CatSeedLogin;
 import cc.baka9.catseedlogin.common.api.PlatformAdapter;
 import cc.baka9.catseedlogin.common.i18n.I18n;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 
 public class BukkitPlatformAdapter implements PlatformAdapter {
 
@@ -78,37 +76,5 @@ public class BukkitPlatformAdapter implements PlatformAdapter {
   @Override
   public I18n getI18n() {
     return i18n;
-  }
-
-  @Override
-  public Object getPlatformPlayer(String name) {
-    return Bukkit.getPlayerExact(name);
-  }
-
-  @Override
-  public boolean isPlayerOnline(String name) {
-    Player player = Bukkit.getPlayerExact(name);
-    return player != null && player.isOnline();
-  }
-
-  @Override
-  public void kickPlayer(String name, String reason) {
-    Player player = Bukkit.getPlayerExact(name);
-    if (player != null) {
-      player.kickPlayer(reason);
-    }
-  }
-
-  @Override
-  public void sendMessage(String playerName, String message) {
-    Player player = Bukkit.getPlayerExact(playerName);
-    if (player != null) {
-      player.sendMessage(message);
-    }
-  }
-
-  @Override
-  public void broadcast(String message) {
-    Bukkit.broadcastMessage(message);
   }
 }

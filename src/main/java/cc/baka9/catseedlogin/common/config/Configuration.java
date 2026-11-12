@@ -12,11 +12,7 @@ public interface Configuration {
 
   String getString(String path, String defaultValue);
 
-  double getDouble(String path, double defaultValue);
-
   List<String> getStringList(String path);
-
-  ConfigurationSection getSection(String path);
 
   void set(String path, Object value);
 
@@ -36,9 +32,5 @@ public interface Configuration {
 
   default String getString(String path) {
     return getString(path, "");
-  }
-
-  default double getDouble(String path) {
-    return getDouble(path, 0.0);
   }
 }

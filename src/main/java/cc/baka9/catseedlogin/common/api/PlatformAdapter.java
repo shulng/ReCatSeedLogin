@@ -27,14 +27,4 @@ public interface PlatformAdapter {
   void runSyncTimer(Runnable task, long delayTicks, long periodTicks);
 
   I18n getI18n();
-
-  Object getPlatformPlayer(String name);
-
-  boolean isPlayerOnline(String name);
-
-  void kickPlayer(String name, String reason);
-
-  void sendMessage(String playerName, String message);
-
-  void broadcast(String message);
 }

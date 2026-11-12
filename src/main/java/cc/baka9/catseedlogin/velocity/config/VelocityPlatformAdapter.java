@@ -3,8 +3,6 @@ package cc.baka9.catseedlogin.velocity.config;
 import cc.baka9.catseedlogin.common.api.PlatformAdapter;
 import cc.baka9.catseedlogin.common.i18n.I18n;
 import cc.baka9.catseedlogin.velocity.PluginMain;
-import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ProxyServer;
 import java.util.concurrent.TimeUnit;
 
 public class VelocityPlatformAdapter implements PlatformAdapter {
@@ -86,39 +84,5 @@ public class VelocityPlatformAdapter implements PlatformAdapter {
   @Override
   public I18n getI18n() {
     return i18n;
-  }
-
-  @Override
-  public Object getPlatformPlayer(String name) {
-    return plugin.getProxyServer().getPlayer(name).orElse(null);
-  }
-
-  @Override
-  public boolean isPlayerOnline(String name) {
-    return plugin.getProxyServer().getPlayer(name).isPresent();
-  }
-
-  @Override
-  public void kickPlayer(String name, String reason) {
-    plugin
-        .getProxyServer()
-        .getPlayer(name)
-        .ifPresent(player -> player.disconnect(net.kyori.adventure.text.Component.text(reason)));
-  }
-
-  @Override
-  public void sendMessage(String playerName, String message) {
-    plugin
-        .getProxyServer()
-        .getPlayer(playerName)
-        .ifPresent(player -> player.sendMessage(net.kyori.adventure.text.Component.text(message)));
-  }
-
-  @Override
-  public void broadcast(String message) {
-    ProxyServer proxyServer = plugin.getProxyServer();
-    for (Player player : proxyServer.getAllPlayers()) {
-      player.sendMessage(net.kyori.adventure.text.Component.text(message));
-    }
   }
 }

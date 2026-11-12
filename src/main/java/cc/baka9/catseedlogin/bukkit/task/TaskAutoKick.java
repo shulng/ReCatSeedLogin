@@ -4,6 +4,7 @@ import cc.baka9.catseedlogin.bukkit.Cache;
 import cc.baka9.catseedlogin.bukkit.Config;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.bukkit.object.TwoFactorState;
+import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
@@ -68,7 +69,6 @@ public class TaskAutoKick extends Task {
   }
 
   private void kickPlayer(Player player, int seconds) {
-    String kickMessage = Config.Language.AUTO_KICK.replace("{time}", String.valueOf(seconds));
-    player.kickPlayer(kickMessage);
+    player.kickPlayer(MessageKey.AUTO_KICK.get(seconds));
   }
 }

@@ -29,23 +29,23 @@ public class CommandChangePassword implements CommandExecutor {
 
     LoginPlayer lp = Cache.getIgnoreCase(name);
     if (lp == null) {
-      sender.sendMessage(Config.Language.CHANGEPASSWORD_NOREGISTER);
+      sender.sendMessage(MessageKey.CHANGEPASSWORD_NOREGISTER.get());
       return true;
     }
     if (!LoginPlayerHelper.isLogin(name)) {
-      sender.sendMessage(Config.Language.CHANGEPASSWORD_NOLOGIN);
+      sender.sendMessage(MessageKey.CHANGEPASSWORD_NOLOGIN.get());
       return true;
     }
     if (!Crypt.match(name, args[0], lp.getPassword().trim())) {
-      sender.sendMessage(Config.Language.CHANGEPASSWORD_OLDPASSWORD_INCORRECT);
+      sender.sendMessage(MessageKey.CHANGEPASSWORD_OLDPASSWORD_INCORRECT.get());
       return true;
     }
     if (!args[1].equals(args[2])) {
-      sender.sendMessage(Config.Language.CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL);
+      sender.sendMessage(MessageKey.CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL.get());
       return true;
     }
     if (ValidationUtil.isPasswordTooSimple(args[1])) {
-      sender.sendMessage(Config.Language.COMMON_PASSWORD_SO_SIMPLE);
+      sender.sendMessage(MessageKey.COMMON_PASSWORD_SO_SIMPLE.get());
       return true;
     }
     if (!Cache.isLoaded) return true;
@@ -78,7 +78,7 @@ public class CommandChangePassword implements CommandExecutor {
     Player online = Bukkit.getPlayer(player.getUniqueId());
     if (online == null || !online.isOnline()) return;
 
-    online.sendMessage(Config.Language.CHANGEPASSWORD_SUCCESS);
+    online.sendMessage(MessageKey.CHANGEPASSWORD_SUCCESS.get());
     Config.setOfflineLocation(online);
     if (!Config.Settings.CanTpSpawnLocation) return;
 

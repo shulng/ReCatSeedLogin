@@ -66,10 +66,6 @@ public final class TwoFactorState {
     return name == null ? null : PENDING_BIND.remove(name);
   }
 
-  public static boolean hasPendingBind(String name) {
-    return name != null && PENDING_BIND.containsKey(name);
-  }
-
   /** 记录一个待验证登录的玩家。 */
   public static void setPendingLogin(LoginPlayer lp) {
     if (lp == null) {

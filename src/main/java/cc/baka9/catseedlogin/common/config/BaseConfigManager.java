@@ -127,12 +127,10 @@ public abstract class BaseConfigManager
   }
 
   public void reload() {
-    createDefaultConfig("config.yml");
     mainConfig = getConfig("config.yml");
     String language =
         mainConfig.getString(ConfigConstants.Path.LANGUAGE, ConfigConstants.DEFAULT_LANGUAGE);
     i18n.setLocale(language.replace("_", "-"));
-    i18n.reload();
   }
 
   public File getDataFolder() {
@@ -417,9 +415,9 @@ public abstract class BaseConfigManager
         ConfigConstants.Path.EMAIL_FROM_NAME, ConfigConstants.DEFAULT_FROM_NAME);
   }
 
+  /** 只写入内存，调用方批量改完后统一调用 {@link #saveConfig(String)} 落盘。 */
   public void set(String path, Object value) {
     mainConfig.set(path, value);
-    saveConfig("config.yml");
   }
 
   @Override

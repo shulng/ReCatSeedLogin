@@ -6,6 +6,8 @@ import cc.baka9.catseedlogin.bukkit.object.TwoFactorState;
 import cc.baka9.catseedlogin.bukkit.task.Task;
 import cc.baka9.catseedlogin.bukkit.task.TaskAutoKick;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -33,8 +35,16 @@ import org.geysermc.floodgate.api.FloodgateApi;
 
 public class Listeners implements Listener {
 
+  private final Map<Class<?>, Boolean> playerClassCache = new ConcurrentHashMap<>();
+
   private boolean playerIsNotMinecraftPlayer(Player p) {
-    return !p.getClass().getName().matches("org\\.bukkit\\.craftbukkit.*?\\.entity\\.CraftPlayer");
+    return playerClassCache.computeIfAbsent(
+        p.getClass(),
+        clazz -> {
+          String name = clazz.getName();
+          boolean craftBukkit = name.startsWith("org.bukkit.craftbukkit.");
+          return !craftBukkit || !name.contains(".entity.CraftPlayer");
+        });
   }
 
   @EventHandler
@@ -251,7 +261,7 @@ public class Listeners implements Listener {
       player.sendMessage(MessageKey.TWO_FACTOR_REBIND_REQUIRED.get());
     }
     if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player)) {
-      player.sendMessage(Config.Language.BEDROCK_LOGIN_BYPASS);
+      player.sendMessage(MessageKey.BEDROCK_LOGIN_BYPASS.get());
       return;
     }
     if (Config.Settings.LoopbackLoginBypass && LoginPlayerHelper.isLoopbackPlayer(player)) {
@@ -259,7 +269,7 @@ public class Listeners implements Listener {
       if (lp != null) {
         LoginPlayerHelper.add(lp);
       }
-      player.sendMessage(Config.Language.LOOPBACK_LOGIN_BYPASS);
+      player.sendMessage(MessageKey.LOOPBACK_LOGIN_BYPASS.get());
       teleportToLastLocation(player);
       return;
     }
@@ -268,7 +278,7 @@ public class Listeners implements Listener {
       if (lp != null) {
         LoginPlayerHelper.add(lp);
       }
-      player.sendMessage(Config.Language.LOGIN_WITH_THE_SAME_IP);
+      player.sendMessage(MessageKey.LOGIN_WITH_THE_SAME_IP.get());
       teleportToLastLocation(player);
       return;
     }

@@ -9,7 +9,6 @@ import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class I18n {
 
@@ -18,9 +17,8 @@ public class I18n {
 
   private final File dataFolder;
   private final ResourceProvider resourceProvider;
+  private volatile Map<String, String> messages = new HashMap<>();
   private Locale currentLocale = Locale.SIMPLIFIED_CHINESE;
-  private final Map<Locale, Map<String, String>> messages = new ConcurrentHashMap<>();
-  private final Map<String, Object> placeholders = new ConcurrentHashMap<>();
   private char colorChar = '&';
 
   public interface ResourceProvider {
@@ -53,9 +51,8 @@ public class I18n {
   public void loadMessages(Locale locale) {
     Map<String, String> localeMessages = new HashMap<>();
     String fileName = locale.toLanguageTag() + ".yml";
-    File languagesFolder = new File(dataFolder, LANGUAGES_FOLDER);
 
-    File customFile = new File(languagesFolder, fileName);
+    File customFile = new File(new File(dataFolder, LANGUAGES_FOLDER), fileName);
     if (customFile.exists()) {
       loadFromFile(customFile, localeMessages);
     }
@@ -79,11 +76,7 @@ public class I18n {
       }
     }
 
-    try {
-      messages.put(locale, localeMessages);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    messages = localeMessages;
   }
 
   private void loadYaml(Reader reader, Map<String, String> messages) {
@@ -119,92 +112,38 @@ public class I18n {
   @SuppressWarnings("unchecked")
   private void flattenMap(Map<String, String> result, String prefix, Map<String, Object> map) {
     for (Map.Entry<String, Object> entry : map.entrySet()) {
-      String key = buildKey(prefix, entry.getKey());
+      String key = prefix.isEmpty() ? entry.getKey() : prefix + "." + entry.getKey();
       Object value = entry.getValue();
-      processValue(result, key, value);
-    }
-  }
-
-  private String buildKey(String prefix, String key) {
-    return prefix.isEmpty() ? key : prefix + "." + key;
-  }
-
-  @SuppressWarnings("unchecked")
-  private void processValue(Map<String, String> result, String key, Object value) {
-    if (value instanceof Map) {
-      flattenMap(result, key, (Map<String, Object>) value);
-      return;
-    }
-    if (value == null) {
-      return;
-    }
-    try {
-      result.put(key, String.valueOf(value));
-    } catch (Exception e) {
-      e.printStackTrace();
+      if (value instanceof Map) {
+        flattenMap(result, key, (Map<String, Object>) value);
+      } else if (value != null) {
+        result.put(key, String.valueOf(value));
+      }
     }
   }
 
   private String lookup(String key) {
-    if (currentLocale == null || key == null) {
-      return null;
-    }
-    Map<String, String> localeMessages = messages.get(currentLocale);
-    if (localeMessages != null && localeMessages.containsKey(key)) {
-      String value = localeMessages.get(key);
-      return value != null ? translateColors(value) : null;
-    }
-    return null;
+    String value = messages.get(key);
+    return value != null ? translateColors(value) : null;
   }
 
   public String get(String key) {
     if (key == null) return null;
-    try {
-      String message = lookup(key);
-      return message != null ? message : key;
-    } catch (Exception e) {
-      return key;
-    }
+    String message = lookup(key);
+    return message != null ? message : key;
   }
 
   public String get(String key, Object... args) {
     if (key == null) return null;
-    try {
-      String message = get(key);
-      if (args != null && args.length > 0) {
-        return MessageFormat.format(message, args);
-      }
+    String message = get(key);
+    if (args == null || args.length == 0) {
       return message;
-    } catch (Exception e) {
-      return key;
     }
-  }
-
-  public String getOrDefault(String key, String defaultValue) {
-    String message = lookup(key);
-    return message != null ? message : defaultValue;
-  }
-
-  public void setPlaceholder(String key, Object value) {
-    if (key == null) return;
     try {
-      placeholders.put(key, value);
+      return MessageFormat.format(message, args);
     } catch (Exception e) {
-      e.printStackTrace();
+      return message;
     }
-  }
-
-  public void removePlaceholder(String key) {
-    if (key == null) return;
-    try {
-      placeholders.remove(key);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
-  public void clearPlaceholders() {
-    placeholders.clear();
   }
 
   public String translateColors(String message) {
@@ -221,15 +160,16 @@ public class I18n {
   }
 
   public void reload() {
-    messages.clear();
     loadMessages(currentLocale);
   }
 
   public static String tr(String key) {
-    return instance != null ? instance.get(key) : key;
+    I18n i18n = instance;
+    return i18n != null ? i18n.get(key) : key;
   }
 
   public static String tr(String key, Object... args) {
-    return instance != null ? instance.get(key, args) : key;
+    I18n i18n = instance;
+    return i18n != null ? i18n.get(key, args) : key;
   }
 }

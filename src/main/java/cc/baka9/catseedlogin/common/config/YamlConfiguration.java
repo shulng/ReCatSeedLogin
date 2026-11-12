@@ -130,11 +130,6 @@ public class YamlConfiguration implements Configuration {
   }
 
   @Override
-  public double getDouble(String path, double defaultValue) {
-    return parseNumeric(path, defaultValue, Number::doubleValue, Double::parseDouble);
-  }
-
-  @Override
   @SuppressWarnings("unchecked")
   public String getString(String path, String defaultValue) {
     Object value = get(path);
@@ -150,11 +145,6 @@ public class YamlConfiguration implements Configuration {
           .stream().map(String::valueOf).collect(java.util.stream.Collectors.toList());
     }
     return Collections.emptyList();
-  }
-
-  @Override
-  public ConfigurationSection getSection(String path) {
-    return new ConfigurationSectionImpl(this, path);
   }
 
   @Override
@@ -209,25 +199,5 @@ public class YamlConfiguration implements Configuration {
 
   public File getFile() {
     return file;
-  }
-
-  private static class ConfigurationSectionImpl implements ConfigurationSection {
-    private final Configuration root;
-    private final String path;
-
-    ConfigurationSectionImpl(Configuration root, String path) {
-      this.root = root;
-      this.path = path;
-    }
-
-    @Override
-    public String getPath() {
-      return path;
-    }
-
-    @Override
-    public Configuration getRoot() {
-      return root;
-    }
   }
 }

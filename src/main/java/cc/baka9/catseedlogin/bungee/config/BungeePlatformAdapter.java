@@ -4,7 +4,6 @@ import cc.baka9.catseedlogin.bungee.PluginMain;
 import cc.baka9.catseedlogin.common.api.PlatformAdapter;
 import cc.baka9.catseedlogin.common.i18n.I18n;
 import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 public class BungeePlatformAdapter implements PlatformAdapter {
 
@@ -86,39 +85,5 @@ public class BungeePlatformAdapter implements PlatformAdapter {
   @Override
   public I18n getI18n() {
     return i18n;
-  }
-
-  @Override
-  public Object getPlatformPlayer(String name) {
-    return ProxyServer.getInstance().getPlayer(name);
-  }
-
-  @Override
-  public boolean isPlayerOnline(String name) {
-    ProxiedPlayer player = ProxyServer.getInstance().getPlayer(name);
-    return player != null;
-  }
-
-  @Override
-  public void kickPlayer(String name, String reason) {
-    ProxiedPlayer player = ProxyServer.getInstance().getPlayer(name);
-    if (player != null) {
-      player.disconnect(reason);
-    }
-  }
-
-  @Override
-  public void sendMessage(String playerName, String message) {
-    ProxiedPlayer player = ProxyServer.getInstance().getPlayer(playerName);
-    if (player != null) {
-      player.sendMessage(message);
-    }
-  }
-
-  @Override
-  public void broadcast(String message) {
-    for (ProxiedPlayer player : ProxyServer.getInstance().getPlayers()) {
-      player.sendMessage(message);
-    }
   }
 }

@@ -33,11 +33,11 @@ public class CommandResetPassword implements CommandExecutor {
 
     LoginPlayer lp = Cache.getIgnoreCase(name);
     if (lp == null) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_NOREGISTER);
+      sender.sendMessage(MessageKey.RESETPASSWORD_NOREGISTER.get());
       return true;
     }
-    if (!Config.EmailVerify.Enable) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_DISABLE);
+    if (!PluginContext.getConfigManager().isEmailEnable()) {
+      sender.sendMessage(MessageKey.RESETPASSWORD_EMAIL_DISABLE.get());
       return true;
     }
 
@@ -54,7 +54,7 @@ public class CommandResetPassword implements CommandExecutor {
 
   private boolean handleForget(CommandSender sender, String name, LoginPlayer lp) {
     if (lp.getEmail() == null) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_NO_SET);
+      sender.sendMessage(MessageKey.RESETPASSWORD_EMAIL_NO_SET.get());
       return true;
     }
 
@@ -62,8 +62,7 @@ public class CommandResetPassword implements CommandExecutor {
       Optional<EmailCode> optional = EmailCode.getByName(name, EmailCode.Type.ResetPassword);
       if (optional.isPresent()) {
         sender.sendMessage(
-            Config.Language.RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE.replace(
-                "{email}", optional.get().getEmail()));
+            MessageKey.RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE.get(optional.get().getEmail()));
         return true;
       }
     } catch (Exception e) {
@@ -79,8 +78,7 @@ public class CommandResetPassword implements CommandExecutor {
       e.printStackTrace();
       return true;
     }
-    sender.sendMessage(
-        Config.Language.RESETPASSWORD_EMAIL_SENDING_MESSAGE.replace("{email}", lp.getEmail()));
+    sender.sendMessage(MessageKey.RESETPASSWORD_EMAIL_SENDING_MESSAGE.get(lp.getEmail()));
 
     sendResetEmailAsync(sender, name, emailCode);
     return true;
@@ -109,22 +107,20 @@ public class CommandResetPassword implements CommandExecutor {
     Bukkit.getScheduler()
         .runTask(
             PluginContext.getPlugin(),
-            () ->
-                sender.sendMessage(
-                    Config.Language.RESETPASSWORD_EMAIL_SENT_MESSAGE.replace("{email}", email)));
+            () -> sender.sendMessage(MessageKey.RESETPASSWORD_EMAIL_SENT_MESSAGE.get(email)));
   }
 
   private void notifyEmailFailed(CommandSender sender) {
     Bukkit.getScheduler()
         .runTask(
             PluginContext.getPlugin(),
-            () -> sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_WARN));
+            () -> sender.sendMessage(MessageKey.RESETPASSWORD_EMAIL_WARN.get()));
   }
 
   private boolean handleReset(Player player, LoginPlayer lp, String code, String pwd) {
     CommandSender sender = player;
     if (lp.getEmail() == null) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_NO_SET);
+      sender.sendMessage(MessageKey.RESETPASSWORD_EMAIL_NO_SET.get());
       return true;
     }
 
@@ -132,21 +128,21 @@ public class CommandResetPassword implements CommandExecutor {
       Optional<EmailCode> optional =
           EmailCode.getByName(lp.getName(), EmailCode.Type.ResetPassword);
       if (!optional.isPresent()) {
-        sender.sendMessage(Config.Language.RESETPASSWORD_FAIL);
+        sender.sendMessage(MessageKey.RESETPASSWORD_FAIL.get());
         return true;
       }
       if (!optional.get().getCode().equals(code)) {
-        sender.sendMessage(Config.Language.RESETPASSWORD_EMAILCODE_INCORRECT);
+        sender.sendMessage(MessageKey.RESETPASSWORD_EMAILCODE_INCORRECT.get());
         return true;
       }
     } catch (Exception e) {
       e.printStackTrace();
-      sender.sendMessage(Config.Language.RESETPASSWORD_FAIL);
+      sender.sendMessage(MessageKey.RESETPASSWORD_FAIL.get());
       return true;
     }
 
     if (ValidationUtil.isPasswordTooSimple(pwd)) {
-      sender.sendMessage(Config.Language.COMMON_PASSWORD_SO_SIMPLE);
+      sender.sendMessage(MessageKey.COMMON_PASSWORD_SO_SIMPLE.get());
       return true;
     }
 
@@ -185,7 +181,7 @@ public class CommandResetPassword implements CommandExecutor {
     if (Config.Settings.CanTpSpawnLocation) {
       CatScheduler.teleport(p, Config.Settings.SpawnLocation);
     }
-    p.sendMessage(Config.Language.RESETPASSWORD_SUCCESS);
+    p.sendMessage(MessageKey.RESETPASSWORD_SUCCESS.get());
 
     if (PluginContext.isLoadProtocolLib()) {
       LoginPlayerHelper.sendBlankInventoryPacket(p);

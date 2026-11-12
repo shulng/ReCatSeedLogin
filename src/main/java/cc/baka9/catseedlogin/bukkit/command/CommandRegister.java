@@ -28,11 +28,11 @@ public class CommandRegister implements CommandExecutor {
       return true;
     }
     if (!args[0].equals(args[1])) {
-      sender.sendMessage(Config.Language.REGISTER_PASSWORD_CONFIRM_FAIL);
+      sender.sendMessage(MessageKey.REGISTER_PASSWORD_CONFIRM_FAIL.get());
       return true;
     }
     if (ValidationUtil.isPasswordTooSimple(args[0])) {
-      sender.sendMessage(Config.Language.COMMON_PASSWORD_SO_SIMPLE);
+      sender.sendMessage(MessageKey.COMMON_PASSWORD_SO_SIMPLE.get());
       return true;
     }
     if (!Cache.isLoaded) return true;
@@ -46,11 +46,11 @@ public class CommandRegister implements CommandExecutor {
     if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
       return false;
     if (LoginPlayerHelper.isLogin(name)) {
-      player.sendMessage(Config.Language.REGISTER_AFTER_LOGIN_ALREADY);
+      player.sendMessage(MessageKey.REGISTER_AFTER_LOGIN_ALREADY.get());
       return false;
     }
     if (LoginPlayerHelper.isRegister(name)) {
-      player.sendMessage(Config.Language.REGISTER_BEFORE_LOGIN_ALREADY);
+      player.sendMessage(MessageKey.REGISTER_BEFORE_LOGIN_ALREADY.get());
       return false;
     }
     return true;
@@ -79,14 +79,9 @@ public class CommandRegister implements CommandExecutor {
     List<LoginPlayer> loginPlayersByIp = PluginContext.getSql().getLikeByIp(currentIp);
 
     if (!isLoopback && loginPlayersByIp.size() >= Config.Settings.IpRegisterCountLimit) {
+      String[] names = loginPlayersByIp.stream().map(LoginPlayer::getName).toArray(String[]::new);
       player.sendMessage(
-          Config.Language.REGISTER_MORE
-              .replace("{count}", String.valueOf(loginPlayersByIp.size()))
-              .replace(
-                  "{accounts}",
-                  String.join(
-                      ", ",
-                      loginPlayersByIp.stream().map(LoginPlayer::getName).toArray(String[]::new))));
+          MessageKey.REGISTER_MORE.get(loginPlayersByIp.size(), String.join(", ", names)));
       return;
     }
 
@@ -98,7 +93,7 @@ public class CommandRegister implements CommandExecutor {
       CatSeedPlayerRegisterEvent event = new CatSeedPlayerRegisterEvent(Bukkit.getPlayer(name));
       Bukkit.getServer().getPluginManager().callEvent(event);
     });
-    player.sendMessage(Config.Language.REGISTER_SUCCESS);
+    player.sendMessage(MessageKey.REGISTER_SUCCESS.get());
     CatScheduler.updateInventory(player);
     LoginPlayerHelper.recordCurrentIP(player, lp);
   }

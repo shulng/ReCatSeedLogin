@@ -1,14 +1,6 @@
 package cc.baka9.catseedlogin.common.config;
 
-import java.util.function.Function;
-
 public class ConfigHelper {
-
-  public static final String parseLocationString(LocationData location) {
-    return String.format(
-        "%s:%.2f:%.2f:%.2f:%.2f:%.2f",
-        location.world, location.x, location.y, location.z, location.yaw, location.pitch);
-  }
 
   public static LocationData parseLocationString(String locationStr, LocationData defaultLocation) {
     if (locationStr == null || locationStr.isEmpty()) {
@@ -86,39 +78,6 @@ public class ConfigHelper {
       public LocationData build() {
         return data;
       }
-    }
-  }
-
-  public static String sanitizeString(String input) {
-    if (input == null) {
-      return null;
-    }
-    return input.trim();
-  }
-
-  public static int parseIntOrDefault(String value, int defaultValue) {
-    return parseValue(value, Integer::parseInt, defaultValue);
-  }
-
-  public static long parseLongOrDefault(String value, long defaultValue) {
-    return parseValue(value, Long::parseLong, defaultValue);
-  }
-
-  public static boolean parseBooleanOrDefault(String value, boolean defaultValue) {
-    if (value == null || value.isEmpty()) {
-      return defaultValue;
-    }
-    return Boolean.parseBoolean(value);
-  }
-
-  private static <T> T parseValue(String value, Function<String, T> parser, T defaultValue) {
-    if (value == null || value.isEmpty()) {
-      return defaultValue;
-    }
-    try {
-      return parser.apply(value);
-    } catch (Exception e) {
-      return defaultValue;
     }
   }
 }

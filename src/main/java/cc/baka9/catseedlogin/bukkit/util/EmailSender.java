@@ -1,6 +1,7 @@
 package cc.baka9.catseedlogin.bukkit.util;
 
-import cc.baka9.catseedlogin.bukkit.Config;
+import cc.baka9.catseedlogin.bukkit.PluginContext;
+import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.HtmlEmail;
@@ -12,19 +13,19 @@ public final class EmailSender {
     if (receiveMailAccount == null || receiveMailAccount.isEmpty()) {
       return;
     }
+    BukkitConfigManager cm = PluginContext.getConfigManager();
     HtmlEmail email = new HtmlEmail();
-    email.setHostName(Config.EmailVerify.EmailSmtpHost);
+    email.setHostName(cm.getEmailSmtpHost());
     try {
-      email.setSmtpPort(Integer.parseInt(Config.EmailVerify.EmailSmtpPort));
+      email.setSmtpPort(Integer.parseInt(cm.getEmailSmtpPort()));
     } catch (NumberFormatException e) {
       return;
     }
     email.setAuthenticator(
-        new DefaultAuthenticator(
-            Config.EmailVerify.EmailAccount, Config.EmailVerify.EmailPassword));
-    configureSecurity(email);
+        new DefaultAuthenticator(cm.getEmailAccount(), cm.getEmailPassword()));
+    configureSecurity(email, cm);
     try {
-      email.setFrom(Config.EmailVerify.EmailAccount, Config.EmailVerify.FromPersonal);
+      email.setFrom(cm.getEmailAccount(), cm.getFromPersonal());
       email.setSubject(subject);
       email.setHtmlMsg(content);
       email.addTo(receiveMailAccount);
@@ -35,8 +36,8 @@ public final class EmailSender {
     }
   }
 
-  private static void configureSecurity(HtmlEmail email) {
-    if (Config.EmailVerify.SSLAuthVerify) {
+  private static void configureSecurity(HtmlEmail email, BukkitConfigManager cm) {
+    if (cm.isSSLAuthVerify()) {
       email.setSSLOnConnect(true);
       email.setSSLCheckServerIdentity(true);
     } else {
