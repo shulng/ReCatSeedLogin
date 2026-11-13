@@ -2,15 +2,13 @@ package cc.baka9.catseedlogin.bukkit.command;
 
 import cc.baka9.catseedlogin.bukkit.Cache;
 import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Communication;
 import cc.baka9.catseedlogin.bukkit.Config;
 import cc.baka9.catseedlogin.bukkit.PluginContext;
-import cc.baka9.catseedlogin.bukkit.database.MySQL;
-import cc.baka9.catseedlogin.bukkit.database.SQLite;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.bukkit.object.TwoFactorState;
+import cc.baka9.catseedlogin.common.api.Permissions;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
+import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import cc.baka9.catseedlogin.common.util.PasswordHelper;
 import cc.baka9.catseedlogin.common.util.TabCompleteUtil;
 import cc.baka9.catseedlogin.common.util.ValidationUtil;
@@ -35,7 +33,7 @@ import org.bukkit.entity.Player;
 
 public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
 
-  public static final String PERMISSION = "catseedlogin.command.catseedlogin";
+  public static final String PERMISSION = Permissions.ADMIN;
 
   /** 所有管理子命令，执行分发与 TAB 补全共用同一份数据源。 */
   public static final List<String> SUB_COMMANDS =
@@ -69,61 +67,69 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
   private static final Map<String, BoolSetting> BOOLEAN_SETTINGS = new LinkedHashMap<>();
 
   static {
-    register("limitChineseID", () -> Config.Settings.LimitChineseID, v -> Config.Settings.LimitChineseID = v, "限制中文游戏名");
+    register(
+        "limitChineseID",
+        () -> Config.Settings.LimitChineseID,
+        v -> Config.Settings.LimitChineseID = v,
+        MessageKey.ADMIN_LABEL_LIMIT_CHINESE_ID);
     register(
         "bedrockLoginBypass",
         () -> Config.Settings.BedrockLoginBypass,
         v -> Config.Settings.BedrockLoginBypass = v,
-        "基岩版玩家登录跳过");
+        MessageKey.ADMIN_LABEL_BEDROCK_LOGIN_BYPASS);
     register(
         "LoginwiththesameIP",
         () -> Config.Settings.LoginwiththesameIP,
         v -> Config.Settings.LoginwiththesameIP = v,
-        "同IP玩家登录跳过");
+        MessageKey.ADMIN_LABEL_SAME_IP_LOGIN);
     register(
         "beforeLoginNoDamage",
         () -> Config.Settings.BeforeLoginNoDamage,
         v -> Config.Settings.BeforeLoginNoDamage = v,
-        "登陆之前不受到伤害");
+        MessageKey.ADMIN_LABEL_BEFORE_LOGIN_NO_DAMAGE);
     register(
         "afterLoginBack",
         () -> Config.Settings.AfterLoginBack,
         v -> Config.Settings.AfterLoginBack = v,
-        "登陆之后返回下线地点");
+        MessageKey.ADMIN_LABEL_AFTER_LOGIN_BACK);
     register(
         "canTpSpawnLocation",
         () -> Config.Settings.CanTpSpawnLocation,
         v -> Config.Settings.CanTpSpawnLocation = v,
-        "登录之前强制在登陆地点");
+        MessageKey.ADMIN_LABEL_CAN_TP_SPAWN);
     register(
         "deathStateQuitRecordLocation",
         () -> Config.Settings.DeathStateQuitRecordLocation,
         v -> Config.Settings.DeathStateQuitRecordLocation = v,
-        "死亡状态退出游戏记录退出位置");
+        MessageKey.ADMIN_LABEL_DEATH_STATE_QUIT_RECORD);
     register(
         "loopbackLoginBypass",
         () -> Config.Settings.LoopbackLoginBypass,
         v -> Config.Settings.LoopbackLoginBypass = v,
-        "本地回环地址登录跳过");
+        MessageKey.ADMIN_LABEL_LOOPBACK_LOGIN_BYPASS);
     register(
         "beforeLoginAllowChat",
         () -> Config.Settings.BeforeLoginAllowChat,
         v -> Config.Settings.BeforeLoginAllowChat = v,
-        "登陆之前允许发消息");
+        MessageKey.ADMIN_LABEL_BEFORE_LOGIN_ALLOW_CHAT);
     register(
         "blindingBeforeLogin",
         () -> Config.Settings.BlindingBeforeLogin,
         v -> Config.Settings.BlindingBeforeLogin = v,
-        "登陆之前失明效果");
+        MessageKey.ADMIN_LABEL_BLINDING_BEFORE_LOGIN);
   }
 
   private static void register(
-      String key, BooleanSupplier getter, Consumer<Boolean> setter, String label) {
+      String key, BooleanSupplier getter, Consumer<Boolean> setter, MessageKey label) {
     BOOLEAN_SETTINGS.put(key.toLowerCase(Locale.ROOT), new BoolSetting(getter, setter, label));
   }
 
   @Override
   public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    if (!sender.hasPermission(PERMISSION)) {
+      sender.sendMessage(MessageKey.NO_PERMISSION.get());
+      return true;
+    }
     if (args.length == 0) return false;
     switch (args[0].toLowerCase(Locale.ROOT)) {
       case "reload":
@@ -210,9 +216,9 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
   private static class BoolSetting {
     final BooleanSupplier getter;
     final Consumer<Boolean> setter;
-    final String label;
+    final MessageKey label;
 
-    BoolSetting(BooleanSupplier getter, Consumer<Boolean> setter, String label) {
+    BoolSetting(BooleanSupplier getter, Consumer<Boolean> setter, MessageKey label) {
       this.getter = getter;
       this.setter = setter;
       this.label = label;
@@ -225,10 +231,11 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
     try {
       setting.setter.accept(!setting.getter.getAsBoolean());
       Config.Settings.save();
+      String label = setting.label.get();
       sender.sendMessage(
           setting.getter.getAsBoolean()
-              ? MessageKey.ADMIN_TOGGLE_ON.get(setting.label)
-              : MessageKey.ADMIN_TOGGLE_OFF.get(setting.label));
+              ? MessageKey.ADMIN_TOGGLE_ON.get(label)
+              : MessageKey.ADMIN_TOGGLE_OFF.get(label));
     } catch (Exception e) {
       sender.sendMessage(MessageKey.ADMIN_SET_FAILED.get(e.getMessage()));
     }
@@ -372,38 +379,14 @@ public class CommandCatSeedLogin implements CommandExecutor, TabCompleter {
   // ---- Reload ----
 
   private boolean reload(CommandSender sender) {
-    Config.reload();
     try {
-      PluginContext.getSql().closeConnection();
+      PluginContext.getPlugin().reloadAll();
+      sender.sendMessage(MessageKey.CONFIG_RELOADED.get());
     } catch (Exception e) {
-      PluginContext.getLogger().warning("§c关闭旧数据库连接时出错");
+      sender.sendMessage(MessageKey.INTERNAL_ERROR.get());
+      PluginContext.getLogger().warning("重载插件时出错");
       e.printStackTrace();
     }
-    boolean mysql = PluginContext.getConfigManager().isMySQL();
-    PluginContext.setSql(
-        mysql ? new MySQL(PluginContext.getPlugin()) : new SQLite(PluginContext.getPlugin()));
-    try {
-      PluginContext.getSql().init();
-      Cache.refreshAllSync();
-    } catch (Exception e) {
-      PluginContext.getLogger().warning("§c加载数据库时出错");
-      e.printStackTrace();
-    }
-    try {
-      Communication.socketServerStopAsync();
-    } catch (Exception e) {
-      PluginContext.getLogger().warning("§c停止通信服务时出错");
-      e.printStackTrace();
-    }
-    if (PluginContext.getConfigManager().isEnable()) {
-      try {
-        Communication.socketServerStartAsync();
-      } catch (Exception e) {
-        PluginContext.getLogger().warning("§c启动通信服务时出错");
-        e.printStackTrace();
-      }
-    }
-    sender.sendMessage(MessageKey.CONFIG_RELOADED.get());
     return true;
   }
 

@@ -107,11 +107,11 @@ ReCatSeedLogin/
 │   │   ├── Listeners.java       → 代理端事件监听
 │   │   └── config/              → Velocity配置管理
 │   └── common/                  → 跨平台共享代码
-│       ├── api/                 → 平台抽象接口（PlatformAdapter、配置接口）
+│       ├── api/                 → 平台无关接口（配置接口、权限节点）
+│       ├── command/             → 代理端管理指令的共用实现（BungeeCord / Velocity）
 │       ├── communication/       → Socket通信基类
 │       ├── config/              → 配置管理基类、YAML解析
-│       ├── database/            → 数据库连接抽象
-│       ├── i18n/                → 国际化引擎（I18n、MessageKey）
+│       ├── i18n/                → 国际化引擎（I18n、MessageKey、§ 颜色码解析）
 │       ├── model/               → 数据模型（LoginPlayer）
 │       └── util/                → 加密、验证、日期工具类
 └── src/main/resources/
@@ -127,7 +127,7 @@ ReCatSeedLogin/
 - **Bukkit端** - 服务端插件，实现注册/登录/管理等核心功能，同时运行Socket服务器供代理端查询登录状态
 - **BungeeCord端** - 代理端插件，通过TCP Socket与Bukkit端通信，实现跨服登录状态同步
 - **Velocity端** - 代理端插件，通过TCP Socket与Bukkit端通信，实现跨服登录状态同步
-- **common包** - 跨平台共享代码，提供 `PlatformAdapter`、`CoreConfig` 等平台无关接口
+- **common包** - 跨平台共享代码，提供配置接口、`CoreConfig`、管理指令与 i18n 等平台无关实现
 
 ## 📥 下载安装
 
@@ -267,11 +267,12 @@ ReCatSeedLogin/
 
 | 权限节点 | 平台 | 描述 |
 |----------|------|------|
-| `catseedlogin.command.catseedlogin` | Bukkit | 管理员指令使用权限 |
-| `catseedlogin.admin` | BungeeCord | BungeeCord端管理员指令权限 |
-| `catseedlogin.admin` | Velocity | Velocity端管理员指令权限 |
+| `catseedlogin.admin` | Bukkit / BungeeCord / Velocity | 管理员指令使用权限（三端统一） |
 
 > 玩家指令（`/login`、`/register`、`/changepassword`、`/bindemail`、`/resetpassword`）不需要权限节点，所有玩家均可使用。
+
+> **升级提示**：管理员权限节点已统一为 `catseedlogin.admin`。旧节点 `catseedlogin.command.catseedlogin`
+> 不再生效，使用权限插件显式授予该节点的服主请改为 `catseedlogin.admin`。
 
 ## ⚙️ 配置文件
 
@@ -425,10 +426,16 @@ proxy:
 ### 🔄 代理端指令
 | 平台 | 指令 | 功能 |
 |------|------|------|
+| BungeeCord | `/cslb` | 查看帮助 |
 | BungeeCord | `/cslb reload` | 重载BungeeCord端配置 |
+| BungeeCord | `/cslb status` | 查看插件状态（通讯地址、登录服在线状态） |
+| BungeeCord | `/cslb list` | 查看已登录玩家列表 |
+| Velocity | `/cslv` | 查看帮助 |
 | Velocity | `/cslv reload` | 重载Velocity端配置 |
-| Velocity | `/cslv status` | 查看插件状态（通讯地址、在线状态） |
+| Velocity | `/cslv status` | 查看插件状态（通讯地址、登录服在线状态） |
 | Velocity | `/cslv list` | 查看已登录玩家列表 |
+
+> 两端的子命令、帮助、状态与列表输出由 `common/command/ProxyAdminCommand` 统一实现，行为保持一致。
 
 ### 🔄 代理端工作流程
 1. 玩家加入网络 → 连接到登录服务器

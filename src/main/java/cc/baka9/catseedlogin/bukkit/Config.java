@@ -114,12 +114,13 @@ public class Config {
       cm.set(ConfigConstants.Path.TWO_FACTOR_ATTEMPT_WINDOW, TwoFactorAttemptWindow);
       cm.set(ConfigConstants.Path.TWO_FACTOR_PENDING_TIMEOUT, TwoFactorPendingTimeout);
 
-      if (CommandWhiteList != null && !CommandWhiteList.isEmpty()) {
-        cm.getMainConfig()
-            .set(
-                ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_COMMAND_WHITELIST,
-                CommandWhiteList.stream().map(Pattern::toString).collect(Collectors.toList()));
-      }
+      // 空列表也要写回：否则删掉最后一条白名单永远无法落盘
+      cm.getMainConfig()
+          .set(
+              ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_COMMAND_WHITELIST,
+              CommandWhiteList == null
+                  ? new java.util.ArrayList<String>()
+                  : CommandWhiteList.stream().map(Pattern::toString).collect(Collectors.toList()));
 
       if (SpawnLocation != null) {
         cm.setSpawnLocation(SpawnLocation);
@@ -132,15 +133,6 @@ public class Config {
   public static void load() {
     plugin = CatSeedLogin.instance;
     Settings.load();
-  }
-
-  public static void save() {
-    Settings.save();
-  }
-
-  public static void reload() {
-    plugin.getConfigManager().reload();
-    load();
   }
 
   public static Optional<Location> getOfflineLocation(Player player) {

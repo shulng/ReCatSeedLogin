@@ -1,5 +1,6 @@
 package cc.baka9.catseedlogin.bukkit.object;
 
+import cc.baka9.catseedlogin.common.model.LoginPlayer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

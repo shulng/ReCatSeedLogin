@@ -70,4 +70,7 @@ commands:
       §e/<command> setPwd [玩家名] [密码] §9管理员强制设置玩家密码
       §3/<command> reload §9重载配置文件
     aliases: [cslogin]
-    permission: catseedlogin.command.catseedlogin
+permissions:
+  catseedlogin.admin:
+    description: CatSeedLogin 管理员指令权限 (Bukkit / BungeeCord / Velocity 统一节点)
+    default: op

@@ -2,8 +2,10 @@ package cc.baka9.catseedlogin.bungee;
 
 import cc.baka9.catseedlogin.bungee.config.BungeeConfigManager;
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.regex.Pattern;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -16,6 +18,9 @@ import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
 public class Listeners implements Listener {
+
+  /** 与 Velocity 端一致：登录服登记完成后再补发 KeepLoggedIn，避免子服尚未就绪。 */
+  private static final long KEEP_LOGGED_IN_DELAY_TICKS = 20;
 
   private final ProxyServer proxyServer = ProxyServer.getInstance();
   private final List<String> loggedInPlayerList = new CopyOnWriteArrayList<>();
@@ -34,10 +39,27 @@ public class Listeners implements Listener {
     }
     ProxiedPlayer player = (ProxiedPlayer) event.getSender();
     String playerName = player.getName();
-    if (!loggedInPlayerList.contains(playerName)) {
-      event.setCancelled(true);
-      handleLogin(player, event.getMessage());
+    if (loggedInPlayerList.contains(playerName)) {
+      return;
     }
+    if (isCommandAllowed(event.getMessage())) {
+      return;
+    }
+    event.setCancelled(true);
+    handleLogin(player, event.getMessage());
+  }
+
+  /** 登录前白名单命中即原样放行，与 Bukkit/Velocity 使用同一份配置。 */
+  private boolean isCommandAllowed(String input) {
+    if (input == null) {
+      return false;
+    }
+    for (Pattern regex : configManager.getCommandWhiteList()) {
+      if (regex.matcher(input).matches()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @EventHandler
@@ -74,7 +96,9 @@ public class Listeners implements Listener {
     }
     ProxiedPlayer player = event.getPlayer();
     if (loggedInPlayerList.contains(player.getName())) {
-      PluginMain.runAsync(() -> communication.sendKeepLoggedInRequest(player.getName()));
+      PluginMain.runAsyncLater(
+          () -> communication.sendKeepLoggedInRequest(player.getName()),
+          KEEP_LOGGED_IN_DELAY_TICKS);
     }
   }
 
@@ -104,14 +128,20 @@ public class Listeners implements Listener {
 
   private void handleLogin(ProxiedPlayer player, String message) {
     String playerName = player.getName();
-    PluginMain.runAsync(() -> {
-      if (communication.sendConnectRequest(playerName) != 1) {
-        return;
-      }
-      loggedInPlayerList.add(playerName);
-      if (message != null && !message.isEmpty()) {
-        proxyServer.getPluginManager().dispatchCommand(player, message.substring(1));
-      }
-    });
+    PluginMain.runAsync(
+        () -> {
+          if (communication.sendConnectRequest(playerName) != 1) {
+            return;
+          }
+          loggedInPlayerList.add(playerName);
+          if (message != null && !message.isEmpty()) {
+            proxyServer.getPluginManager().dispatchCommand(player, message.substring(1));
+          }
+        });
+  }
+
+  /** 供管理指令的 {@code list} 子命令使用，与 Velocity 端同名方法保持一致。 */
+  public List<String> getLoggedInPlayers() {
+    return Collections.unmodifiableList(loggedInPlayerList);
   }
 }

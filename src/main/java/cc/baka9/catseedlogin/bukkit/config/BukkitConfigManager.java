@@ -4,6 +4,7 @@ import cc.baka9.catseedlogin.bukkit.CatSeedLogin;
 import cc.baka9.catseedlogin.bukkit.util.WorldUtil;
 import cc.baka9.catseedlogin.common.config.BaseConfigManager;
 import cc.baka9.catseedlogin.common.config.ConfigConstants;
+import cc.baka9.catseedlogin.common.config.JulConfigLogger;
 import java.io.InputStream;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -14,7 +15,7 @@ public class BukkitConfigManager extends BaseConfigManager {
   private final CatSeedLogin plugin;
 
   public BukkitConfigManager(CatSeedLogin plugin) {
-    super();
+    super(new JulConfigLogger(plugin.getLogger()));
     this.plugin = plugin;
     initConfig(plugin.getDataFolder(), "config.yml");
   }

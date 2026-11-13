@@ -15,11 +15,13 @@ public class I18n {
   private static volatile I18n instance;
   private static final String LANGUAGES_FOLDER = "languages";
 
+  /** 语言文件统一使用 {@code &} 书写，加载时统一转换成 Minecraft 的 {@code §}。 */
+  private static final char COLOR_CHAR = '&';
+
   private final File dataFolder;
   private final ResourceProvider resourceProvider;
   private volatile Map<String, String> messages = new HashMap<>();
   private Locale currentLocale = Locale.SIMPLIFIED_CHINESE;
-  private char colorChar = '&';
 
   public interface ResourceProvider {
     InputStream getResource(String name);
@@ -31,10 +33,6 @@ public class I18n {
     instance = this;
   }
 
-  public static I18n getInstance() {
-    return instance;
-  }
-
   public void setLocale(Locale locale) {
     this.currentLocale = locale;
     loadMessages(locale);
@@ -44,19 +42,11 @@ public class I18n {
     setLocale(Locale.forLanguageTag(languageTag));
   }
 
-  public Locale getLocale() {
-    return currentLocale;
-  }
-
   public void loadMessages(Locale locale) {
     Map<String, String> localeMessages = new HashMap<>();
     String fileName = locale.toLanguageTag() + ".yml";
 
-    File customFile = new File(new File(dataFolder, LANGUAGES_FOLDER), fileName);
-    if (customFile.exists()) {
-      loadFromFile(customFile, localeMessages);
-    }
-
+    // 先铺内置语言，再用数据目录里的自定义文件覆盖，用户改动才能生效
     String resourcePath = LANGUAGES_FOLDER + "/" + fileName;
     try (InputStream defaultStream = resourceProvider.getResource(resourcePath)) {
       if (defaultStream != null) {
@@ -64,6 +54,11 @@ public class I18n {
       }
     } catch (Exception e) {
       e.printStackTrace();
+    }
+
+    File customFile = new File(new File(dataFolder, LANGUAGES_FOLDER), fileName);
+    if (customFile.exists()) {
+      loadFromFile(customFile, localeMessages);
     }
 
     if (localeMessages.isEmpty()) {
@@ -148,19 +143,7 @@ public class I18n {
 
   public String translateColors(String message) {
     if (message == null) return null;
-    return message.replace(colorChar, '\u00A7');
-  }
-
-  public void setColorChar(char colorChar) {
-    this.colorChar = colorChar;
-  }
-
-  public char getColorChar() {
-    return colorChar;
-  }
-
-  public void reload() {
-    loadMessages(currentLocale);
+    return message.replace(COLOR_CHAR, '\u00A7');
   }
 
   public static String tr(String key) {

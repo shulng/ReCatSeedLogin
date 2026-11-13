@@ -2,7 +2,6 @@ package cc.baka9.catseedlogin.bukkit;
 
 import cc.baka9.catseedlogin.bukkit.command.*;
 import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
-import cc.baka9.catseedlogin.bukkit.config.BukkitPlatformAdapter;
 import cc.baka9.catseedlogin.bukkit.database.*;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.bukkit.object.TwoFactorState;
@@ -32,7 +31,6 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
   private static final String LEGACY_BLINDING_PLUGIN = "CatSeedLoginBlinding";
 
   private BukkitConfigManager configManager;
-  private BukkitPlatformAdapter platformAdapter;
 
   @Override
   public void onEnable() {
@@ -42,7 +40,6 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
     getServer().getPluginManager().registerEvents(this, this);
 
     configManager = new BukkitConfigManager(this);
-    platformAdapter = new BukkitPlatformAdapter(this, configManager.getI18n());
 
     try {
       configManager.reload();
@@ -93,6 +90,44 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
     registerCommands();
 
     Task.runAll();
+  }
+
+  /** 重载配置、重建数据库连接、刷新缓存并重启通讯服务器，供 onEnable 与管理员 reload 共用。 */
+  public void reloadAll() {
+    configManager.reload();
+    Config.load();
+
+    try {
+      sql.closeConnection();
+    } catch (Exception e) {
+      getLogger().warning("关闭旧数据库连接时出错");
+      e.printStackTrace();
+    }
+
+    sql = configManager.isMySQL() ? new MySQL(this) : new SQLite(this);
+    PluginContext.setSql(sql);
+    try {
+      sql.init();
+      Cache.refreshAllSync();
+    } catch (Exception e) {
+      getLogger().warning("加载数据库时出错");
+      e.printStackTrace();
+    }
+
+    try {
+      Communication.socketServerStopAsync();
+    } catch (Exception e) {
+      getLogger().warning("停止通信服务时出错");
+      e.printStackTrace();
+    }
+    if (configManager.isEnable()) {
+      try {
+        Communication.socketServerStartAsync();
+      } catch (Exception e) {
+        getLogger().warning("启动通信服务时出错");
+        e.printStackTrace();
+      }
+    }
   }
 
   /** 两步验证的地基：探测 adventure 可用性，并准备好 TOTP 密钥文件。 */
@@ -242,10 +277,6 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
 
   public BukkitConfigManager getConfigManager() {
     return configManager;
-  }
-
-  public BukkitPlatformAdapter getPlatformAdapter() {
-    return platformAdapter;
   }
 
   public I18n getI18n() {

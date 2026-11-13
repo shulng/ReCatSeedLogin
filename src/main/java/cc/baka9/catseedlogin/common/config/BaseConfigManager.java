@@ -8,17 +8,20 @@ import cc.baka9.catseedlogin.common.i18n.I18n;
 import java.io.File;
 import java.io.InputStream;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 public abstract class BaseConfigManager
     implements CoreConfig, DatabaseConfig, BungeeCordConfig, EmailConfig {
 
-  private static final Logger LOGGER = Logger.getLogger(BaseConfigManager.class.getName());
+  protected final ConfigLogger logger;
   protected File dataFolder;
   protected I18n i18n;
   protected YamlConfiguration mainConfig;
+
+  /** @param logger 平台自己的 logger，保证配置相关告警出现在对应的服务端日志里 */
+  protected BaseConfigManager(ConfigLogger logger) {
+    this.logger = logger;
+  }
 
   protected void initConfig(File dataFolder, String configFileName) {
     this.dataFolder = dataFolder;
@@ -45,19 +48,19 @@ public abstract class BaseConfigManager
         YamlConfiguration defaultConfig = new YamlConfiguration(null);
         defaultConfig.loadFromResource(defaultStream);
         boolean changed = mergeDefaults(config, defaultConfig);
-        if ("config.yml".equals(fileName) && ConfigMigration.migrate(config)) {
+        if ("config.yml".equals(fileName) && ConfigMigration.migrate(config, logger)) {
           changed = true;
         }
         if (changed) {
           try {
             config.save();
           } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to save merged config: " + name, e);
+            logger.warn("Failed to save merged config: " + name + ": " + e.getMessage());
           }
         }
       }
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Failed to load default config: " + name, e);
+      logger.warn("Failed to load default config: " + name + ": " + e.getMessage());
     }
 
     return config;
@@ -72,7 +75,7 @@ public abstract class BaseConfigManager
           java.nio.file.Files.copy(in, file.toPath());
         }
       } catch (Exception e) {
-        LOGGER.log(Level.WARNING, "Failed to create default config: " + name, e);
+        logger.warn("Failed to create default config: " + name + ": " + e.getMessage());
       }
     }
   }
@@ -85,7 +88,7 @@ public abstract class BaseConfigManager
       try {
         mainConfig.save();
       } catch (Exception e) {
-        LOGGER.log(Level.WARNING, "Failed to save config: " + name, e);
+        logger.warn("Failed to save config: " + name + ": " + e.getMessage());
       }
     } else {
       YamlConfiguration config = getConfig(name);
@@ -93,7 +96,7 @@ public abstract class BaseConfigManager
         try {
           config.save();
         } catch (Exception e) {
-          LOGGER.log(Level.WARNING, "Failed to save config: " + name, e);
+          logger.warn("Failed to save config: " + name + ": " + e.getMessage());
         }
       }
     }
@@ -418,58 +421,5 @@ public abstract class BaseConfigManager
   /** 只写入内存，调用方批量改完后统一调用 {@link #saveConfig(String)} 落盘。 */
   public void set(String path, Object value) {
     mainConfig.set(path, value);
-  }
-
-  @Override
-  public CoreConfig.SpawnLocation getSpawnLocation() {
-    String locStr =
-        mainConfig.getString(
-            ConfigConstants.Path.SPAWN_LOCATION, ConfigConstants.DEFAULT_SPAWN_LOCATION);
-    return parseSpawnLocation(locStr);
-  }
-
-  private CoreConfig.SpawnLocation parseSpawnLocation(String str) {
-    ConfigHelper.LocationData data =
-        ConfigHelper.parseLocationString(
-            str,
-            ConfigHelper.LocationData.builder()
-                .world("world")
-                .x(0)
-                .y(64)
-                .z(0)
-                .yaw(0)
-                .pitch(0)
-                .build());
-    return new CoreConfig.SpawnLocation() {
-      @Override
-      public String getWorld() {
-        return data.world;
-      }
-
-      @Override
-      public double getX() {
-        return data.x;
-      }
-
-      @Override
-      public double getY() {
-        return data.y;
-      }
-
-      @Override
-      public double getZ() {
-        return data.z;
-      }
-
-      @Override
-      public float getYaw() {
-        return data.yaw;
-      }
-
-      @Override
-      public float getPitch() {
-        return data.pitch;
-      }
-    };
   }
 }

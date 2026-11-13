@@ -9,7 +9,7 @@ public class VelocityConfigManager extends BaseConfigManager {
   private final PluginMain plugin;
 
   public VelocityConfigManager(PluginMain plugin) {
-    super();
+    super(new VelocityLoggerAdapter(plugin));
     this.plugin = plugin;
     initConfig(plugin.getDataDirectory().toFile(), "config.yml");
   }

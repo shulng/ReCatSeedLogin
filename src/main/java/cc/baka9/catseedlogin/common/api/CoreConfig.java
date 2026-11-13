@@ -73,20 +73,4 @@ public interface CoreConfig {
 
   /** 待验证状态超时 (秒)，0 表示沿用 settings.before-login.auto-kick。 */
   int getTwoFactorPendingTimeout();
-
-  interface SpawnLocation {
-    String getWorld();
-
-    double getX();
-
-    double getY();
-
-    double getZ();
-
-    float getYaw();
-
-    float getPitch();
-  }
-
-  SpawnLocation getSpawnLocation();
 }

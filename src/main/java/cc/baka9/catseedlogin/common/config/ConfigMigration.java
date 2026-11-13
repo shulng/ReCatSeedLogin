@@ -2,8 +2,6 @@ package cc.baka9.catseedlogin.common.config;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * 旧版 config.yml 路径迁移。
@@ -14,8 +12,6 @@ import java.util.logging.Logger;
  * <p>旧版配置文件里这些值仍在老路径上，如果直接读取新路径就会静默回退到默认值， 等于用户升级后配置被重置。这里在加载（并补全默认值）之后把旧路径的值搬到新路径。
  */
 public final class ConfigMigration {
-
-  private static final Logger LOGGER = Logger.getLogger(ConfigMigration.class.getName());
 
   /** 旧路径 -> 新路径 */
   private static final Map<String, String> LEGACY_PATHS = new LinkedHashMap<>();
@@ -72,9 +68,10 @@ public final class ConfigMigration {
    *
    * <p>分两步执行：先把旧路径的值全部读出来缓存，再按对照表写回新路径。 读与写分开可以避免边遍历边修改配置导致的结果依赖遍历顺序。
    *
+   * @param logger 平台日志出口，迁移结果写入对应服务端
    * @return 配置是否发生了改动（需要回写文件）
    */
-  public static boolean migrate(YamlConfiguration config) {
+  public static boolean migrate(YamlConfiguration config, ConfigLogger logger) {
     Map<String, Object> legacyValues = readLegacyValues(config);
     if (legacyValues.isEmpty()) {
       return removeEmptySections(config);
@@ -94,7 +91,9 @@ public final class ConfigMigration {
     }
 
     boolean changed = removeEmptySections(config) || moved > 0;
-    LOGGER.log(Level.INFO, "已将 {0} 个旧配置路径迁移到新结构，旧路径已自动移除。", moved);
+    if (logger != null) {
+      logger.info("已将 " + moved + " 个旧配置路径迁移到新结构，旧路径已自动移除。");
+    }
     return changed;
   }
 

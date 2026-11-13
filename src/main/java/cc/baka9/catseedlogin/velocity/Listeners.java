@@ -2,6 +2,7 @@ package cc.baka9.catseedlogin.velocity;
 
 import cc.baka9.catseedlogin.common.i18n.MessageKey;
 import cc.baka9.catseedlogin.velocity.config.VelocityConfigManager;
+import cc.baka9.catseedlogin.velocity.util.VelocityMessages;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
@@ -13,7 +14,6 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
-import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 
 public class Listeners {
@@ -40,10 +40,15 @@ public class Listeners {
     Player player = event.getPlayer();
     String message = event.getMessage();
 
-    if (message.startsWith("/") && isNotLoggedIn(player)) {
-      event.setResult(com.velocitypowered.api.event.player.PlayerChatEvent.ChatResult.denied());
-      handleLogin(player, message);
+    if (!message.startsWith("/") || !isNotLoggedIn(player)) {
+      return;
     }
+    // 白名单内的指令（/login、/reg 等）原样放行给子服处理，与 BungeeCord 端保持一致
+    if (isCommandAllowed(message)) {
+      return;
+    }
+    event.setResult(com.velocitypowered.api.event.player.PlayerChatEvent.ChatResult.denied());
+    handleLogin(player, message);
   }
 
   @Subscribe
@@ -147,12 +152,12 @@ public class Listeners {
           && (communication.sendConnectRequest(playerName) == 1)) {
         event.setResult(
             PreLoginEvent.PreLoginComponentResult.denied(
-                Component.text(MessageKey.ALREADY_LOGGED_IN_PROXY.get())));
+                VelocityMessages.toComponent(MessageKey.ALREADY_LOGGED_IN_PROXY.get())));
       }
     } catch (Exception e) {
       event.setResult(
           PreLoginEvent.PreLoginComponentResult.denied(
-              Component.text(MessageKey.ERROR_PLEASE_RETRY.get())));
+              VelocityMessages.toComponent(MessageKey.ERROR_PLEASE_RETRY.get())));
     }
   }
 

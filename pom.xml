@@ -35,10 +35,12 @@
         <floodgate.version>2.2.5-SNAPSHOT</floodgate.version>
         <morepaperlib.version>0.5.3</morepaperlib.version>
         <argon2.version>2.12</argon2.version>
+        <junit.version>5.11.4</junit.version>
 
         <shade.version>3.6.2</shade.version>
         <compiler.version>3.16.0</compiler.version>
         <resources.version>3.5.0</resources.version>
+        <surefire.version>3.5.4</surefire.version>
     </properties>
 
     <repositories>
@@ -153,6 +155,14 @@
             <artifactId>argon2-jvm</artifactId>
             <version>${argon2.version}</version>
         </dependency>
+
+        <!-- Test -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -200,6 +210,11 @@
                 <configuration>
                     <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

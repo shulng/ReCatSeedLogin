@@ -2,7 +2,6 @@ package cc.baka9.catseedlogin.velocity;
 
 import cc.baka9.catseedlogin.common.i18n.I18n;
 import cc.baka9.catseedlogin.velocity.config.VelocityConfigManager;
-import cc.baka9.catseedlogin.velocity.config.VelocityPlatformAdapter;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -27,7 +26,6 @@ public class PluginMain {
   private final Logger logger;
   private final Path dataDirectory;
   private VelocityConfigManager configManager;
-  private VelocityPlatformAdapter platformAdapter;
   private VelocityCommunication communication;
   private Listeners listeners;
 
@@ -58,7 +56,6 @@ public class PluginMain {
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent event) {
     configManager = new VelocityConfigManager(this);
-    platformAdapter = new VelocityPlatformAdapter(this, configManager.getI18n());
     communication = new VelocityCommunication(configManager, logger);
     listeners = new Listeners(configManager, communication, proxyServer, logger);
     configManager.reload();
@@ -93,10 +90,6 @@ public class PluginMain {
 
   public VelocityConfigManager getConfigManager() {
     return configManager;
-  }
-
-  public VelocityPlatformAdapter getPlatformAdapter() {
-    return platformAdapter;
   }
 
   public I18n getI18n() {
