@@ -47,29 +47,15 @@ public class BukkitConfigManager extends BaseConfigManager {
     World defaultWorld = WorldUtil.getDefaultWorld(plugin.getLogger());
 
     if (locStr == null || locStr.isEmpty()) {
-      Location spawn;
-      if (defaultWorld != null) {
-        spawn = defaultWorld.getSpawnLocation();
-      } else if (!Bukkit.getWorlds().isEmpty()) {
-        spawn = Bukkit.getWorlds().get(0).getSpawnLocation();
-      } else {
-        return null;
-      }
-      setSpawnLocation(spawn);
+      Location spawn = fallbackSpawn(defaultWorld);
+      if (spawn != null) setSpawnLocation(spawn);
       return spawn;
     }
 
     String[] parts = locStr.split(":");
     if (parts.length < 6) {
-      Location spawn;
-      if (defaultWorld != null) {
-        spawn = defaultWorld.getSpawnLocation();
-      } else if (!Bukkit.getWorlds().isEmpty()) {
-        spawn = Bukkit.getWorlds().get(0).getSpawnLocation();
-      } else {
-        return null;
-      }
-      setSpawnLocation(spawn);
+      Location spawn = fallbackSpawn(defaultWorld);
+      if (spawn != null) setSpawnLocation(spawn);
       return spawn;
     }
 
@@ -78,11 +64,10 @@ public class BukkitConfigManager extends BaseConfigManager {
       world = defaultWorld;
     }
     if (world == null) {
-      if (!Bukkit.getWorlds().isEmpty()) {
-        world = Bukkit.getWorlds().get(0);
-      } else {
+      if (Bukkit.getWorlds().isEmpty()) {
         return null;
       }
+      world = Bukkit.getWorlds().get(0);
     }
 
     try {
@@ -97,5 +82,19 @@ public class BukkitConfigManager extends BaseConfigManager {
       setSpawnLocation(spawn);
       return spawn;
     }
+  }
+
+  /**
+   * 提取自原版两处完全相同的 fallback 块:
+   * 优先默认世界出生点,其次第一个世界出生点,都没有则 null。
+   */
+  private Location fallbackSpawn(World defaultWorld) {
+    if (defaultWorld != null) {
+      return defaultWorld.getSpawnLocation();
+    }
+    if (!Bukkit.getWorlds().isEmpty()) {
+      return Bukkit.getWorlds().get(0).getSpawnLocation();
+    }
+    return null;
   }
 }
