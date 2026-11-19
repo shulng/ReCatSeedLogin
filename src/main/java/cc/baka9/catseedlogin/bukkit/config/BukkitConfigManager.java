@@ -84,10 +84,7 @@ public class BukkitConfigManager extends BaseConfigManager {
     }
   }
 
-  /**
-   * 提取自原版两处完全相同的 fallback 块:
-   * 优先默认世界出生点,其次第一个世界出生点,都没有则 null。
-   */
+  /** 提取自原版两处完全相同的 fallback 块: 优先默认世界出生点,其次第一个世界出生点,都没有则 null。 */
   private Location fallbackSpawn(World defaultWorld) {
     if (defaultWorld != null) {
       return defaultWorld.getSpawnLocation();
