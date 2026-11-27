@@ -14,7 +14,7 @@ java {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:26.3.build.257-stable")
+    compileOnly("io.papermc.paper:paper-api:26.3.build.259-stable")
     compileOnly("net.dmulloy2:ProtocolLib:5.4.0")
     compileOnly("net.md-5:bungeecord-api:1.21-R0.4")
     compileOnly("com.velocitypowered:velocity-api:4.3.1")
