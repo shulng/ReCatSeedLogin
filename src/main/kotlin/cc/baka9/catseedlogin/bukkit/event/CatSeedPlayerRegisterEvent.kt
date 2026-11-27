@@ -5,12 +5,13 @@ import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 
 class CatSeedPlayerRegisterEvent(val player: Player) : Event() {
-    override fun getHandlers(): HandlerList = handlers
+    override fun getHandlers(): HandlerList = HANDLERS
 
     companion object {
-        private val handlers = HandlerList()
+        @JvmField
+        val HANDLERS = HandlerList()
 
         @JvmStatic
-        fun getHandlerList(): HandlerList = handlers
+        fun getHandlerList(): HandlerList = HANDLERS
     }
 }

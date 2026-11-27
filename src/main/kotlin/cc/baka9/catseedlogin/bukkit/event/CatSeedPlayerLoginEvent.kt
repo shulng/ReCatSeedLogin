@@ -12,7 +12,7 @@ class CatSeedPlayerLoginEvent(
 ) : Event() {
     private val emailValue = email
 
-    override fun getHandlers(): HandlerList = handlers
+    override fun getHandlers(): HandlerList = HANDLERS
 
     fun getEmail(): Optional<String> = Optional.ofNullable(emailValue)
 
@@ -22,9 +22,10 @@ class CatSeedPlayerLoginEvent(
     }
 
     companion object {
-        private val handlers = HandlerList()
+        @JvmField
+        val HANDLERS = HandlerList()
 
         @JvmStatic
-        fun getHandlerList(): HandlerList = handlers
+        fun getHandlerList(): HandlerList = HANDLERS
     }
 }
