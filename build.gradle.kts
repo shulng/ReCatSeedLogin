@@ -27,7 +27,7 @@ dependencies {
     implementation("org.yaml:snakeyaml:2.7")
     implementation("com.sun.mail:javax.mail:1.6.2")
     implementation("org.apache.commons:commons-email:1.6.0")
-    implementation("org.apache.commons:commons-lang3:3.21.0")
+    implementation("org.apache.commons:commons-lang3:3.22.0")
     implementation("commons-net:commons-net:3.13.0")
     implementation("space.arim.morepaperlib:morepaperlib:0.5.3")
     implementation("de.mkammerer:argon2-jvm:2.12")
