@@ -1,52 +1,45 @@
-package cc.baka9.catseedlogin.bukkit;
+package cc.baka9.catseedlogin.bukkit
 
-import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerLoginEvent;
-import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerRegisterEvent;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
+import cc.baka9.catseedlogin.bukkit.`object`.LoginPlayerHelper
+import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerLoginEvent
+import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerRegisterEvent
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
 
-/**
- * 登录前给未登录玩家施加失明效果，登录或注册成功后移除。
- *
- * <p>合并自 CatSeedLoginBlinding: https://github.com/CatSeed/CatSeedLoginBlinding
- */
-public class BlindingListeners implements Listener {
+class BlindingListeners : Listener {
+    @EventHandler
+    fun onPlayerJoin(event: PlayerJoinEvent) {
+        if (!Config.Settings.BlindingBeforeLogin) return
+        val player = event.player
+        if (LoginPlayerHelper.isLogin(player.name)) return
+        addBlindness(player)
+    }
 
-  /** 24 小时 (单位: tick)，沿用 CatSeedLoginBlinding 原本的时长。 */
-  private static final int BLINDNESS_DURATION = 20 * 60 * 60 * 24;
+    @EventHandler
+    fun onPlayerLogin(event: CatSeedPlayerLoginEvent) {
+        if (event.result != CatSeedPlayerLoginEvent.Result.SUCCESS) return
+        removeBlindness(event.player)
+    }
 
-  @EventHandler
-  public void onPlayerJoin(PlayerJoinEvent event) {
-    if (!Config.Settings.BlindingBeforeLogin) return;
-    Player player = event.getPlayer();
-    if (LoginPlayerHelper.isLogin(player.getName())) return;
-    addBlindness(player);
-  }
+    @EventHandler
+    fun onPlayerRegister(event: CatSeedPlayerRegisterEvent) {
+        removeBlindness(event.player)
+    }
 
-  @EventHandler
-  public void onPlayerLogin(CatSeedPlayerLoginEvent event) {
-    if (event.getResult() != CatSeedPlayerLoginEvent.Result.SUCCESS) return;
-    removeBlindness(event.getPlayer());
-  }
+    @Suppress("DEPRECATION")
+    private fun addBlindness(player: Player) {
+        player.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS, BLINDNESS_DURATION, 0), true)
+    }
 
-  @EventHandler
-  public void onPlayerRegister(CatSeedPlayerRegisterEvent event) {
-    removeBlindness(event.getPlayer());
-  }
+    private fun removeBlindness(player: Player?) {
+        player?.removePotionEffect(PotionEffectType.BLINDNESS)
+    }
 
-  @SuppressWarnings("deprecation")
-  private void addBlindness(Player player) {
-    player.addPotionEffect(
-        new PotionEffect(PotionEffectType.BLINDNESS, BLINDNESS_DURATION, 0), true);
-  }
-
-  private void removeBlindness(Player player) {
-    if (player == null) return;
-    player.removePotionEffect(PotionEffectType.BLINDNESS);
-  }
+    companion object {
+        private const val BLINDNESS_DURATION = 20 * 60 * 60 * 24
+    }
 }

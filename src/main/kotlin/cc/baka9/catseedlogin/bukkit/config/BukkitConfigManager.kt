@@ -1,97 +1,36 @@
-package cc.baka9.catseedlogin.bukkit.config;
+package cc.baka9.catseedlogin.bukkit.config
 
-import cc.baka9.catseedlogin.bukkit.CatSeedLogin;
-import cc.baka9.catseedlogin.bukkit.util.WorldUtil;
-import cc.baka9.catseedlogin.common.config.BaseConfigManager;
-import cc.baka9.catseedlogin.common.config.ConfigConstants;
-import java.io.InputStream;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
+import cc.baka9.catseedlogin.bukkit.CatSeedLogin
+import cc.baka9.catseedlogin.bukkit.util.WorldUtil
+import cc.baka9.catseedlogin.common.config.BaseConfigManager
+import cc.baka9.catseedlogin.common.config.ConfigConstants
+import java.io.InputStream
+import org.bukkit.Bukkit
+import org.bukkit.Location
+import org.bukkit.World
 
-public class BukkitConfigManager extends BaseConfigManager {
-
-  private final CatSeedLogin plugin;
-
-  public BukkitConfigManager(CatSeedLogin plugin) {
-    super();
-    this.plugin = plugin;
-    initConfig(plugin.getDataFolder(), "config.yml");
-  }
-
-  @Override
-  public InputStream getResource(String name) {
-    return plugin.getResource(name);
-  }
-
-  public void setSpawnLocation(Location location) {
-    if (location.getWorld() == null) return;
-    String locStr =
-        location.getWorld().getName()
-            + ":"
-            + location.getX()
-            + ":"
-            + location.getY()
-            + ":"
-            + location.getZ()
-            + ":"
-            + location.getYaw()
-            + ":"
-            + location.getPitch();
-    mainConfig.set(ConfigConstants.Path.SPAWN_LOCATION, locStr);
-    saveConfig("config.yml");
-  }
-
-  public Location getBukkitSpawnLocation() {
-    String locStr = mainConfig.getString(ConfigConstants.Path.SPAWN_LOCATION);
-    World defaultWorld = WorldUtil.getDefaultWorld(plugin.getLogger());
-
-    if (locStr == null || locStr.isEmpty()) {
-      Location spawn = fallbackSpawn(defaultWorld);
-      if (spawn != null) setSpawnLocation(spawn);
-      return spawn;
+class BukkitConfigManager(private val plugin: CatSeedLogin) : BaseConfigManager() {
+    init { initConfig(plugin.dataFolder, "config.yml") }
+    override fun getResource(name: String): InputStream? = plugin.getResource(name)
+    fun setSpawnLocation(location: Location) {
+        val world = location.world ?: return
+        mainConfig.set(ConfigConstants.Path.SPAWN_LOCATION, "${world.name}:${location.x}:${location.y}:${location.z}:${location.yaw}:${location.pitch}")
+        saveConfig("config.yml")
     }
-
-    String[] parts = locStr.split(":");
-    if (parts.length < 6) {
-      Location spawn = fallbackSpawn(defaultWorld);
-      if (spawn != null) setSpawnLocation(spawn);
-      return spawn;
+    fun getBukkitSpawnLocation(): Location? {
+        val locStr = mainConfig.getString(ConfigConstants.Path.SPAWN_LOCATION)
+        val defaultWorld = WorldUtil.getDefaultWorld(plugin.logger)
+        if (locStr.isNullOrEmpty()) return fallbackSpawn(defaultWorld)?.also { setSpawnLocation(it) }
+        val parts = locStr.split(":")
+        if (parts.size < 6) return fallbackSpawn(defaultWorld)?.also { setSpawnLocation(it) }
+        var world = Bukkit.getWorld(parts[0]) ?: defaultWorld
+        if (world == null) world = Bukkit.getWorlds().firstOrNull() ?: return null
+        return try {
+            Location(world, parts[1].toDouble(), parts[2].toDouble(), parts[3].toDouble(), parts[4].toFloat(), parts[5].toFloat())
+        } catch (_: NumberFormatException) {
+            world.spawnLocation.also { setSpawnLocation(it) }
+        }
     }
-
-    World world = Bukkit.getWorld(parts[0]);
-    if (world == null) {
-      world = defaultWorld;
-    }
-    if (world == null) {
-      if (Bukkit.getWorlds().isEmpty()) {
-        return null;
-      }
-      world = Bukkit.getWorlds().get(0);
-    }
-
-    try {
-      double x = Double.parseDouble(parts[1]);
-      double y = Double.parseDouble(parts[2]);
-      double z = Double.parseDouble(parts[3]);
-      float yaw = Float.parseFloat(parts[4]);
-      float pitch = Float.parseFloat(parts[5]);
-      return new Location(world, x, y, z, yaw, pitch);
-    } catch (NumberFormatException e) {
-      Location spawn = world.getSpawnLocation();
-      setSpawnLocation(spawn);
-      return spawn;
-    }
-  }
-
-  /** 提取自原版两处完全相同的 fallback 块: 优先默认世界出生点,其次第一个世界出生点,都没有则 null。 */
-  private Location fallbackSpawn(World defaultWorld) {
-    if (defaultWorld != null) {
-      return defaultWorld.getSpawnLocation();
-    }
-    if (!Bukkit.getWorlds().isEmpty()) {
-      return Bukkit.getWorlds().get(0).getSpawnLocation();
-    }
-    return null;
-  }
+    private fun fallbackSpawn(defaultWorld: World?): Location? =
+        defaultWorld?.spawnLocation ?: Bukkit.getWorlds().firstOrNull()?.spawnLocation
 }

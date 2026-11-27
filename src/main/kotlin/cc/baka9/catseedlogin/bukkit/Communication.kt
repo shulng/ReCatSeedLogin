@@ -1,134 +1,125 @@
-package cc.baka9.catseedlogin.bukkit;
+package cc.baka9.catseedlogin.bukkit
 
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
-import cc.baka9.catseedlogin.common.communication.BaseCommunication;
-import cc.baka9.catseedlogin.common.util.CommunicationAuth;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
+import cc.baka9.catseedlogin.bukkit.`object`.LoginPlayer
+import cc.baka9.catseedlogin.bukkit.`object`.LoginPlayerHelper
+import cc.baka9.catseedlogin.common.communication.BaseCommunication
+import cc.baka9.catseedlogin.common.util.CommunicationAuth
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
+import java.io.OutputStream
+import java.net.ServerSocket
+import java.net.Socket
+import org.bukkit.Bukkit
+import org.bukkit.entity.Player
 
-public class Communication extends BaseCommunication {
-  private static ServerSocket serverSocket;
+object Communication : BaseCommunication() {
+    @Volatile
+    private var serverSocket: ServerSocket? = null
 
-  public static void socketServerStopAsync() {
-    CatScheduler.runTaskAsync(Communication::socketServerStop);
-  }
-
-  public static void socketServerStop() {
-    if (serverSocket != null && !serverSocket.isClosed()) {
-      try {
-        serverSocket.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+    @JvmStatic
+    fun socketServerStopAsync() {
+        CatScheduler.runTaskAsync(Runnable { socketServerStop() })
     }
-  }
 
-  public static void socketServerStartAsync() {
-    CatScheduler.runTaskAsync(Communication::socketServerStart);
-  }
-
-  public static void socketServerStart() {
-    try {
-      serverSocket = new ServerSocket(PluginContext.getConfigManager().getProxyPort(), 50);
-      while (!serverSocket.isClosed()) {
-        acceptAndHandle();
-      }
-    } catch (IOException e) {
-      PluginContext.getLogger().warning("无法启动Socket服务器: " + e.getMessage());
-      e.printStackTrace();
+    @JvmStatic
+    fun socketServerStop() {
+        val socket = serverSocket
+        if (socket != null && !socket.isClosed) {
+            try {
+                socket.close()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
     }
-  }
 
-  private static void acceptAndHandle() {
-    try (Socket socket = serverSocket.accept()) {
-      handleRequest(socket);
-    } catch (IOException e) {
-      if (!serverSocket.isClosed()) {
-        PluginContext.getLogger().warning("Socket连接处理异常: " + e.getMessage());
-      }
+    @JvmStatic
+    fun socketServerStartAsync() {
+        CatScheduler.runTaskAsync(Runnable { socketServerStart() })
     }
-  }
 
-  private static void handleRequest(Socket socket) throws IOException {
-    try (BufferedReader bufferedReader =
-            new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        OutputStream outputStream = socket.getOutputStream()) {
-      String requestType = bufferedReader.readLine();
-      if (requestType == null) return;
-      String playerName = bufferedReader.readLine();
-      switch (requestType) {
-        case "Connect":
-          handleConnectRequest(outputStream, playerName);
-          break;
-        case "KeepLoggedIn":
-          String time = bufferedReader.readLine();
-          String sign = bufferedReader.readLine();
-          handleKeepLoggedInRequest(playerName, time, sign);
-          break;
-        default:
-          break;
-      }
+    @JvmStatic
+    fun socketServerStart() {
+        try {
+            ServerSocket(PluginContext.getConfigManager().getProxyPort(), 50).use { socket ->
+                serverSocket = socket
+                while (!socket.isClosed) acceptAndHandle(socket)
+            }
+        } catch (e: IOException) {
+            PluginContext.getLogger().warning("无法启动Socket服务器: ${e.message}")
+            e.printStackTrace()
+        } finally {
+            serverSocket = null
+        }
     }
-  }
 
-  private static void handleKeepLoggedInRequest(String playerName, String time, String sign) {
-    if (playerName == null || time == null || sign == null) return;
-    String expectedSign =
-        CommunicationAuth.encryption(
-            PluginContext.getConfigManager().getAuthKey(), playerName, time);
-    if (!sign.equals(expectedSign)) return;
-
-    CatScheduler.runTask(() -> {
-      LoginPlayer lp = Cache.getIgnoreCase(playerName);
-      if (lp == null) return;
-      LoginPlayerHelper.add(lp);
-      Player player = Bukkit.getPlayerExact(playerName);
-      if (player != null) {
-        player.updateInventory();
-      }
-    });
-  }
-
-  private static void handleConnectRequest(OutputStream outputStream, String playerName) {
-    boolean result = LoginPlayerHelper.isLogin(playerName);
-    try {
-      outputStream.write(result ? 1 : 0);
-      outputStream.flush();
-    } catch (IOException e) {
-      e.printStackTrace();
+    private fun acceptAndHandle(server: ServerSocket) {
+        try {
+            server.accept().use(::handleRequest)
+        } catch (e: IOException) {
+            if (!server.isClosed) {
+                PluginContext.getLogger().warning("Socket连接处理异常: ${e.message}")
+            }
+        }
     }
-  }
 
-  @Override
-  protected String getProxyHost() {
-    return PluginContext.getConfigManager().getProxyHost();
-  }
+    @Throws(IOException::class)
+    private fun handleRequest(socket: Socket) {
+        BufferedReader(InputStreamReader(socket.getInputStream())).use { reader ->
+            socket.getOutputStream().use { output ->
+                when (val requestType = reader.readLine() ?: return) {
+                    "Connect" -> handleConnectRequest(output, reader.readLine())
+                    "KeepLoggedIn" -> handleKeepLoggedInRequest(
+                        reader.readLine(),
+                        reader.readLine(),
+                        reader.readLine()
+                    )
+                    else -> requestType.length
+                }
+            }
+        }
+    }
 
-  @Override
-  protected int getProxyPort() {
-    return PluginContext.getConfigManager().getProxyPort();
-  }
+    private fun handleKeepLoggedInRequest(playerName: String?, time: String?, sign: String?) {
+        if (playerName == null || time == null || sign == null) return
+        val expectedSign = CommunicationAuth.encryption(
+            PluginContext.getConfigManager().getAuthKey(),
+            playerName,
+            time
+        )
+        if (sign != expectedSign) return
 
-  @Override
-  protected String getAuthKey() {
-    return PluginContext.getConfigManager().getAuthKey();
-  }
+        CatScheduler.runTask(Runnable {
+            val loginPlayer: LoginPlayer = Cache.getIgnoreCase(playerName) ?: return@Runnable
+            LoginPlayerHelper.add(loginPlayer)
+            val player: Player? = Bukkit.getPlayerExact(playerName)
+            player?.updateInventory()
+        })
+    }
 
-  @Override
-  protected void logError(String message, Exception e) {
-    PluginContext.getLogger().severe(message);
-    e.printStackTrace();
-  }
+    private fun handleConnectRequest(outputStream: OutputStream, playerName: String?) {
+        val result = playerName?.let(LoginPlayerHelper::isLogin) ?: false
+        try {
+            outputStream.write(if (result) 1 else 0)
+            outputStream.flush()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
 
-  @Override
-  protected void logWarning(String message) {
-    PluginContext.getLogger().warning(message);
-  }
+    override fun getProxyHost(): String = PluginContext.getConfigManager().getProxyHost()
+
+    override fun getProxyPort(): Int = PluginContext.getConfigManager().getProxyPort()
+
+    override fun getAuthKey(): String = PluginContext.getConfigManager().getAuthKey()
+
+    override fun logError(message: String, e: Exception) {
+        PluginContext.getLogger().severe(message)
+        e.printStackTrace()
+    }
+
+    override fun logWarning(message: String) {
+        PluginContext.getLogger().warning(message)
+    }
 }

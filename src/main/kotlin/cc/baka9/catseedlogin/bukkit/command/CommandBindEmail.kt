@@ -1,177 +1,95 @@
-package cc.baka9.catseedlogin.bukkit.command;
+package cc.baka9.catseedlogin.bukkit.command
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
-import cc.baka9.catseedlogin.bukkit.object.EmailCode;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
-import cc.baka9.catseedlogin.bukkit.util.EmailSender;
-import cc.baka9.catseedlogin.common.i18n.MessageKey;
-import cc.baka9.catseedlogin.common.util.ValidationUtil;
-import java.util.Optional;
-import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import cc.baka9.catseedlogin.bukkit.Cache
+import cc.baka9.catseedlogin.bukkit.CatScheduler
+import cc.baka9.catseedlogin.bukkit.Config
+import cc.baka9.catseedlogin.bukkit.PluginContext
+import cc.baka9.catseedlogin.bukkit.`object`.EmailCode
+import cc.baka9.catseedlogin.bukkit.`object`.LoginPlayer
+import cc.baka9.catseedlogin.bukkit.`object`.LoginPlayerHelper
+import cc.baka9.catseedlogin.bukkit.util.EmailSender
+import cc.baka9.catseedlogin.common.i18n.MessageKey
+import cc.baka9.catseedlogin.common.util.ValidationUtil
+import org.bukkit.Bukkit
+import org.bukkit.command.Command
+import org.bukkit.command.CommandExecutor
+import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
 
-public class CommandBindEmail implements CommandExecutor {
-
-  @Override
-  public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
-    if (args.length == 0 || !(sender instanceof Player)) return false;
-
-    String name = sender.getName();
-
-    if (!canBindEmail(sender, name)) return true;
-
-    String subCommand = args[0].toLowerCase();
-    if ("set".equals(subCommand)) {
-      handleSet(sender, name, args);
-    } else if ("verify".equals(subCommand)) {
-      handleVerify(sender, name, args);
+class CommandBindEmail : CommandExecutor {
+    override fun onCommand(sender: CommandSender, command: Command, s: String, args: Array<String>): Boolean {
+        if (args.isEmpty() || sender !is Player) return false
+        val name = sender.name
+        if (!canBindEmail(sender, name)) return true
+        when (args[0].lowercase()) {
+            "set" -> handleSet(sender, name, args)
+            "verify" -> handleVerify(sender, name, args)
+        }
+        return true
     }
-
-    return true;
-  }
-
-  private boolean canBindEmail(CommandSender sender, String name) {
-    Player player = (Player) sender;
-
-    if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
-      return false;
-
-    LoginPlayer lp = Cache.getIgnoreCase(name);
-    if (lp == null) {
-      sender.sendMessage(MessageKey.NOT_REGISTERED.get());
-      return false;
+    private fun canBindEmail(sender: CommandSender, name: String): Boolean {
+        val player = sender as Player
+        if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player)) return false
+        if (Cache.getIgnoreCase(name) == null) { sender.sendMessage(MessageKey.NOT_REGISTERED.get()); return false }
+        if (!LoginPlayerHelper.isLogin(name)) { sender.sendMessage(MessageKey.NOT_LOGGED_IN.get()); return false }
+        if (!Config.EmailVerify.Enable) { sender.sendMessage(MessageKey.RESETPASSWORD_EMAIL_DISABLE.get()); return false }
+        return true
     }
-    if (!LoginPlayerHelper.isLogin(name)) {
-      sender.sendMessage(MessageKey.NOT_LOGGED_IN.get());
-      return false;
+    private fun handleSet(sender: CommandSender, name: String, args: Array<String>) {
+        if (args.size <= 1) return
+        val lp = Cache.getIgnoreCase(name) ?: return
+        if (lp.email != null && ValidationUtil.isValidEmail(lp.email)) { sender.sendMessage(MessageKey.EMAIL_ALREADY_BOUND.get()); return }
+        val mail = args[1]
+        if (!ValidationUtil.isValidEmail(mail)) { sender.sendMessage(MessageKey.EMAIL_FORMAT_INVALID.get()); return }
+        try {
+            val existingCode = EmailCode.getByName(name, EmailCode.Type.Bind)
+            if (existingCode.isPresent && existingCode.get().email == mail) { sender.sendMessage(MessageKey.EMAIL_CODE_ALREADY_SENT.get(mail)); return }
+        } catch (e: Exception) { e.printStackTrace() }
+        val bindEmail = try { EmailCode.create(name, mail, 1000L * 60 * 5, EmailCode.Type.Bind) }
+        catch (e: Exception) { sender.sendMessage(MessageKey.INTERNAL_ERROR.get()); e.printStackTrace(); return }
+        sender.sendMessage(MessageKey.SENDING_EMAIL_CODE.get())
+        sendEmailCode(sender, name, mail, bindEmail)
     }
-    if (!Config.EmailVerify.Enable) {
-      sender.sendMessage(MessageKey.RESETPASSWORD_EMAIL_DISABLE.get());
-      return false;
+    private fun handleVerify(sender: CommandSender, name: String, args: Array<String>) {
+        if (args.size <= 1) return
+        val lp = Cache.getIgnoreCase(name) ?: return
+        if (lp.email != null && ValidationUtil.isValidEmail(lp.email)) { sender.sendMessage(MessageKey.EMAIL_ALREADY_BOUND.get()); return }
+        val emailOptional = EmailCode.getByName(name, EmailCode.Type.Bind)
+        if (!emailOptional.isPresent) { sender.sendMessage(MessageKey.NO_PENDING_EMAIL_CODE.get()); return }
+        val bindEmail = emailOptional.get()
+        if (bindEmail.code != args[1]) { sender.sendMessage(MessageKey.VERIFICATION_CODE_INCORRECT.get()); return }
+        sender.sendMessage(MessageKey.BINDING_EMAIL.get())
+        bindEmail(sender, lp, bindEmail)
     }
-    return true;
-  }
-
-  private void handleSet(CommandSender sender, String name, String[] args) {
-    if (args.length <= 1) return;
-
-    LoginPlayer lp = Cache.getIgnoreCase(name);
-    if (lp == null) return;
-    if (lp.getEmail() != null && ValidationUtil.isValidEmail(lp.getEmail())) {
-      sender.sendMessage(MessageKey.EMAIL_ALREADY_BOUND.get());
-      return;
+    private fun sendEmailCode(sender: CommandSender, name: String, mail: String, bindEmail: EmailCode) {
+        CatScheduler.runTaskAsync {
+            try {
+                EmailSender.sendEmail(mail, MessageKey.EMAIL_SUBJECT_BIND_EMAIL.get(), buildBindEmailContent(name, bindEmail))
+                notifyBindEmailSent(sender, mail)
+            } catch (e: Exception) { notifyBindEmailFailed(sender); e.printStackTrace() }
+        }
     }
-
-    String mail = args[1];
-    if (!ValidationUtil.isValidEmail(mail)) {
-      sender.sendMessage(MessageKey.EMAIL_FORMAT_INVALID.get());
-      return;
+    private fun buildBindEmailContent(name: String, bindEmail: EmailCode): String =
+        MessageKey.EMAIL_BIND_EMAIL_CONTENT.get(bindEmail.code, name, bindEmail.durability / (1000 * 60))
+    private fun notifyBindEmailSent(sender: CommandSender, mail: String) {
+        CatScheduler.runTask { sender.sendMessage(MessageKey.EMAIL_SENT_CHECK_INBOX.get(mail)); sender.sendMessage(MessageKey.CHECK_SPAM_FOLDER.get()) }
     }
-
-    try {
-      Optional<EmailCode> existingCode = EmailCode.getByName(name, EmailCode.Type.Bind);
-      if (existingCode.isPresent() && existingCode.get().getEmail().equals(mail)) {
-        sender.sendMessage(MessageKey.EMAIL_CODE_ALREADY_SENT.get(mail));
-        return;
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
+    private fun notifyBindEmailFailed(sender: CommandSender) { CatScheduler.runTask { sender.sendMessage(MessageKey.EMAIL_SEND_FAILED.get()) } }
+    private fun bindEmail(sender: CommandSender, lp: LoginPlayer, bindEmail: EmailCode) {
+        CatScheduler.runTaskAsync { executeBindEmail(sender, lp, bindEmail) }
     }
-
-    EmailCode bindEmail;
-    try {
-      bindEmail = EmailCode.create(name, mail, 1000 * 60 * 5, EmailCode.Type.Bind);
-    } catch (Exception e) {
-      sender.sendMessage(MessageKey.INTERNAL_ERROR.get());
-      e.printStackTrace();
-      return;
+    private fun executeBindEmail(sender: CommandSender, lp: LoginPlayer, bindEmail: EmailCode) {
+        try {
+            lp.email = bindEmail.email
+            PluginContext.getSql().edit(lp)
+            Cache.refresh(lp.name)
+            notifyBindSuccess(sender, bindEmail)
+        } catch (e: Exception) { e.printStackTrace(); sender.sendMessage(MessageKey.INTERNAL_ERROR.get()) }
     }
-    sender.sendMessage(MessageKey.SENDING_EMAIL_CODE.get());
-    sendEmailCode(sender, name, mail, bindEmail);
-  }
-
-  private void handleVerify(CommandSender sender, String name, String[] args) {
-    if (args.length <= 1) return;
-
-    LoginPlayer lp = Cache.getIgnoreCase(name);
-    if (lp.getEmail() != null && ValidationUtil.isValidEmail(lp.getEmail())) {
-      sender.sendMessage(MessageKey.EMAIL_ALREADY_BOUND.get());
-      return;
+    private fun notifyBindSuccess(sender: CommandSender, bindEmail: EmailCode) {
+        val syncPlayer = Bukkit.getPlayer((sender as Player).uniqueId)
+        if (syncPlayer == null || !syncPlayer.isOnline) return
+        syncPlayer.sendMessage(MessageKey.EMAIL_BOUND_SUCCESS.get(bindEmail.email))
+        EmailCode.removeByName(syncPlayer.name, EmailCode.Type.Bind)
     }
-
-    Optional<EmailCode> emailOptional = EmailCode.getByName(name, EmailCode.Type.Bind);
-    if (!emailOptional.isPresent()) {
-      sender.sendMessage(MessageKey.NO_PENDING_EMAIL_CODE.get());
-      return;
-    }
-
-    EmailCode bindEmail = emailOptional.get();
-    if (!bindEmail.getCode().equals(args[1])) {
-      sender.sendMessage(MessageKey.VERIFICATION_CODE_INCORRECT.get());
-      return;
-    }
-
-    sender.sendMessage(MessageKey.BINDING_EMAIL.get());
-    bindEmail(sender, lp, bindEmail);
-  }
-
-  private void sendEmailCode(CommandSender sender, String name, String mail, EmailCode bindEmail) {
-    CatScheduler.runTaskAsync(() -> {
-      try {
-        String content = buildBindEmailContent(name, bindEmail);
-        EmailSender.sendEmail(mail, MessageKey.EMAIL_SUBJECT_BIND_EMAIL.get(), content);
-        notifyBindEmailSent(sender, mail);
-      } catch (Exception e) {
-        notifyBindEmailFailed(sender);
-        e.printStackTrace();
-      }
-    });
-  }
-
-  private String buildBindEmailContent(String name, EmailCode bindEmail) {
-    long minutes = bindEmail.getDurability() / (1000 * 60);
-    return MessageKey.EMAIL_BIND_EMAIL_CONTENT.get(bindEmail.getCode(), name, minutes);
-  }
-
-  private void notifyBindEmailSent(CommandSender sender, String mail) {
-    CatScheduler.runTask(() -> {
-      sender.sendMessage(MessageKey.EMAIL_SENT_CHECK_INBOX.get(mail));
-      sender.sendMessage(MessageKey.CHECK_SPAM_FOLDER.get());
-    });
-  }
-
-  private void notifyBindEmailFailed(CommandSender sender) {
-    CatScheduler.runTask(() -> sender.sendMessage(MessageKey.EMAIL_SEND_FAILED.get()));
-  }
-
-  private void bindEmail(CommandSender sender, LoginPlayer lp, EmailCode bindEmail) {
-    CatScheduler.runTaskAsync(() -> executeBindEmail(sender, lp, bindEmail));
-  }
-
-  private void executeBindEmail(CommandSender sender, LoginPlayer lp, EmailCode bindEmail) {
-    try {
-      lp.setEmail(bindEmail.getEmail());
-      PluginContext.getSql().edit(lp);
-      Cache.refresh(lp.getName());
-      notifyBindSuccess(sender, bindEmail);
-    } catch (Exception e) {
-      e.printStackTrace();
-      sender.sendMessage(MessageKey.INTERNAL_ERROR.get());
-    }
-  }
-
-  private void notifyBindSuccess(CommandSender sender, EmailCode bindEmail) {
-    Player syncPlayer = Bukkit.getPlayer(((Player) sender).getUniqueId());
-    if (syncPlayer == null || !syncPlayer.isOnline()) return;
-
-    syncPlayer.sendMessage(MessageKey.EMAIL_BOUND_SUCCESS.get(bindEmail.getEmail()));
-    EmailCode.removeByName(syncPlayer.getName(), EmailCode.Type.Bind);
-  }
 }

@@ -1,24 +1,16 @@
-package cc.baka9.catseedlogin.bukkit.event;
+package cc.baka9.catseedlogin.bukkit.event
 
-import lombok.Getter;
-import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.event.HandlerList;
+import org.bukkit.entity.Player
+import org.bukkit.event.Event
+import org.bukkit.event.HandlerList
 
-@Getter
-public class CatSeedPlayerRegisterEvent extends Event {
-  private static final HandlerList handlers = new HandlerList();
-  private final Player player;
+class CatSeedPlayerRegisterEvent(val player: Player) : Event() {
+    override fun getHandlers(): HandlerList = handlers
 
-  public CatSeedPlayerRegisterEvent(Player player) {
-    this.player = player;
-  }
+    companion object {
+        private val handlers = HandlerList()
 
-  public HandlerList getHandlers() {
-    return handlers;
-  }
-
-  public static HandlerList getHandlerList() {
-    return handlers;
-  }
+        @JvmStatic
+        fun getHandlerList(): HandlerList = handlers
+    }
 }

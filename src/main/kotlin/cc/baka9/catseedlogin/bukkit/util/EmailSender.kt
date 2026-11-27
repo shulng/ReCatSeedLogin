@@ -1,46 +1,31 @@
-package cc.baka9.catseedlogin.bukkit.util;
+package cc.baka9.catseedlogin.bukkit.util
 
-import cc.baka9.catseedlogin.bukkit.Config;
-import org.apache.commons.mail.DefaultAuthenticator;
-import org.apache.commons.mail.EmailException;
-import org.apache.commons.mail.HtmlEmail;
+import cc.baka9.catseedlogin.bukkit.Config
+import org.apache.commons.mail.DefaultAuthenticator
+import org.apache.commons.mail.EmailException
+import org.apache.commons.mail.HtmlEmail
 
-public final class EmailSender {
-  private EmailSender() {}
-
-  public static void sendEmail(String receiveMailAccount, String subject, String content) {
-    if (receiveMailAccount == null || receiveMailAccount.isEmpty()) {
-      return;
+object EmailSender {
+    @JvmStatic fun sendEmail(receiveMailAccount: String?, subject: String, content: String) {
+        if (receiveMailAccount.isNullOrEmpty()) return
+        val email = HtmlEmail()
+        email.setHostName(Config.EmailVerify.EmailSmtpHost)
+        try { email.setSmtpPort(Config.EmailVerify.EmailSmtpPort.toInt()) } catch (_: NumberFormatException) { return }
+        email.setAuthenticator(DefaultAuthenticator(Config.EmailVerify.EmailAccount, Config.EmailVerify.EmailPassword))
+        configureSecurity(email)
+        try {
+            email.setFrom(Config.EmailVerify.EmailAccount, Config.EmailVerify.FromPersonal)
+            email.setSubject(subject)
+            email.setHtmlMsg(content)
+            email.addTo(receiveMailAccount)
+            email.setCharset("UTF-8")
+            email.send()
+        } catch (e: EmailException) { e.printStackTrace() }
     }
-    HtmlEmail email = new HtmlEmail();
-    email.setHostName(Config.EmailVerify.EmailSmtpHost);
-    try {
-      email.setSmtpPort(Integer.parseInt(Config.EmailVerify.EmailSmtpPort));
-    } catch (NumberFormatException e) {
-      return;
+    private fun configureSecurity(email: HtmlEmail) {
+        if (Config.EmailVerify.SSLAuthVerify) {
+            email.setSSLOnConnect(true)
+            email.setSSLCheckServerIdentity(true)
+        } else email.setStartTLSEnabled(true)
     }
-    email.setAuthenticator(
-        new DefaultAuthenticator(
-            Config.EmailVerify.EmailAccount, Config.EmailVerify.EmailPassword));
-    configureSecurity(email);
-    try {
-      email.setFrom(Config.EmailVerify.EmailAccount, Config.EmailVerify.FromPersonal);
-      email.setSubject(subject);
-      email.setHtmlMsg(content);
-      email.addTo(receiveMailAccount);
-      email.setCharset("UTF-8");
-      email.send();
-    } catch (EmailException e) {
-      e.printStackTrace();
-    }
-  }
-
-  private static void configureSecurity(HtmlEmail email) {
-    if (Config.EmailVerify.SSLAuthVerify) {
-      email.setSSLOnConnect(true);
-      email.setSSLCheckServerIdentity(true);
-    } else {
-      email.setStartTLSEnabled(true);
-    }
-  }
 }

@@ -84,10 +84,10 @@
 ReCatSeedLogin/
 ├── build.gradle.kts             (Gradle Kotlin DSL 构建配置)
 ├── settings.gradle.kts          (Gradle 项目和仓库配置)
-├── src/main/java/cc/baka9/catseedlogin/
+├── src/main/kotlin/cc/baka9/catseedlogin/
 │   ├── bukkit/                  → Bukkit/Spigot/Paper/Folia 服务端实现
-│   │   ├── CatSeedLogin.java    → 服务端插件主类
-│   │   ├── CatSeedLoginAPI.java → 开发者API
+│   │   ├── CatSeedLogin.kt     → 服务端插件主类
+│   │   ├── CatSeedLoginAPI.kt  → 开发者API
 │   │   ├── command/             → 指令实现（登录/注册/改密/邮箱/管理）
 │   │   ├── config/              → Bukkit配置管理
 │   │   ├── database/            → 数据库实现（SQLite/MySQL）
@@ -96,16 +96,16 @@ ReCatSeedLogin/
 │   │   ├── task/                → 定时任务（自动踢出、登录提示）
 │   │   └── util/                → 邮件发送工具
 │   ├── bungee/                  → BungeeCord 代理端实现
-│   │   ├── PluginMain.java      → BungeeCord插件主类
-│   │   ├── BungeeCommunication.java → Socket通信客户端
-│   │   ├── BungeeCommands.java  → 代理端指令
-│   │   ├── Listeners.java       → 代理端事件监听
+│   │   ├── PluginMain.kt        → BungeeCord插件主类
+│   │   ├── BungeeCommunication.kt → Socket通信客户端
+│   │   ├── BungeeCommands.kt    → 代理端指令
+│   │   ├── Listeners.kt         → 代理端事件监听
 │   │   └── config/              → BungeeCord配置管理
 │   ├── velocity/                → Velocity 代理端实现
-│   │   ├── PluginMain.java      → Velocity插件主类
-│   │   ├── VelocityCommunication.java → Socket通信客户端
-│   │   ├── Commands.java        → 代理端指令
-│   │   ├── Listeners.java       → 代理端事件监听
+│   │   ├── PluginMain.kt        → Velocity插件主类
+│   │   ├── VelocityCommunication.kt → Socket通信客户端
+│   │   ├── Commands.kt          → 代理端指令
+│   │   ├── Listeners.kt         → 代理端事件监听
 │   │   └── config/              → Velocity配置管理
 │   └── common/                  → 跨平台共享代码
 │       ├── api/                 → 平台抽象接口（PlatformAdapter、配置接口）
@@ -130,6 +130,8 @@ ReCatSeedLogin/
 产物为 `build/libs/CatSeedLogin-<版本>.jar`。
 
 项目使用 JDK 25 编译，并输出 Java 8 字节码。Paper 和 Velocity API 需要较新的 JDK，因此编译类路径按 JDK 25 解析；实际运行环境仍需满足所使用服务端 API 的 Java 要求。
+
+项目实现代码使用 Kotlin，位于 `src/main/kotlin`；构建脚本使用 Gradle Kotlin DSL。
 
 ### 架构说明
 - **单JAR部署** - 所有平台代码打包为一个Shaded JAR，每个平台自动加载对应的入口类

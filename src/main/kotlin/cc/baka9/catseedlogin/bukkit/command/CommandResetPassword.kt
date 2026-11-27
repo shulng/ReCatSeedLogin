@@ -1,194 +1,97 @@
-package cc.baka9.catseedlogin.bukkit.command;
+package cc.baka9.catseedlogin.bukkit.command
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
-import cc.baka9.catseedlogin.bukkit.object.EmailCode;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
-import cc.baka9.catseedlogin.bukkit.util.EmailSender;
-import cc.baka9.catseedlogin.common.i18n.MessageKey;
-import cc.baka9.catseedlogin.common.util.PasswordHelper;
-import cc.baka9.catseedlogin.common.util.ValidationUtil;
-import java.util.Optional;
-import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import cc.baka9.catseedlogin.bukkit.Cache
+import cc.baka9.catseedlogin.bukkit.CatScheduler
+import cc.baka9.catseedlogin.bukkit.Config
+import cc.baka9.catseedlogin.bukkit.PluginContext
+import cc.baka9.catseedlogin.bukkit.`object`.EmailCode
+import cc.baka9.catseedlogin.bukkit.`object`.LoginPlayer
+import cc.baka9.catseedlogin.bukkit.`object`.LoginPlayerHelper
+import cc.baka9.catseedlogin.bukkit.util.EmailSender
+import cc.baka9.catseedlogin.common.i18n.MessageKey
+import cc.baka9.catseedlogin.common.util.PasswordHelper
+import cc.baka9.catseedlogin.common.util.ValidationUtil
+import org.bukkit.Bukkit
+import org.bukkit.command.Command
+import org.bukkit.command.CommandExecutor
+import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
 
-public class CommandResetPassword implements CommandExecutor {
-  private static final long EMAIL_CODE_DURATION = 1000 * 60 * 5;
-
-  @Override
-  public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
-    if (args.length == 0 || !(sender instanceof Player)) return false;
-
-    Player player = (Player) sender;
-    String name = player.getName();
-
-    if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player))
-      return true;
-
-    LoginPlayer lp = Cache.getIgnoreCase(name);
-    if (lp == null) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_NOREGISTER);
-      return true;
+class CommandResetPassword : CommandExecutor {
+    override fun onCommand(sender: CommandSender, command: Command, s: String, args: Array<String>): Boolean {
+        if (args.isEmpty() || sender !is Player) return false
+        val player = sender
+        val name = player.name
+        if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player)) return true
+        val lp = Cache.getIgnoreCase(name)
+        if (lp == null) { sender.sendMessage(Config.Language.RESETPASSWORD_NOREGISTER); return true }
+        if (!Config.EmailVerify.Enable) { sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_DISABLE); return true }
+        if (args[0].equals("forget", true)) return handleForget(sender, name, lp)
+        if (args[0].equals("re", true) && args.size > 2) return handleReset(player, lp, args[1], args[2])
+        return true
     }
-    if (!Config.EmailVerify.Enable) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_DISABLE);
-      return true;
+    private fun handleForget(sender: CommandSender, name: String, lp: LoginPlayer): Boolean {
+        val email = lp.email
+        if (email == null) { sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_NO_SET); return true }
+        try {
+            val optional = EmailCode.getByName(name, EmailCode.Type.ResetPassword)
+            if (optional.isPresent) { sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE.replace("{email}", optional.get().email)); return true }
+        } catch (e: Exception) { e.printStackTrace() }
+        val emailCode = try { EmailCode.create(name, email, EMAIL_CODE_DURATION, EmailCode.Type.ResetPassword) }
+        catch (e: Exception) { sender.sendMessage(MessageKey.INTERNAL_ERROR.get()); e.printStackTrace(); return true }
+        sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_SENDING_MESSAGE.replace("{email}", email))
+        sendResetEmailAsync(sender, name, emailCode)
+        return true
     }
-
-    if (args[0].equalsIgnoreCase("forget")) {
-      return handleForget(sender, name, lp);
+    private fun sendResetEmailAsync(sender: CommandSender, name: String, emailCode: EmailCode) {
+        CatScheduler.runTaskAsync {
+            try {
+                EmailSender.sendEmail(emailCode.email, MessageKey.EMAIL_SUBJECT_RESET_PASSWORD.get(), buildResetEmailContent(name, emailCode))
+                notifyEmailSent(sender, emailCode.email)
+            } catch (e: Exception) { notifyEmailFailed(sender); e.printStackTrace() }
+        }
     }
-
-    if (args[0].equalsIgnoreCase("re") && args.length > 2) {
-      return handleReset(player, lp, args[1], args[2]);
+    private fun buildResetEmailContent(name: String, emailCode: EmailCode): String =
+        MessageKey.EMAIL_RESET_PASSWORD_CONTENT.get(emailCode.code, name, emailCode.durability / (1000 * 60))
+    private fun notifyEmailSent(sender: CommandSender, email: String) {
+        Bukkit.getScheduler().runTask(PluginContext.getPlugin(), Runnable { sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_SENT_MESSAGE.replace("{email}", email)) })
     }
-
-    return true;
-  }
-
-  private boolean handleForget(CommandSender sender, String name, LoginPlayer lp) {
-    if (lp.getEmail() == null) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_NO_SET);
-      return true;
+    private fun notifyEmailFailed(sender: CommandSender) {
+        Bukkit.getScheduler().runTask(PluginContext.getPlugin(), Runnable { sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_WARN) })
     }
-
-    try {
-      Optional<EmailCode> optional = EmailCode.getByName(name, EmailCode.Type.ResetPassword);
-      if (optional.isPresent()) {
-        sender.sendMessage(
-            Config.Language.RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE.replace(
-                "{email}", optional.get().getEmail()));
-        return true;
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
+    private fun handleReset(player: Player, lp: LoginPlayer, code: String, pwd: String): Boolean {
+        val sender: CommandSender = player
+        if (lp.email == null) { sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_NO_SET); return true }
+        try {
+            val optional = EmailCode.getByName(lp.name, EmailCode.Type.ResetPassword)
+            if (!optional.isPresent) { sender.sendMessage(Config.Language.RESETPASSWORD_FAIL); return true }
+            if (optional.get().code != code) { sender.sendMessage(Config.Language.RESETPASSWORD_EMAILCODE_INCORRECT); return true }
+        } catch (e: Exception) { e.printStackTrace(); sender.sendMessage(Config.Language.RESETPASSWORD_FAIL); return true }
+        if (ValidationUtil.isPasswordTooSimple(pwd)) { sender.sendMessage(Config.Language.COMMON_PASSWORD_SO_SIMPLE); return true }
+        sender.sendMessage(MessageKey.RESETTING_PASSWORD.get())
+        processPasswordResetAsync(player, lp, pwd)
+        return true
     }
-
-    EmailCode emailCode;
-    try {
-      emailCode =
-          EmailCode.create(name, lp.getEmail(), EMAIL_CODE_DURATION, EmailCode.Type.ResetPassword);
-    } catch (Exception e) {
-      sender.sendMessage(MessageKey.INTERNAL_ERROR.get());
-      e.printStackTrace();
-      return true;
+    private fun processPasswordResetAsync(player: Player, lp: LoginPlayer, pwd: String) {
+        val name = lp.name
+        CatScheduler.runTaskAsync { executePasswordReset(name, lp, pwd, player) }
     }
-    sender.sendMessage(
-        Config.Language.RESETPASSWORD_EMAIL_SENDING_MESSAGE.replace("{email}", lp.getEmail()));
-
-    sendResetEmailAsync(sender, name, emailCode);
-    return true;
-  }
-
-  private void sendResetEmailAsync(CommandSender sender, String name, EmailCode emailCode) {
-    CatScheduler.runTaskAsync(() -> {
-      try {
-        String content = buildResetEmailContent(name, emailCode);
-        EmailSender.sendEmail(
-            emailCode.getEmail(), MessageKey.EMAIL_SUBJECT_RESET_PASSWORD.get(), content);
-        notifyEmailSent(sender, emailCode.getEmail());
-      } catch (Exception e) {
-        notifyEmailFailed(sender);
-        e.printStackTrace();
-      }
-    });
-  }
-
-  private String buildResetEmailContent(String name, EmailCode emailCode) {
-    long minutes = emailCode.getDurability() / (1000 * 60);
-    return MessageKey.EMAIL_RESET_PASSWORD_CONTENT.get(emailCode.getCode(), name, minutes);
-  }
-
-  private void notifyEmailSent(CommandSender sender, String email) {
-    Bukkit.getScheduler()
-        .runTask(
-            PluginContext.getPlugin(),
-            () ->
-                sender.sendMessage(
-                    Config.Language.RESETPASSWORD_EMAIL_SENT_MESSAGE.replace("{email}", email)));
-  }
-
-  private void notifyEmailFailed(CommandSender sender) {
-    Bukkit.getScheduler()
-        .runTask(
-            PluginContext.getPlugin(),
-            () -> sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_WARN));
-  }
-
-  private boolean handleReset(Player player, LoginPlayer lp, String code, String pwd) {
-    CommandSender sender = player;
-    if (lp.getEmail() == null) {
-      sender.sendMessage(Config.Language.RESETPASSWORD_EMAIL_NO_SET);
-      return true;
+    private fun executePasswordReset(name: String, lp: LoginPlayer, pwd: String, sender: CommandSender) {
+        try {
+            val copy = PasswordHelper.updatePassword(lp, pwd)
+            PluginContext.getSql().edit(copy)
+            Cache.refresh(name)
+            LoginPlayerHelper.remove(lp)
+            EmailCode.removeByName(name, EmailCode.Type.ResetPassword)
+            notifyResetSuccess(name, Bukkit.getPlayer(name))
+        } catch (e: Exception) { sender.sendMessage(MessageKey.DATABASE_ERROR.get()); e.printStackTrace() }
     }
-
-    try {
-      Optional<EmailCode> optional =
-          EmailCode.getByName(lp.getName(), EmailCode.Type.ResetPassword);
-      if (!optional.isPresent()) {
-        sender.sendMessage(Config.Language.RESETPASSWORD_FAIL);
-        return true;
-      }
-      if (!optional.get().getCode().equals(code)) {
-        sender.sendMessage(Config.Language.RESETPASSWORD_EMAILCODE_INCORRECT);
-        return true;
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-      sender.sendMessage(Config.Language.RESETPASSWORD_FAIL);
-      return true;
+    private fun notifyResetSuccess(name: String, player: Player?) {
+        val p = Bukkit.getPlayer(name)
+        if (p == null || !p.isOnline) return
+        if (Config.Settings.CanTpSpawnLocation) CatScheduler.teleport(p, Config.Settings.SpawnLocation)
+        p.sendMessage(Config.Language.RESETPASSWORD_SUCCESS)
+        if (PluginContext.isLoadProtocolLib()) LoginPlayerHelper.sendBlankInventoryPacket(p)
     }
-
-    if (ValidationUtil.isPasswordTooSimple(pwd)) {
-      sender.sendMessage(Config.Language.COMMON_PASSWORD_SO_SIMPLE);
-      return true;
-    }
-
-    sender.sendMessage(MessageKey.RESETTING_PASSWORD.get());
-    processPasswordResetAsync(player, lp, pwd);
-    return true;
-  }
-
-  private void processPasswordResetAsync(Player player, LoginPlayer lp, String pwd) {
-    CommandSender sender = player;
-    String name = lp.getName();
-    CatScheduler.runTaskAsync(() -> {
-      executePasswordReset(name, lp, pwd, sender);
-    });
-  }
-
-  private void executePasswordReset(String name, LoginPlayer lp, String pwd, CommandSender sender) {
-    try {
-      LoginPlayer copy = PasswordHelper.updatePassword(lp, pwd);
-      PluginContext.getSql().edit(copy);
-      Cache.refresh(name);
-      LoginPlayerHelper.remove(lp);
-      EmailCode.removeByName(name, EmailCode.Type.ResetPassword);
-      Player player = Bukkit.getPlayer(name);
-      notifyResetSuccess(name, player);
-    } catch (Exception e) {
-      sender.sendMessage(MessageKey.DATABASE_ERROR.get());
-      e.printStackTrace();
-    }
-  }
-
-  private void notifyResetSuccess(String name, Player player) {
-    Player p = Bukkit.getPlayer(name);
-    if (p == null || !p.isOnline()) return;
-
-    if (Config.Settings.CanTpSpawnLocation) {
-      CatScheduler.teleport(p, Config.Settings.SpawnLocation);
-    }
-    p.sendMessage(Config.Language.RESETPASSWORD_SUCCESS);
-
-    if (PluginContext.isLoadProtocolLib()) {
-      LoginPlayerHelper.sendBlankInventoryPacket(p);
-    }
-  }
+    companion object { private const val EMAIL_CODE_DURATION = 1000L * 60 * 5 }
 }

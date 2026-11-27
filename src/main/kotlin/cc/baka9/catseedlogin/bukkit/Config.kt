@@ -1,364 +1,354 @@
-package cc.baka9.catseedlogin.bukkit;
+package cc.baka9.catseedlogin.bukkit
 
-import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
-import cc.baka9.catseedlogin.bukkit.util.WorldUtil;
-import cc.baka9.catseedlogin.common.config.ConfigConstants;
-import cc.baka9.catseedlogin.common.i18n.MessageKey;
-import java.util.List;
-import java.util.Optional;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.entity.Player;
+import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager
+import cc.baka9.catseedlogin.bukkit.util.WorldUtil
+import cc.baka9.catseedlogin.common.config.ConfigConstants
+import cc.baka9.catseedlogin.common.i18n.MessageKey
+import org.bukkit.Bukkit
+import org.bukkit.Location
+import org.bukkit.World
+import org.bukkit.entity.Player
+import java.util.Optional
+import java.util.regex.Pattern
 
-public class Config {
-  private static CatSeedLogin plugin;
+object Config {
+    private lateinit var plugin: CatSeedLogin
 
-  public static class MySQL {
-    public static volatile boolean Enable;
-    public static volatile String Host;
-    public static volatile String Port;
-    public static volatile String Database;
-    public static volatile String User;
-    public static volatile String Password;
+    class MySQL {
+        companion object {
+            @JvmField @Volatile var Enable = false
+            @JvmField @Volatile var Host = ""
+            @JvmField @Volatile var Port = ""
+            @JvmField @Volatile var Database = ""
+            @JvmField @Volatile var User = ""
+            @JvmField @Volatile var Password = ""
 
-    public static void load() {
-      BukkitConfigManager cm = plugin.getConfigManager();
-      Enable = cm.isMySQL();
-      Host = cm.getDatabaseHost();
-      Port = String.valueOf(cm.getDatabasePort());
-      Database = cm.getDatabaseName();
-      User = cm.getDatabaseUser();
-      Password = cm.getDatabasePassword();
-    }
-  }
-
-  public static class BungeeCord {
-    public static volatile boolean Enable;
-    public static volatile String Host;
-    public static volatile String Port;
-    public static volatile String AuthKey;
-
-    public static void load() {
-      BukkitConfigManager cm = plugin.getConfigManager();
-      Enable = cm.isEnable();
-      Host = cm.getProxyHost();
-      Port = String.valueOf(cm.getProxyPort());
-      AuthKey = cm.getAuthKey();
-    }
-  }
-
-  public static class Settings {
-    public static volatile int IpRegisterCountLimit;
-    public static volatile int IpCountLimit;
-    public static volatile Location SpawnLocation;
-    public static volatile boolean LimitChineseID;
-    public static volatile boolean BedrockLoginBypass;
-    public static volatile boolean LoginwiththesameIP;
-    public static volatile boolean EmptyBackpack;
-    public static volatile int IPTimeout;
-    public static volatile int MaxLengthID;
-    public static volatile int MinLengthID;
-    public static volatile boolean BeforeLoginNoDamage;
-    public static volatile long ReenterInterval;
-    public static volatile boolean AfterLoginBack;
-    public static volatile boolean CanTpSpawnLocation;
-    public static volatile List<Pattern> CommandWhiteList = new java.util.ArrayList<>();
-    public static volatile int AutoKick;
-    public static volatile String NamePattern;
-    public static volatile boolean DeathStateQuitRecordLocation;
-    public static volatile boolean FloodgatePrefixProtect;
-    public static volatile boolean LoopbackLoginBypass;
-    public static volatile boolean BeforeLoginAllowChat;
-    public static volatile boolean BlindingBeforeLogin;
-    public static volatile boolean TwoFactorEnabled;
-    public static volatile String TwoFactorIssuer;
-    public static volatile int TwoFactorDigits;
-    public static volatile int TwoFactorPeriod;
-    public static volatile int TwoFactorRecoveryCodeCount;
-    public static volatile int TwoFactorMaxAttempts;
-    public static volatile int TwoFactorAttemptWindow;
-    public static volatile int TwoFactorPendingTimeout;
-
-    public static void load() {
-      BukkitConfigManager cm = plugin.getConfigManager();
-      IpRegisterCountLimit = cm.getIpRegisterCountLimit();
-      IpCountLimit = cm.getIpCountLimit();
-      LimitChineseID = cm.isLimitChineseID();
-      MinLengthID = cm.getMinLengthID();
-      BedrockLoginBypass = cm.isBedrockLoginBypass();
-      LoginwiththesameIP = cm.isLoginWithSameIP();
-      EmptyBackpack = cm.isEmptyBackpack();
-      MaxLengthID = cm.getMaxLengthID();
-      BeforeLoginNoDamage = cm.isBeforeLoginNoDamage();
-      ReenterInterval = cm.getReenterInterval();
-      AfterLoginBack = cm.isAfterLoginBack();
-      CanTpSpawnLocation = cm.isCanTpSpawnLocation();
-      NamePattern = cm.getNamePattern();
-      CommandWhiteList = cm.getCommandWhiteList();
-      AutoKick = cm.getAutoKick();
-      IPTimeout = cm.getIPTimeout();
-      SpawnLocation = cm.getBukkitSpawnLocation();
-      DeathStateQuitRecordLocation = cm.isDeathStateQuitRecordLocation();
-      FloodgatePrefixProtect = cm.isFloodgatePrefixProtect();
-      LoopbackLoginBypass = cm.isLoopbackLoginBypass();
-      BeforeLoginAllowChat = cm.isBeforeLoginAllowChat();
-      BlindingBeforeLogin = cm.isBlindingBeforeLogin();
-      TwoFactorEnabled = cm.isTwoFactorEnabled();
-      TwoFactorIssuer = cm.getTwoFactorIssuer();
-      TwoFactorDigits = cm.getTwoFactorDigits();
-      TwoFactorPeriod = cm.getTwoFactorPeriod();
-      TwoFactorRecoveryCodeCount = cm.getTwoFactorRecoveryCodeCount();
-      TwoFactorMaxAttempts = cm.getTwoFactorMaxAttempts();
-      TwoFactorAttemptWindow = cm.getTwoFactorAttemptWindow();
-      TwoFactorPendingTimeout = cm.getTwoFactorPendingTimeout();
+            @JvmStatic fun load() {
+                val manager = plugin.getConfigManager()
+                Enable = manager.isMySQL()
+                Host = manager.getDatabaseHost()
+                Port = manager.getDatabasePort().toString()
+                Database = manager.getDatabaseName()
+                User = manager.getDatabaseUser()
+                Password = manager.getDatabasePassword()
+            }
+        }
     }
 
-    public static void save() {
-      BukkitConfigManager cm = plugin.getConfigManager();
-      cm.set(ConfigConstants.Path.SETTINGS_LOGIN_IP_REGISTER_LIMIT, IpRegisterCountLimit);
-      cm.set(ConfigConstants.Path.SETTINGS_LOGIN_IP_COUNT_LIMIT, IpCountLimit);
-      cm.set(ConfigConstants.Path.SETTINGS_ACCOUNT_LIMIT_CHINESE_ID, LimitChineseID);
-      cm.set(ConfigConstants.Path.BEDROCK_LOGIN_BYPASS, BedrockLoginBypass);
-      cm.set(ConfigConstants.Path.SETTINGS_LOGIN_SAME_IP_ENABLED, LoginwiththesameIP);
-      cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_EMPTY_BACKPACK, EmptyBackpack);
-      cm.set(ConfigConstants.Path.SETTINGS_LOGIN_SAME_IP_TIMEOUT, IPTimeout);
-      cm.set(ConfigConstants.Path.SETTINGS_ACCOUNT_MIN_LENGTH_ID, MinLengthID);
-      cm.set(ConfigConstants.Path.SETTINGS_ACCOUNT_MAX_LENGTH_ID, MaxLengthID);
-      cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_NO_DAMAGE, BeforeLoginNoDamage);
-      cm.set(ConfigConstants.Path.SETTINGS_LOGIN_REENTER_INTERVAL, ReenterInterval);
-      cm.set(ConfigConstants.Path.SETTINGS_LOGIN_AFTER_LOGIN_BACK, AfterLoginBack);
-      cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_CAN_TP_SPAWN, CanTpSpawnLocation);
-      cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_AUTO_KICK, AutoKick);
-      cm.set(
-          ConfigConstants.Path.SETTINGS_LOGIN_DEATH_STATE_QUIT_RECORD,
-          DeathStateQuitRecordLocation);
-      cm.set(ConfigConstants.Path.BEDROCK_FLOODGATE_PREFIX, FloodgatePrefixProtect);
-      cm.set(ConfigConstants.Path.SETTINGS_ACCOUNT_NAME_PATTERN, NamePattern);
-      cm.set(ConfigConstants.Path.SETTINGS_LOGIN_LOOPBACK_BYPASS, LoopbackLoginBypass);
-      cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_ALLOW_CHAT, BeforeLoginAllowChat);
-      cm.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_BLINDING, BlindingBeforeLogin);
-      cm.set(ConfigConstants.Path.TWO_FACTOR_ENABLED, TwoFactorEnabled);
-      cm.set(ConfigConstants.Path.TWO_FACTOR_ISSUER, TwoFactorIssuer);
-      cm.set(ConfigConstants.Path.TWO_FACTOR_DIGITS, TwoFactorDigits);
-      cm.set(ConfigConstants.Path.TWO_FACTOR_PERIOD, TwoFactorPeriod);
-      cm.set(ConfigConstants.Path.TWO_FACTOR_RECOVERY_CODE_COUNT, TwoFactorRecoveryCodeCount);
-      cm.set(ConfigConstants.Path.TWO_FACTOR_MAX_ATTEMPTS, TwoFactorMaxAttempts);
-      cm.set(ConfigConstants.Path.TWO_FACTOR_ATTEMPT_WINDOW, TwoFactorAttemptWindow);
-      cm.set(ConfigConstants.Path.TWO_FACTOR_PENDING_TIMEOUT, TwoFactorPendingTimeout);
+    class BungeeCord {
+        companion object {
+            @JvmField @Volatile var Enable = false
+            @JvmField @Volatile var Host = ""
+            @JvmField @Volatile var Port = ""
+            @JvmField @Volatile var AuthKey = ""
 
-      if (CommandWhiteList != null && !CommandWhiteList.isEmpty()) {
-        cm.getMainConfig()
-            .set(
-                ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_COMMAND_WHITELIST,
-                CommandWhiteList.stream().map(Pattern::toString).collect(Collectors.toList()));
-      }
-
-      if (SpawnLocation != null) {
-        cm.setSpawnLocation(SpawnLocation);
-      }
+            @JvmStatic fun load() {
+                val manager = plugin.getConfigManager()
+                Enable = manager.isEnable()
+                Host = manager.getProxyHost()
+                Port = manager.getProxyPort().toString()
+                AuthKey = manager.getAuthKey()
+            }
+        }
     }
-  }
 
-  public static class Language {
-    public static String LOGIN_REQUEST;
-    public static String REGISTER_REQUEST;
-    public static String LOGIN_NOREGISTER;
-    public static String LOGIN_REPEAT;
-    public static String LOGIN_SUCCESS;
-    public static String LOGIN_FAIL;
-    public static String LOGIN_FAIL_IF_FORGET;
-    public static String REGISTER_SUCCESS;
-    public static String REGISTER_BEFORE_LOGIN_ALREADY;
-    public static String REGISTER_AFTER_LOGIN_ALREADY;
-    public static String REGISTER_PASSWORD_CONFIRM_FAIL;
-    public static String COMMON_PASSWORD_SO_SIMPLE;
-    public static String RESETPASSWORD_NOREGISTER;
-    public static String RESETPASSWORD_EMAIL_DISABLE;
-    public static String RESETPASSWORD_EMAIL_NO_SET;
-    public static String RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE;
-    public static String RESETPASSWORD_EMAIL_SENDING_MESSAGE;
-    public static String RESETPASSWORD_EMAIL_SENT_MESSAGE;
-    public static String RESETPASSWORD_EMAIL_WARN;
-    public static String RESETPASSWORD_SUCCESS;
-    public static String RESETPASSWORD_EMAILCODE_INCORRECT;
-    public static String RESETPASSWORD_FAIL;
-    public static String CHANGEPASSWORD_NOREGISTER;
-    public static String CHANGEPASSWORD_NOLOGIN;
-    public static String CHANGEPASSWORD_OLDPASSWORD_INCORRECT;
-    public static String CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL;
-    public static String CHANGEPASSWORD_SUCCESS;
-    public static String AUTO_KICK;
-    public static String REGISTER_MORE;
-    public static String BEDROCK_LOGIN_BYPASS;
-    public static String LOGIN_WITH_THE_SAME_IP;
-    public static String LOOPBACK_LOGIN_BYPASS;
+    class Settings {
+        companion object {
+            @JvmField @Volatile var IpRegisterCountLimit = 0
+            @JvmField @Volatile var IpCountLimit = 0
+            @JvmField @Volatile var SpawnLocation: Location? = null
+            @JvmField @Volatile var LimitChineseID = false
+            @JvmField @Volatile var BedrockLoginBypass = false
+            @JvmField @Volatile var LoginwiththesameIP = false
+            @JvmField @Volatile var EmptyBackpack = false
+            @JvmField @Volatile var IPTimeout = 0
+            @JvmField @Volatile var MaxLengthID = 0
+            @JvmField @Volatile var MinLengthID = 0
+            @JvmField @Volatile var BeforeLoginNoDamage = false
+            @JvmField @Volatile var ReenterInterval = 0L
+            @JvmField @Volatile var AfterLoginBack = false
+            @JvmField @Volatile var CanTpSpawnLocation = false
+            @JvmField @Volatile var CommandWhiteList: List<Pattern> = emptyList()
+            @JvmField @Volatile var AutoKick = 0
+            @JvmField @Volatile var NamePattern = ""
+            @JvmField @Volatile var DeathStateQuitRecordLocation = false
+            @JvmField @Volatile var FloodgatePrefixProtect = false
+            @JvmField @Volatile var LoopbackLoginBypass = false
+            @JvmField @Volatile var BeforeLoginAllowChat = false
+            @JvmField @Volatile var BlindingBeforeLogin = false
+            @JvmField @Volatile var TwoFactorEnabled = false
+            @JvmField @Volatile var TwoFactorIssuer = ""
+            @JvmField @Volatile var TwoFactorDigits = 0
+            @JvmField @Volatile var TwoFactorPeriod = 0
+            @JvmField @Volatile var TwoFactorRecoveryCodeCount = 0
+            @JvmField @Volatile var TwoFactorMaxAttempts = 0
+            @JvmField @Volatile var TwoFactorAttemptWindow = 0
+            @JvmField @Volatile var TwoFactorPendingTimeout = 0
 
-    public static void load() {
-      LOGIN_REQUEST = MessageKey.LOGIN_REQUEST.get();
-      REGISTER_REQUEST = MessageKey.REGISTER_REQUEST.get();
-      LOGIN_NOREGISTER = MessageKey.LOGIN_NOREGISTER.get();
-      LOGIN_REPEAT = MessageKey.LOGIN_REPEAT.get();
-      LOGIN_SUCCESS = MessageKey.LOGIN_SUCCESS.get();
-      LOGIN_FAIL = MessageKey.LOGIN_FAIL.get();
-      LOGIN_FAIL_IF_FORGET = MessageKey.LOGIN_FAIL_IF_FORGET.get();
-      REGISTER_SUCCESS = MessageKey.REGISTER_SUCCESS.get();
-      REGISTER_BEFORE_LOGIN_ALREADY = MessageKey.REGISTER_BEFORE_LOGIN_ALREADY.get();
-      REGISTER_AFTER_LOGIN_ALREADY = MessageKey.REGISTER_AFTER_LOGIN_ALREADY.get();
-      REGISTER_PASSWORD_CONFIRM_FAIL = MessageKey.REGISTER_PASSWORD_CONFIRM_FAIL.get();
-      COMMON_PASSWORD_SO_SIMPLE = MessageKey.COMMON_PASSWORD_SO_SIMPLE.get();
-      RESETPASSWORD_NOREGISTER = MessageKey.RESETPASSWORD_NOREGISTER.get();
-      RESETPASSWORD_EMAIL_DISABLE = MessageKey.RESETPASSWORD_EMAIL_DISABLE.get();
-      RESETPASSWORD_EMAIL_NO_SET = MessageKey.RESETPASSWORD_EMAIL_NO_SET.get();
-      RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE =
-          MessageKey.RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE.get();
-      RESETPASSWORD_EMAIL_SENDING_MESSAGE = MessageKey.RESETPASSWORD_EMAIL_SENDING_MESSAGE.get();
-      RESETPASSWORD_EMAIL_SENT_MESSAGE = MessageKey.RESETPASSWORD_EMAIL_SENT_MESSAGE.get();
-      RESETPASSWORD_EMAIL_WARN = MessageKey.RESETPASSWORD_EMAIL_WARN.get();
-      RESETPASSWORD_SUCCESS = MessageKey.RESETPASSWORD_SUCCESS.get();
-      RESETPASSWORD_EMAILCODE_INCORRECT = MessageKey.RESETPASSWORD_EMAILCODE_INCORRECT.get();
-      RESETPASSWORD_FAIL = MessageKey.RESETPASSWORD_FAIL.get();
-      CHANGEPASSWORD_NOREGISTER = MessageKey.CHANGEPASSWORD_NOREGISTER.get();
-      CHANGEPASSWORD_NOLOGIN = MessageKey.CHANGEPASSWORD_NOLOGIN.get();
-      CHANGEPASSWORD_OLDPASSWORD_INCORRECT = MessageKey.CHANGEPASSWORD_OLDPASSWORD_INCORRECT.get();
-      CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL = MessageKey.CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL.get();
-      CHANGEPASSWORD_SUCCESS = MessageKey.CHANGEPASSWORD_SUCCESS.get();
-      AUTO_KICK = MessageKey.AUTO_KICK.get();
-      REGISTER_MORE = MessageKey.REGISTER_MORE.get();
-      BEDROCK_LOGIN_BYPASS = MessageKey.BEDROCK_LOGIN_BYPASS.get();
-      LOGIN_WITH_THE_SAME_IP = MessageKey.LOGIN_WITH_THE_SAME_IP.get();
-      LOOPBACK_LOGIN_BYPASS = MessageKey.LOOPBACK_LOGIN_BYPASS.get();
+            @JvmStatic fun load() {
+                val manager = plugin.getConfigManager()
+                IpRegisterCountLimit = manager.getIpRegisterCountLimit()
+                IpCountLimit = manager.getIpCountLimit()
+                LimitChineseID = manager.isLimitChineseID()
+                MinLengthID = manager.getMinLengthID()
+                BedrockLoginBypass = manager.isBedrockLoginBypass()
+                LoginwiththesameIP = manager.isLoginWithSameIP()
+                EmptyBackpack = manager.isEmptyBackpack()
+                MaxLengthID = manager.getMaxLengthID()
+                BeforeLoginNoDamage = manager.isBeforeLoginNoDamage()
+                ReenterInterval = manager.getReenterInterval()
+                AfterLoginBack = manager.isAfterLoginBack()
+                CanTpSpawnLocation = manager.isCanTpSpawnLocation()
+                NamePattern = manager.getNamePattern()
+                CommandWhiteList = manager.getCommandWhiteList()
+                AutoKick = manager.getAutoKick()
+                IPTimeout = manager.getIPTimeout()
+                SpawnLocation = manager.getBukkitSpawnLocation()
+                DeathStateQuitRecordLocation = manager.isDeathStateQuitRecordLocation()
+                FloodgatePrefixProtect = manager.isFloodgatePrefixProtect()
+                LoopbackLoginBypass = manager.isLoopbackLoginBypass()
+                BeforeLoginAllowChat = manager.isBeforeLoginAllowChat()
+                BlindingBeforeLogin = manager.isBlindingBeforeLogin()
+                TwoFactorEnabled = manager.isTwoFactorEnabled()
+                TwoFactorIssuer = manager.getTwoFactorIssuer()
+                TwoFactorDigits = manager.getTwoFactorDigits()
+                TwoFactorPeriod = manager.getTwoFactorPeriod()
+                TwoFactorRecoveryCodeCount = manager.getTwoFactorRecoveryCodeCount()
+                TwoFactorMaxAttempts = manager.getTwoFactorMaxAttempts()
+                TwoFactorAttemptWindow = manager.getTwoFactorAttemptWindow()
+                TwoFactorPendingTimeout = manager.getTwoFactorPendingTimeout()
+            }
+
+            @JvmStatic fun save() {
+                val manager = plugin.getConfigManager()
+                manager.set(ConfigConstants.Path.SETTINGS_LOGIN_IP_REGISTER_LIMIT, IpRegisterCountLimit)
+                manager.set(ConfigConstants.Path.SETTINGS_LOGIN_IP_COUNT_LIMIT, IpCountLimit)
+                manager.set(ConfigConstants.Path.SETTINGS_ACCOUNT_LIMIT_CHINESE_ID, LimitChineseID)
+                manager.set(ConfigConstants.Path.BEDROCK_LOGIN_BYPASS, BedrockLoginBypass)
+                manager.set(ConfigConstants.Path.SETTINGS_LOGIN_SAME_IP_ENABLED, LoginwiththesameIP)
+                manager.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_EMPTY_BACKPACK, EmptyBackpack)
+                manager.set(ConfigConstants.Path.SETTINGS_LOGIN_SAME_IP_TIMEOUT, IPTimeout)
+                manager.set(ConfigConstants.Path.SETTINGS_ACCOUNT_MIN_LENGTH_ID, MinLengthID)
+                manager.set(ConfigConstants.Path.SETTINGS_ACCOUNT_MAX_LENGTH_ID, MaxLengthID)
+                manager.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_NO_DAMAGE, BeforeLoginNoDamage)
+                manager.set(ConfigConstants.Path.SETTINGS_LOGIN_REENTER_INTERVAL, ReenterInterval)
+                manager.set(ConfigConstants.Path.SETTINGS_LOGIN_AFTER_LOGIN_BACK, AfterLoginBack)
+                manager.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_CAN_TP_SPAWN, CanTpSpawnLocation)
+                manager.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_AUTO_KICK, AutoKick)
+                manager.set(ConfigConstants.Path.SETTINGS_LOGIN_DEATH_STATE_QUIT_RECORD, DeathStateQuitRecordLocation)
+                manager.set(ConfigConstants.Path.BEDROCK_FLOODGATE_PREFIX, FloodgatePrefixProtect)
+                manager.set(ConfigConstants.Path.SETTINGS_ACCOUNT_NAME_PATTERN, NamePattern)
+                manager.set(ConfigConstants.Path.SETTINGS_LOGIN_LOOPBACK_BYPASS, LoopbackLoginBypass)
+                manager.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_ALLOW_CHAT, BeforeLoginAllowChat)
+                manager.set(ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_BLINDING, BlindingBeforeLogin)
+                manager.set(ConfigConstants.Path.TWO_FACTOR_ENABLED, TwoFactorEnabled)
+                manager.set(ConfigConstants.Path.TWO_FACTOR_ISSUER, TwoFactorIssuer)
+                manager.set(ConfigConstants.Path.TWO_FACTOR_DIGITS, TwoFactorDigits)
+                manager.set(ConfigConstants.Path.TWO_FACTOR_PERIOD, TwoFactorPeriod)
+                manager.set(ConfigConstants.Path.TWO_FACTOR_RECOVERY_CODE_COUNT, TwoFactorRecoveryCodeCount)
+                manager.set(ConfigConstants.Path.TWO_FACTOR_MAX_ATTEMPTS, TwoFactorMaxAttempts)
+                manager.set(ConfigConstants.Path.TWO_FACTOR_ATTEMPT_WINDOW, TwoFactorAttemptWindow)
+                manager.set(ConfigConstants.Path.TWO_FACTOR_PENDING_TIMEOUT, TwoFactorPendingTimeout)
+
+                if (CommandWhiteList.isNotEmpty()) {
+                    manager.getMainConfig().set(
+                        ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_COMMAND_WHITELIST,
+                        CommandWhiteList.map(Pattern::toString)
+                    )
+                }
+                SpawnLocation?.let(manager::setSpawnLocation)
+            }
+        }
     }
-  }
 
-  public static class EmailVerify {
-    public static volatile boolean Enable;
-    public static volatile String EmailAccount;
-    public static volatile String EmailPassword;
-    public static volatile String EmailSmtpHost;
-    public static volatile String EmailSmtpPort;
-    public static volatile boolean SSLAuthVerify;
-    public static volatile String FromPersonal;
+    class Language {
+        companion object {
+            @JvmField var LOGIN_REQUEST = ""
+            @JvmField var REGISTER_REQUEST = ""
+            @JvmField var LOGIN_NOREGISTER = ""
+            @JvmField var LOGIN_REPEAT = ""
+            @JvmField var LOGIN_SUCCESS = ""
+            @JvmField var LOGIN_FAIL = ""
+            @JvmField var LOGIN_FAIL_IF_FORGET = ""
+            @JvmField var REGISTER_SUCCESS = ""
+            @JvmField var REGISTER_BEFORE_LOGIN_ALREADY = ""
+            @JvmField var REGISTER_AFTER_LOGIN_ALREADY = ""
+            @JvmField var REGISTER_PASSWORD_CONFIRM_FAIL = ""
+            @JvmField var COMMON_PASSWORD_SO_SIMPLE = ""
+            @JvmField var RESETPASSWORD_NOREGISTER = ""
+            @JvmField var RESETPASSWORD_EMAIL_DISABLE = ""
+            @JvmField var RESETPASSWORD_EMAIL_NO_SET = ""
+            @JvmField var RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE = ""
+            @JvmField var RESETPASSWORD_EMAIL_SENDING_MESSAGE = ""
+            @JvmField var RESETPASSWORD_EMAIL_SENT_MESSAGE = ""
+            @JvmField var RESETPASSWORD_EMAIL_WARN = ""
+            @JvmField var RESETPASSWORD_SUCCESS = ""
+            @JvmField var RESETPASSWORD_EMAILCODE_INCORRECT = ""
+            @JvmField var RESETPASSWORD_FAIL = ""
+            @JvmField var CHANGEPASSWORD_NOREGISTER = ""
+            @JvmField var CHANGEPASSWORD_NOLOGIN = ""
+            @JvmField var CHANGEPASSWORD_OLDPASSWORD_INCORRECT = ""
+            @JvmField var CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL = ""
+            @JvmField var CHANGEPASSWORD_SUCCESS = ""
+            @JvmField var AUTO_KICK = ""
+            @JvmField var REGISTER_MORE = ""
+            @JvmField var BEDROCK_LOGIN_BYPASS = ""
+            @JvmField var LOGIN_WITH_THE_SAME_IP = ""
+            @JvmField var LOOPBACK_LOGIN_BYPASS = ""
 
-    public static void load() {
-      BukkitConfigManager cm = plugin.getConfigManager();
-      Enable = cm.isEmailEnable();
-      EmailAccount = cm.getEmailAccount();
-      EmailPassword = cm.getEmailPassword();
-      EmailSmtpHost = cm.getEmailSmtpHost();
-      EmailSmtpPort = cm.getEmailSmtpPort();
-      SSLAuthVerify = cm.isSSLAuthVerify();
-      FromPersonal = cm.getFromPersonal();
+            @JvmStatic fun load() {
+                LOGIN_REQUEST = MessageKey.LOGIN_REQUEST.get()
+                REGISTER_REQUEST = MessageKey.REGISTER_REQUEST.get()
+                LOGIN_NOREGISTER = MessageKey.LOGIN_NOREGISTER.get()
+                LOGIN_REPEAT = MessageKey.LOGIN_REPEAT.get()
+                LOGIN_SUCCESS = MessageKey.LOGIN_SUCCESS.get()
+                LOGIN_FAIL = MessageKey.LOGIN_FAIL.get()
+                LOGIN_FAIL_IF_FORGET = MessageKey.LOGIN_FAIL_IF_FORGET.get()
+                REGISTER_SUCCESS = MessageKey.REGISTER_SUCCESS.get()
+                REGISTER_BEFORE_LOGIN_ALREADY = MessageKey.REGISTER_BEFORE_LOGIN_ALREADY.get()
+                REGISTER_AFTER_LOGIN_ALREADY = MessageKey.REGISTER_AFTER_LOGIN_ALREADY.get()
+                REGISTER_PASSWORD_CONFIRM_FAIL = MessageKey.REGISTER_PASSWORD_CONFIRM_FAIL.get()
+                COMMON_PASSWORD_SO_SIMPLE = MessageKey.COMMON_PASSWORD_SO_SIMPLE.get()
+                RESETPASSWORD_NOREGISTER = MessageKey.RESETPASSWORD_NOREGISTER.get()
+                RESETPASSWORD_EMAIL_DISABLE = MessageKey.RESETPASSWORD_EMAIL_DISABLE.get()
+                RESETPASSWORD_EMAIL_NO_SET = MessageKey.RESETPASSWORD_EMAIL_NO_SET.get()
+                RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE = MessageKey.RESETPASSWORD_EMAIL_REPEAT_SEND_MESSAGE.get()
+                RESETPASSWORD_EMAIL_SENDING_MESSAGE = MessageKey.RESETPASSWORD_EMAIL_SENDING_MESSAGE.get()
+                RESETPASSWORD_EMAIL_SENT_MESSAGE = MessageKey.RESETPASSWORD_EMAIL_SENT_MESSAGE.get()
+                RESETPASSWORD_EMAIL_WARN = MessageKey.RESETPASSWORD_EMAIL_WARN.get()
+                RESETPASSWORD_SUCCESS = MessageKey.RESETPASSWORD_SUCCESS.get()
+                RESETPASSWORD_EMAILCODE_INCORRECT = MessageKey.RESETPASSWORD_EMAILCODE_INCORRECT.get()
+                RESETPASSWORD_FAIL = MessageKey.RESETPASSWORD_FAIL.get()
+                CHANGEPASSWORD_NOREGISTER = MessageKey.CHANGEPASSWORD_NOREGISTER.get()
+                CHANGEPASSWORD_NOLOGIN = MessageKey.CHANGEPASSWORD_NOLOGIN.get()
+                CHANGEPASSWORD_OLDPASSWORD_INCORRECT = MessageKey.CHANGEPASSWORD_OLDPASSWORD_INCORRECT.get()
+                CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL = MessageKey.CHANGEPASSWORD_PASSWORD_CONFIRM_FAIL.get()
+                CHANGEPASSWORD_SUCCESS = MessageKey.CHANGEPASSWORD_SUCCESS.get()
+                AUTO_KICK = MessageKey.AUTO_KICK.get()
+                REGISTER_MORE = MessageKey.REGISTER_MORE.get()
+                BEDROCK_LOGIN_BYPASS = MessageKey.BEDROCK_LOGIN_BYPASS.get()
+                LOGIN_WITH_THE_SAME_IP = MessageKey.LOGIN_WITH_THE_SAME_IP.get()
+                LOOPBACK_LOGIN_BYPASS = MessageKey.LOOPBACK_LOGIN_BYPASS.get()
+            }
+        }
     }
-  }
 
-  public static void load() {
-    plugin = CatSeedLogin.instance;
-    BukkitConfigManager cm = plugin.getConfigManager();
-    cm.createDefaultConfig("config.yml");
-    MySQL.load();
-    Settings.load();
-    EmailVerify.load();
-    Language.load();
-    BungeeCord.load();
-  }
+    class EmailVerify {
+        companion object {
+            @JvmField @Volatile var Enable = false
+            @JvmField @Volatile var EmailAccount = ""
+            @JvmField @Volatile var EmailPassword = ""
+            @JvmField @Volatile var EmailSmtpHost = ""
+            @JvmField @Volatile var EmailSmtpPort = ""
+            @JvmField @Volatile var SSLAuthVerify = false
+            @JvmField @Volatile var FromPersonal = ""
 
-  public static void save() {
-    Settings.save();
-  }
-
-  public static void reload() {
-    plugin.getConfigManager().reload();
-    load();
-  }
-
-  public static Optional<Location> getOfflineLocation(Player player) {
-    try {
-      String locStr = CatSeedLogin.sql.getLocation(player.getName());
-      if (locStr != null && !locStr.isEmpty()) {
-        return Optional.of(str2Location(locStr));
-      }
-    } catch (Exception e) {
-      plugin.getLogger().warning("获取玩家离线位置失败: " + player.getName());
-      e.printStackTrace();
+            @JvmStatic fun load() {
+                val manager = plugin.getConfigManager()
+                Enable = manager.isEmailEnable()
+                EmailAccount = manager.getEmailAccount()
+                EmailPassword = manager.getEmailPassword()
+                EmailSmtpHost = manager.getEmailSmtpHost()
+                EmailSmtpPort = manager.getEmailSmtpPort()
+                SSLAuthVerify = manager.isSSLAuthVerify()
+                FromPersonal = manager.getFromPersonal()
+            }
+        }
     }
-    return Optional.empty();
-  }
 
-  public static void setOfflineLocation(Player player) {
-    String locStr = loc2String(player.getLocation());
-    plugin.runTaskAsync(() -> {
-      try {
-        CatSeedLogin.sql.updateLocation(player.getName(), locStr);
-      } catch (Exception e) {
-        plugin.getLogger().warning("保存玩家离线位置失败: " + player.getName());
-        e.printStackTrace();
-      }
-    });
-  }
-
-  public static void setOfflineLocationSync(Player player) {
-    String locStr = loc2String(player.getLocation());
-    try {
-      CatSeedLogin.sql.updateLocation(player.getName(), locStr);
-    } catch (Exception e) {
-      plugin.getLogger().warning("保存玩家离线位置失败: " + player.getName());
-      e.printStackTrace();
+    @JvmStatic fun load() {
+        plugin = CatSeedLogin.instance
+        plugin.getConfigManager().createDefaultConfig("config.yml")
+        MySQL.load()
+        Settings.load()
+        EmailVerify.load()
+        Language.load()
+        BungeeCord.load()
     }
-  }
 
-  private static Location str2Location(String str) {
-    try {
-      String[] locStrs = str.split(":");
-      if (locStrs.length < 6) {
-        return getDefaultSpawnLocation();
-      }
-      World world = Bukkit.getWorld(locStrs[0]);
-      if (world == null) {
-        world = WorldUtil.getDefaultWorld(plugin.getLogger());
-      }
-      if (world == null) {
-        return getDefaultSpawnLocation();
-      }
-      double x = Double.parseDouble(locStrs[1]);
-      double y = Double.parseDouble(locStrs[2]);
-      double z = Double.parseDouble(locStrs[3]);
-      float yaw = Float.parseFloat(locStrs[4]);
-      float pitch = Float.parseFloat(locStrs[5]);
-      return new Location(world, x, y, z, yaw, pitch);
-    } catch (NumberFormatException ignored) {
-      return getDefaultSpawnLocation();
+    @JvmStatic fun save() = Settings.save()
+
+    @JvmStatic fun reload() {
+        plugin.getConfigManager().reload()
+        load()
     }
-  }
 
-  private static Location getDefaultSpawnLocation() {
-    World world = WorldUtil.getDefaultWorld(plugin.getLogger());
-    return world != null ? world.getSpawnLocation() : Bukkit.getWorlds().get(0).getSpawnLocation();
-  }
-
-  private static String loc2String(Location loc) {
-    try {
-      return String.format(
-          "%s:%.2f:%.2f:%.2f:%.2f:%.2f",
-          loc.getWorld().getName(),
-          loc.getX(),
-          loc.getY(),
-          loc.getZ(),
-          loc.getYaw(),
-          loc.getPitch());
-    } catch (Exception e) {
-      e.printStackTrace();
-      Location defaultLoc = WorldUtil.getDefaultWorld(plugin.getLogger()).getSpawnLocation();
-      return String.format(
-          "%s:%.2f:%.2f:%.2f:%.2f:%.2f",
-          defaultLoc.getWorld().getName(),
-          defaultLoc.getX(),
-          defaultLoc.getY(),
-          defaultLoc.getZ(),
-          defaultLoc.getYaw(),
-          defaultLoc.getPitch());
+    @JvmStatic fun getOfflineLocation(player: Player): Optional<Location> = try {
+        val location = CatSeedLogin.sql.getLocation(player.name)
+        if (!location.isNullOrEmpty()) Optional.of(parseLocation(location)) else Optional.empty()
+    } catch (exception: Exception) {
+        plugin.logger.warning("获取玩家离线位置失败: ${player.name}")
+        exception.printStackTrace()
+        Optional.empty()
     }
-  }
+
+    @JvmStatic fun setOfflineLocation(player: Player) {
+        val location = locationToString(player.location)
+        plugin.runTaskAsync {
+            try {
+                CatSeedLogin.sql.updateLocation(player.name, location)
+            } catch (exception: Exception) {
+                plugin.logger.warning("保存玩家离线位置失败: ${player.name}")
+                exception.printStackTrace()
+            }
+        }
+    }
+
+    @JvmStatic fun setOfflineLocationSync(player: Player) {
+        val location = locationToString(player.location)
+        try {
+            CatSeedLogin.sql.updateLocation(player.name, location)
+        } catch (exception: Exception) {
+            plugin.logger.warning("保存玩家离线位置失败: ${player.name}")
+            exception.printStackTrace()
+        }
+    }
+
+    private fun parseLocation(value: String): Location {
+        try {
+            val parts = value.split(":")
+            if (parts.size < 6) return defaultSpawnLocation()
+            val world = Bukkit.getWorld(parts[0]) ?: WorldUtil.getDefaultWorld(plugin.logger)
+                ?: return defaultSpawnLocation()
+            return Location(
+                world,
+                parts[1].toDouble(),
+                parts[2].toDouble(),
+                parts[3].toDouble(),
+                parts[4].toFloat(),
+                parts[5].toFloat()
+            )
+        } catch (_: NumberFormatException) {
+            return defaultSpawnLocation()
+        }
+    }
+
+    private fun defaultSpawnLocation(): Location {
+        val world: World? = WorldUtil.getDefaultWorld(plugin.logger)
+        return world?.spawnLocation ?: Bukkit.getWorlds()[0].spawnLocation
+    }
+
+    private fun locationToString(location: Location): String = try {
+        String.format(
+            "%s:%.2f:%.2f:%.2f:%.2f:%.2f",
+            location.world.name,
+            location.x,
+            location.y,
+            location.z,
+            location.yaw,
+            location.pitch
+        )
+    } catch (exception: Exception) {
+        exception.printStackTrace()
+        val defaultLocation = WorldUtil.getDefaultWorld(plugin.logger)!!.spawnLocation
+        String.format(
+            "%s:%.2f:%.2f:%.2f:%.2f:%.2f",
+            defaultLocation.world.name,
+            defaultLocation.x,
+            defaultLocation.y,
+            defaultLocation.z,
+            defaultLocation.yaw,
+            defaultLocation.pitch
+        )
+    }
 }

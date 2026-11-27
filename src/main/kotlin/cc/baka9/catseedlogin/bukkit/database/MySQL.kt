@@ -1,64 +1,29 @@
-package cc.baka9.catseedlogin.bukkit.database;
+package cc.baka9.catseedlogin.bukkit.database
 
-import cc.baka9.catseedlogin.bukkit.Config;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import org.bukkit.plugin.java.JavaPlugin;
+import cc.baka9.catseedlogin.bukkit.Config
+import java.sql.Connection
+import java.sql.DriverManager
+import java.sql.SQLException
+import org.bukkit.plugin.java.JavaPlugin
 
-public class MySQL extends SQL {
-  private Connection connection;
-
-  public MySQL(JavaPlugin javaPlugin) {
-    super(javaPlugin.getLogger());
-  }
-
-  @Override
-  public synchronized Connection getConnection() throws SQLException {
-    if (isConnectionValid()) {
-      return this.connection;
+class MySQL(javaPlugin: JavaPlugin) : SQL(javaPlugin.logger) {
+    private var connection: Connection? = null
+    @Synchronized @Throws(SQLException::class)
+    override fun getConnection(): Connection {
+        if (isConnectionValid()) return connection!!
+        closeConnection()
+        return try {
+            Class.forName("com.mysql.cj.jdbc.Driver")
+            DriverManager.getConnection("jdbc:mysql://${Config.MySQL.Host}:${Config.MySQL.Port}/${Config.MySQL.Database}?characterEncoding=UTF-8", Config.MySQL.User, Config.MySQL.Password).also { connection = it }
+        } catch (e: ClassNotFoundException) { throw SQLException(e) }
     }
-    closeConnection();
-    try {
-      Class.forName("com.mysql.cj.jdbc.Driver");
-      this.connection =
-          DriverManager.getConnection(
-              "jdbc:mysql://"
-                  + Config.MySQL.Host
-                  + ":"
-                  + Config.MySQL.Port
-                  + "/"
-                  + Config.MySQL.Database
-                  + "?characterEncoding=UTF-8",
-              Config.MySQL.User,
-              Config.MySQL.Password);
-      return this.connection;
-    } catch (ClassNotFoundException | SQLException e) {
-      throw new SQLException(e);
+    private fun isConnectionValid(): Boolean {
+        val current = connection ?: return false
+        if (current.isClosed) return false
+        return try { current.prepareStatement("SELECT 1").use { it.executeQuery().use { _ -> } }; true } catch (_: SQLException) { false }
     }
-  }
-
-  private boolean isConnectionValid() throws SQLException {
-    if (this.connection == null || this.connection.isClosed()) {
-      return false;
+    @Synchronized override fun closeConnection() {
+        try { if (connection != null && !connection!!.isClosed) connection!!.close() } catch (e: SQLException) { e.printStackTrace() }
+        connection = null
     }
-    try (java.sql.PreparedStatement ps = this.connection.prepareStatement("SELECT 1")) {
-      ps.executeQuery();
-      return true;
-    } catch (SQLException e) {
-      return false;
-    }
-  }
-
-  @Override
-  public synchronized void closeConnection() {
-    try {
-      if (this.connection != null && !this.connection.isClosed()) {
-        this.connection.close();
-      }
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-    this.connection = null;
-  }
 }

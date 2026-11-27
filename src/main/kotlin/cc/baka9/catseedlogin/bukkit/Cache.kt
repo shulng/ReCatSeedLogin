@@ -1,69 +1,36 @@
-package cc.baka9.catseedlogin.bukkit;
+package cc.baka9.catseedlogin.bukkit
 
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import cc.baka9.catseedlogin.bukkit.`object`.LoginPlayer
+import java.util.concurrent.ConcurrentHashMap
 
-public class Cache {
-  private static volatile Map<String, LoginPlayer> PLAYER_HASHTABLE = new ConcurrentHashMap<>();
-  public static volatile boolean isLoaded = false;
-
-  public static List<LoginPlayer> getAllLoginPlayer() {
-    return new ArrayList<>(PLAYER_HASHTABLE.values());
-  }
-
-  public static LoginPlayer getIgnoreCase(String name) {
-    return PLAYER_HASHTABLE.get(name.toLowerCase());
-  }
-
-  public static void refreshAll() {
-    isLoaded = false;
-    CatSeedLogin.instance.runTaskAsync(() -> {
-      try {
-        List<LoginPlayer> newCache = CatSeedLogin.sql.getAll();
-        ConcurrentHashMap<String, LoginPlayer> newMap = new ConcurrentHashMap<>();
-        newCache.forEach(p -> newMap.put(p.getName().toLowerCase(), p));
-        PLAYER_HASHTABLE = newMap;
-        CatSeedLogin.instance.getLogger().info("缓存加载 " + PLAYER_HASHTABLE.size() + " 个数据");
-        isLoaded = true;
-      } catch (Exception e) {
-        CatSeedLogin.instance.getLogger().warning("数据库错误,无法更新缓存!");
-        e.printStackTrace();
-      }
-    });
-  }
-
-  public static void refreshAllSync() {
-    try {
-      List<LoginPlayer> newCache = CatSeedLogin.sql.getAll();
-      ConcurrentHashMap<String, LoginPlayer> newMap = new ConcurrentHashMap<>();
-      newCache.forEach(p -> newMap.put(p.getName().toLowerCase(), p));
-      PLAYER_HASHTABLE = newMap;
-      CatSeedLogin.instance.getLogger().info("缓存加载 " + PLAYER_HASHTABLE.size() + " 个数据");
-      isLoaded = true;
-    } catch (Exception e) {
-      CatSeedLogin.instance.getLogger().warning("数据库错误,无法更新缓存!");
-      e.printStackTrace();
-    }
-  }
-
-  public static void refresh(String name) {
-    CatSeedLogin.instance.runTaskAsync(() -> {
-      try {
-        LoginPlayer newLp = CatSeedLogin.sql.get(name);
-        String key = name.toLowerCase();
-        if (newLp != null) {
-          PLAYER_HASHTABLE.put(key, newLp);
-        } else {
-          PLAYER_HASHTABLE.remove(key);
+object Cache {
+    @Volatile private var playerHashtable = ConcurrentHashMap<String, LoginPlayer>()
+    @JvmField @Volatile var isLoaded: Boolean = false
+    @JvmStatic fun getAllLoginPlayer(): List<LoginPlayer> = ArrayList(playerHashtable.values)
+    @JvmStatic fun getIgnoreCase(name: String): LoginPlayer? = playerHashtable[name.lowercase()]
+    @JvmStatic fun refreshAll() {
+        isLoaded = false
+        CatSeedLogin.instance.runTaskAsync {
+            try {
+                val newMap = ConcurrentHashMap<String, LoginPlayer>()
+                CatSeedLogin.sql.getAll().forEach { newMap[it.name.lowercase()] = it }
+                playerHashtable = newMap; CatSeedLogin.instance.logger.info("缓存加载 ${playerHashtable.size} 个数据"); isLoaded = true
+            } catch (e: Exception) { CatSeedLogin.instance.logger.warning("数据库错误,无法更新缓存!"); e.printStackTrace() }
         }
-        CatSeedLogin.instance.getLogger().info("缓存加载 " + PLAYER_HASHTABLE.size() + " 个数据");
-      } catch (Exception e) {
-        CatSeedLogin.instance.getLogger().warning("数据库错误,无法更新缓存!");
-        e.printStackTrace();
-      }
-    });
-  }
+    }
+    @JvmStatic fun refreshAllSync() {
+        try {
+            val newMap = ConcurrentHashMap<String, LoginPlayer>(); CatSeedLogin.sql.getAll().forEach { newMap[it.name.lowercase()] = it }
+            playerHashtable = newMap; CatSeedLogin.instance.logger.info("缓存加载 ${playerHashtable.size} 个数据"); isLoaded = true
+        } catch (e: Exception) { CatSeedLogin.instance.logger.warning("数据库错误,无法更新缓存!"); e.printStackTrace() }
+    }
+    @JvmStatic fun refresh(name: String) {
+        CatSeedLogin.instance.runTaskAsync {
+            try {
+                val newLp = CatSeedLogin.sql.get(name); val key = name.lowercase()
+                if (newLp != null) playerHashtable[key] = newLp else playerHashtable.remove(key)
+                CatSeedLogin.instance.logger.info("缓存加载 ${playerHashtable.size} 个数据")
+            } catch (e: Exception) { CatSeedLogin.instance.logger.warning("数据库错误,无法更新缓存!"); e.printStackTrace() }
+        }
+    }
 }

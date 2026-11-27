@@ -1,59 +1,23 @@
-package cc.baka9.catseedlogin.bukkit.object;
+package cc.baka9.catseedlogin.bukkit.`object`
 
-import cc.baka9.catseedlogin.common.util.Crypt;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import cc.baka9.catseedlogin.common.util.Crypt
+import java.util.Objects
 
-@ToString
-@Getter
-@Setter
-public class LoginPlayer {
-  private String name, password, email, ips;
-  private long lastAction;
-  private String location;
+class LoginPlayer(var name: String, var password: String) {
+    var email: String? = null
+    var ips: String? = null
+    var lastAction: Long = 0
+    var location: String? = null
+    var totpSecret: String? = null
+    var totpEnabled: Boolean = false
 
-  /** 加密后的 TOTP 密钥，null 表示未绑定。 */
-  private String totpSecret;
-
-  /** 是否已启用两步验证。 */
-  private boolean totpEnabled;
-
-  public LoginPlayer(String name, String password) {
-    this.name = name;
-    this.password = password;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    return this == o || (o instanceof LoginPlayer && Objects.equals(name, ((LoginPlayer) o).name));
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(name);
-  }
-
-  public List<String> getIpsList() {
-    return (ips != null) ? new ArrayList<>(Arrays.asList(ips.split(";"))) : new ArrayList<>();
-  }
-
-  public void crypt() {
-    password = Crypt.encrypt(name, password);
-  }
-
-  public LoginPlayer copy() {
-    LoginPlayer copy = new LoginPlayer(name, password);
-    copy.email = this.email;
-    copy.ips = this.ips;
-    copy.lastAction = this.lastAction;
-    copy.location = this.location;
-    copy.totpSecret = this.totpSecret;
-    copy.totpEnabled = this.totpEnabled;
-    return copy;
-  }
+    fun getIpsList(): MutableList<String> = ips?.split(';')?.toMutableList() ?: mutableListOf()
+    fun crypt() { password = Crypt.encrypt(name, password) }
+    fun copy(): LoginPlayer = LoginPlayer(name, password).also {
+        it.email = email; it.ips = ips; it.lastAction = lastAction; it.location = location
+        it.totpSecret = totpSecret; it.totpEnabled = totpEnabled
+    }
+    override fun equals(other: Any?): Boolean = this === other || (other is LoginPlayer && name == other.name)
+    override fun hashCode(): Int = Objects.hash(name)
+    override fun toString(): String = "LoginPlayer(name=$name, password=$password, email=$email, ips=$ips, lastAction=$lastAction, location=$location, totpSecret=$totpSecret, totpEnabled=$totpEnabled)"
 }

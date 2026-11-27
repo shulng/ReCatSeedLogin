@@ -1,253 +1,154 @@
-package cc.baka9.catseedlogin.bukkit.object;
+package cc.baka9.catseedlogin.bukkit.`object`
 
-import cc.baka9.catseedlogin.bukkit.Cache;
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.Config;
-import cc.baka9.catseedlogin.bukkit.PluginContext;
-import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerLoginEvent;
-import cc.baka9.catseedlogin.common.util.ValidationUtil;
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.reflect.StructureModifier;
-import java.net.InetAddress;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.geysermc.floodgate.api.FloodgateApi;
+import cc.baka9.catseedlogin.bukkit.Cache
+import cc.baka9.catseedlogin.bukkit.CatScheduler
+import cc.baka9.catseedlogin.bukkit.Config
+import cc.baka9.catseedlogin.bukkit.PluginContext
+import cc.baka9.catseedlogin.bukkit.event.CatSeedPlayerLoginEvent
+import cc.baka9.catseedlogin.common.util.ValidationUtil
+import com.comphenix.protocol.PacketType
+import com.comphenix.protocol.ProtocolLibrary
+import com.comphenix.protocol.events.PacketContainer
+import com.comphenix.protocol.reflect.StructureModifier
+import java.net.InetAddress
+import java.util.Arrays
+import java.util.concurrent.ConcurrentHashMap
+import org.bukkit.Bukkit
+import org.bukkit.Material
+import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
+import org.geysermc.floodgate.api.FloodgateApi
 
-public class LoginPlayerHelper {
-  private static final Map<String, LoginPlayer> loginPlayers = new ConcurrentHashMap<>();
-  private static final Map<String, Long> playerExitTimes = new ConcurrentHashMap<>();
-  private static final int MAX_STORED_IPS = 10;
+object LoginPlayerHelper {
+    private val loginPlayers = ConcurrentHashMap<String, LoginPlayer>()
+    private val playerExitTimes = ConcurrentHashMap<String, Long>()
+    private const val MAX_STORED_IPS = 10
 
-  public static List<LoginPlayer> getList() {
-    return new ArrayList<>(loginPlayers.values());
-  }
+    @JvmStatic fun getList(): List<LoginPlayer> = ArrayList(loginPlayers.values)
 
-  public static void add(LoginPlayer lp) {
-    if (lp == null) return;
-    try {
-      loginPlayers.put(lp.getName(), lp);
-    } catch (Exception e) {
-      PluginContext.getLogger().severe("Failed to add LoginPlayer: " + e.getMessage());
-    }
-  }
-
-  public static void remove(LoginPlayer lp) {
-    if (lp == null) return;
-    try {
-      loginPlayers.remove(lp.getName());
-    } catch (Exception e) {
-      PluginContext.getLogger().severe("Failed to remove LoginPlayer: " + e.getMessage());
-    }
-  }
-
-  public static void remove(String name) {
-    if (name == null) return;
-    try {
-      loginPlayers.remove(name);
-    } catch (Exception e) {
-      PluginContext.getLogger()
-          .severe("Failed to remove LoginPlayer by name: " + name + " - " + e.getMessage());
-    }
-  }
-
-  public static boolean isLogin(String name) {
-    // 两步验证没通过时一律视为未登录：登录前的所有限制都要继续生效，
-    // 否则玩家输完密码就等于直接放行，第二步形同虚设。
-    if (TwoFactorState.isAwaitingTwoFactor(name)) return false;
-    return canBypassLogin(name) || loginPlayers.containsKey(name);
-  }
-
-  private static boolean canBypassLogin(String name) {
-    return (Config.Settings.BedrockLoginBypass && isFloodgatePlayer(name))
-        || (Config.Settings.LoginwiththesameIP && recordCurrentIP(name))
-        || (Config.Settings.LoopbackLoginBypass && isLoopbackPlayer(name));
-  }
-
-  public static boolean isRegister(String name) {
-    return (Config.Settings.BedrockLoginBypass && isFloodgatePlayer(name))
-        || Cache.getIgnoreCase(name) != null;
-  }
-
-  public static boolean recordCurrentIP(String name) {
-    Player player = Bukkit.getPlayerExact(name);
-    return player != null && recordCurrentIP(player);
-  }
-
-  public static boolean recordCurrentIP(Player player) {
-    String currentIP = getPlayerIP(player);
-    if (currentIP == null) return false;
-
-    LoginPlayer storedPlayer = Cache.getIgnoreCase(player.getName());
-    if (storedPlayer != null) {
-      List<String> storedIPs = getStoredIPs(storedPlayer);
-      Long exitTime = playerExitTimes.get(player.getName());
-
-      if (ValidationUtil.isLoopbackAddress(currentIP)) return false;
-      return Config.Settings.IPTimeout == 0
-          ? storedIPs.contains(currentIP)
-          : exitTime != null
-              && storedIPs.contains(currentIP)
-              && (System.currentTimeMillis() - exitTime)
-                  <= (long) Config.Settings.IPTimeout * 60 * 1000;
+    @JvmStatic fun add(lp: LoginPlayer?) {
+        if (lp == null) return
+        try { loginPlayers[lp.name] = lp }
+        catch (e: Exception) { PluginContext.getLogger().severe("Failed to add LoginPlayer: ${e.message}") }
     }
 
-    return false;
-  }
-
-  private static String getPlayerIP(Player player) {
-    if (player == null) return null;
-    return Optional.ofNullable(player.getAddress())
-        .map(addr -> addr.getAddress())
-        .map(InetAddress::getHostAddress)
-        .orElse(null);
-  }
-
-  public static void recordPlayerExitTime(String playerName) {
-    if (playerName == null) return;
-    if (Config.Settings.IPTimeout != 0 && isLogin(playerName)) {
-      try {
-        playerExitTimes.put(playerName, System.currentTimeMillis());
-      } catch (Exception e) {
-        PluginContext.getLogger()
-            .severe("Failed to record player exit time: " + playerName + " - " + e.getMessage());
-      }
+    @JvmStatic fun remove(lp: LoginPlayer?) {
+        if (lp == null) return
+        try { loginPlayers.remove(lp.name) }
+        catch (e: Exception) { PluginContext.getLogger().severe("Failed to remove LoginPlayer: ${e.message}") }
     }
-  }
 
-  public static void onPlayerQuit(String playerName) {
-    recordPlayerExitTime(playerName);
-    // 退服后不再处于待验证状态，重连后需要重新走一遍验证
-    TwoFactorState.removePendingLogin(playerName);
-  }
-
-  /**
-   * 登录完成：放行、通知、解除登录前限制。
-   *
-   * <p>密码通过（以及开启两步验证时第二步通过）后统一走这里，保证两种路径的行为完全一致。
-   */
-  public static void completeLogin(Player player, LoginPlayer lp) {
-    add(lp);
-    CatSeedPlayerLoginEvent loginEvent =
-        new CatSeedPlayerLoginEvent(player, lp.getEmail(), CatSeedPlayerLoginEvent.Result.SUCCESS);
-    Bukkit.getServer().getPluginManager().callEvent(loginEvent);
-    player.sendMessage(Config.Language.LOGIN_SUCCESS);
-    CatScheduler.updateInventory(player);
-    recordCurrentIP(player, lp);
-    if (Config.Settings.AfterLoginBack && Config.Settings.CanTpSpawnLocation) {
-      Config.getOfflineLocation(player)
-          .ifPresent(location -> CatScheduler.teleport(player, location));
+    @JvmStatic fun remove(name: String?) {
+        if (name == null) return
+        try { loginPlayers.remove(name) }
+        catch (e: Exception) { PluginContext.getLogger().severe("Failed to remove LoginPlayer by name: $name - ${e.message}") }
     }
-  }
 
-  public static List<String> getStoredIPs(LoginPlayer lp) {
-    if (lp == null || lp.getIps() == null) {
-      return new ArrayList<>();
+    @JvmStatic fun isLogin(name: String): Boolean {
+        if (TwoFactorState.isAwaitingTwoFactor(name)) return false
+        return canBypassLogin(name) || loginPlayers.containsKey(name)
     }
-    try {
-      return new ArrayList<>(Arrays.asList(lp.getIps().split(";")));
-    } catch (Exception e) {
-      return new ArrayList<>();
+
+    private fun canBypassLogin(name: String): Boolean =
+        (Config.Settings.BedrockLoginBypass && isFloodgatePlayer(name)) ||
+            (Config.Settings.LoginwiththesameIP && recordCurrentIP(name)) ||
+            (Config.Settings.LoopbackLoginBypass && isLoopbackPlayer(name))
+
+    @JvmStatic fun isRegister(name: String): Boolean =
+        (Config.Settings.BedrockLoginBypass && isFloodgatePlayer(name)) || Cache.getIgnoreCase(name) != null
+
+    @JvmStatic fun recordCurrentIP(name: String): Boolean = Bukkit.getPlayerExact(name)?.let { recordCurrentIP(it) } ?: false
+
+    @JvmStatic fun recordCurrentIP(player: Player): Boolean {
+        val currentIP = getPlayerIP(player) ?: return false
+        val storedPlayer = Cache.getIgnoreCase(player.name) ?: return false
+        val storedIPs = getStoredIPs(storedPlayer)
+        val exitTime = playerExitTimes[player.name]
+        if (ValidationUtil.isLoopbackAddress(currentIP)) return false
+        return if (Config.Settings.IPTimeout == 0) storedIPs.contains(currentIP)
+        else exitTime != null && storedIPs.contains(currentIP) &&
+            System.currentTimeMillis() - exitTime <= Config.Settings.IPTimeout.toLong() * 60 * 1000
     }
-  }
 
-  /** 判断玩家是否从本地回环地址(127.0.0.1 / ::1 / localhost)连接。 */
-  public static boolean isLoopbackPlayer(String name) {
-    Player player = Bukkit.getPlayerExact(name);
-    return player != null && isLoopbackPlayer(player);
-  }
+    private fun getPlayerIP(player: Player?): String? = player?.address?.address?.hostAddress
 
-  public static boolean isLoopbackPlayer(Player player) {
-    String ip = getPlayerIP(player);
-    return ip != null && ValidationUtil.isLoopbackAddress(ip);
-  }
-
-  public static boolean isFloodgatePlayer(String name) {
-    Player player = Bukkit.getPlayerExact(name);
-    return player != null && isFloodgatePlayer(player);
-  }
-
-  public static boolean isFloodgatePlayer(Player player) {
-    try {
-      return Bukkit.getPluginManager().getPlugin("floodgate") != null
-          && FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId());
-    } catch (Exception e) {
-      return false;
+    @JvmStatic fun recordPlayerExitTime(playerName: String?) {
+        if (playerName == null) return
+        if (Config.Settings.IPTimeout != 0 && isLogin(playerName)) {
+            try { playerExitTimes[playerName] = System.currentTimeMillis() }
+            catch (e: Exception) { PluginContext.getLogger().severe("Failed to record player exit time: $playerName - ${e.message}") }
+        }
     }
-  }
 
-  public static Long getLastLoginTime(String name) {
-    LoginPlayer loginPlayer = Cache.getIgnoreCase(name);
-    return (loginPlayer != null) ? loginPlayer.getLastAction() : null;
-  }
-
-  public static void recordCurrentIP(Player player, LoginPlayer lp) {
-    try {
-      String currentIp = getPlayerIP(player);
-
-      if (currentIp == null) {
-        return;
-      }
-
-      List<String> ipsList =
-          lp.getIpsList() != null ? new ArrayList<>(lp.getIpsList()) : new ArrayList<>();
-      ipsList = ipsList.stream().distinct().collect(Collectors.toList());
-      ipsList.remove(currentIp);
-      ipsList.add(currentIp);
-      while (ipsList.size() > MAX_STORED_IPS) {
-        ipsList.remove(0);
-      }
-      lp.setIps(String.join(";", ipsList));
-
-      savePlayerIPAsync(player, lp);
-    } catch (Exception e) {
-      PluginContext.getLogger()
-          .warning("Failed to record IP for player: " + player.getName() + " - " + e.getMessage());
+    @JvmStatic fun onPlayerQuit(playerName: String) {
+        recordPlayerExitTime(playerName)
+        TwoFactorState.removePendingLogin(playerName)
     }
-  }
 
-  private static void savePlayerIPAsync(Player player, LoginPlayer lp) {
-    CatScheduler.runTaskAsync(() -> savePlayerIP(lp));
-  }
-
-  private static void savePlayerIP(LoginPlayer lp) {
-    try {
-      PluginContext.getSql().edit(lp);
-      Cache.refresh(lp.getName());
-    } catch (Exception e) {
-      e.printStackTrace();
+    @JvmStatic fun completeLogin(player: Player, lp: LoginPlayer) {
+        add(lp)
+        val loginEvent = CatSeedPlayerLoginEvent(player, lp.email, CatSeedPlayerLoginEvent.Result.SUCCESS)
+        Bukkit.getServer().pluginManager.callEvent(loginEvent)
+        player.sendMessage(Config.Language.LOGIN_SUCCESS)
+        CatScheduler.updateInventory(player)
+        recordCurrentIP(player, lp)
+        if (Config.Settings.AfterLoginBack && Config.Settings.CanTpSpawnLocation) {
+            Config.getOfflineLocation(player).ifPresent { location -> CatScheduler.teleport(player, location) }
+        }
     }
-  }
 
-  public static void sendBlankInventoryPacket(Player player) {
-    if (!Config.Settings.EmptyBackpack) return;
-
-    try {
-      ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
-      PacketContainer inventoryPacket =
-          protocolManager.createPacket(PacketType.Play.Server.WINDOW_ITEMS);
-      inventoryPacket.getIntegers().write(0, 0);
-      ItemStack[] blankInventory = new ItemStack[45];
-      Arrays.fill(blankInventory, new ItemStack(Material.AIR));
-
-      StructureModifier<ItemStack[]> itemArrayModifier = inventoryPacket.getItemArrayModifier();
-      if (itemArrayModifier.size() > 0) {
-        itemArrayModifier.write(0, blankInventory);
-      } else {
-        StructureModifier<List<ItemStack>> itemListModifier = inventoryPacket.getItemListModifier();
-        itemListModifier.write(0, Arrays.asList(blankInventory));
-      }
-
-      protocolManager.sendServerPacket(player, inventoryPacket, false);
-    } catch (Exception e) {
-      e.printStackTrace();
+    @JvmStatic fun getStoredIPs(lp: LoginPlayer?): List<String> {
+        if (lp?.ips == null) return ArrayList()
+        return try { lp.ips!!.split(';') } catch (_: Exception) { ArrayList() }
     }
-  }
+
+    @JvmStatic fun isLoopbackPlayer(name: String): Boolean = Bukkit.getPlayerExact(name)?.let { isLoopbackPlayer(it) } ?: false
+    @JvmStatic fun isLoopbackPlayer(player: Player): Boolean = getPlayerIP(player)?.let(ValidationUtil::isLoopbackAddress) ?: false
+    @JvmStatic fun isFloodgatePlayer(name: String): Boolean = Bukkit.getPlayerExact(name)?.let { isFloodgatePlayer(it) } ?: false
+
+    @JvmStatic fun isFloodgatePlayer(player: Player): Boolean = try {
+        Bukkit.getPluginManager().getPlugin("floodgate") != null && FloodgateApi.getInstance().isFloodgatePlayer(player.uniqueId)
+    } catch (_: Exception) { false }
+
+    @JvmStatic fun getLastLoginTime(name: String): Long? = Cache.getIgnoreCase(name)?.lastAction
+
+    @JvmStatic fun recordCurrentIP(player: Player, lp: LoginPlayer) {
+        try {
+            val currentIp = getPlayerIP(player) ?: return
+            val ipsList = lp.getIpsList().distinct().toMutableList()
+            ipsList.remove(currentIp)
+            ipsList.add(currentIp)
+            while (ipsList.size > MAX_STORED_IPS) ipsList.removeAt(0)
+            lp.ips = ipsList.joinToString(";")
+            savePlayerIPAsync(player, lp)
+        } catch (e: Exception) {
+            PluginContext.getLogger().warning("Failed to record IP for player: ${player.name} - ${e.message}")
+        }
+    }
+
+    private fun savePlayerIPAsync(player: Player, lp: LoginPlayer) {
+        CatScheduler.runTaskAsync { savePlayerIP(lp) }
+    }
+
+    private fun savePlayerIP(lp: LoginPlayer) {
+        try { PluginContext.getSql().edit(lp); Cache.refresh(lp.name) }
+        catch (e: Exception) { e.printStackTrace() }
+    }
+
+    @JvmStatic fun sendBlankInventoryPacket(player: Player) {
+        if (!Config.Settings.EmptyBackpack) return
+        try {
+            val protocolManager = ProtocolLibrary.getProtocolManager()
+            val inventoryPacket: PacketContainer = protocolManager.createPacket(PacketType.Play.Server.WINDOW_ITEMS)
+            inventoryPacket.integers.write(0, 0)
+            val blankInventory = Array(45) { ItemStack(Material.AIR) }
+            val itemArrayModifier: StructureModifier<Array<ItemStack>> = inventoryPacket.itemArrayModifier
+            if (itemArrayModifier.size() > 0) itemArrayModifier.write(0, blankInventory)
+            else {
+                val itemListModifier: StructureModifier<List<ItemStack>> = inventoryPacket.itemListModifier
+                itemListModifier.write(0, Arrays.asList(*blankInventory))
+            }
+            protocolManager.sendServerPacket(player, inventoryPacket, false)
+        } catch (e: Exception) { e.printStackTrace() }
+    }
 }

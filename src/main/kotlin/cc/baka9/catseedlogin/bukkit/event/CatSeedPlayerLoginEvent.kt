@@ -1,39 +1,30 @@
-package cc.baka9.catseedlogin.bukkit.event;
+package cc.baka9.catseedlogin.bukkit.event
 
-import java.util.Optional;
-import lombok.Getter;
-import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.event.HandlerList;
+import java.util.Optional
+import org.bukkit.entity.Player
+import org.bukkit.event.Event
+import org.bukkit.event.HandlerList
 
-public class CatSeedPlayerLoginEvent extends Event {
-  private static final HandlerList handlers = new HandlerList();
-  @Getter private final Player player;
-  private final String email;
-  @Getter private final Result result;
+class CatSeedPlayerLoginEvent(
+    val player: Player,
+    email: String?,
+    val result: Result
+) : Event() {
+    private val emailValue = email
 
-  public CatSeedPlayerLoginEvent(Player player, String email, Result result) {
-    this.player = player;
-    this.email = email;
-    this.result = result;
-  }
+    override fun getHandlers(): HandlerList = handlers
 
-  public HandlerList getHandlers() {
-    return handlers;
-  }
+    fun getEmail(): Optional<String> = Optional.ofNullable(emailValue)
 
-  public static HandlerList getHandlerList() {
-    return handlers;
-  }
+    enum class Result {
+        SUCCESS,
+        FAIL
+    }
 
-  public Optional<String> getEmail() {
-    return Optional.ofNullable(email);
-  }
+    companion object {
+        private val handlers = HandlerList()
 
-  public enum Result {
-    SUCCESS,
-    FAIL;
-
-    Result() {}
-  }
+        @JvmStatic
+        fun getHandlerList(): HandlerList = handlers
+    }
 }

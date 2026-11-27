@@ -1,328 +1,265 @@
-package cc.baka9.catseedlogin.bukkit;
+package cc.baka9.catseedlogin.bukkit
 
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayer;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
-import cc.baka9.catseedlogin.bukkit.object.TwoFactorState;
-import cc.baka9.catseedlogin.bukkit.task.Task;
-import cc.baka9.catseedlogin.bukkit.task.TaskAutoKick;
-import cc.baka9.catseedlogin.common.i18n.MessageKey;
-import java.util.regex.Pattern;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityPickupItemEvent;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerGameModeChangeEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
-import org.geysermc.floodgate.api.FloodgateApi;
+import cc.baka9.catseedlogin.bukkit.`object`.LoginPlayer
+import cc.baka9.catseedlogin.bukkit.`object`.LoginPlayerHelper
+import cc.baka9.catseedlogin.bukkit.`object`.TwoFactorState
+import cc.baka9.catseedlogin.bukkit.task.Task
+import cc.baka9.catseedlogin.bukkit.task.TaskAutoKick
+import cc.baka9.catseedlogin.common.i18n.MessageKey
+import java.util.regex.Pattern
+import org.bukkit.Bukkit
+import org.bukkit.Location
+import org.bukkit.entity.Entity
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
+import org.bukkit.event.Listener
+import org.bukkit.event.entity.EntityDamageByEntityEvent
+import org.bukkit.event.entity.EntityDamageEvent
+import org.bukkit.event.entity.EntityPickupItemEvent
+import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.InventoryOpenEvent
+import org.bukkit.event.player.AsyncPlayerChatEvent
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent
+import org.bukkit.event.player.PlayerCommandPreprocessEvent
+import org.bukkit.event.player.PlayerDropItemEvent
+import org.bukkit.event.player.PlayerGameModeChangeEvent
+import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.player.PlayerMoveEvent
+import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.event.player.PlayerTeleportEvent
+import org.geysermc.floodgate.api.FloodgateApi
 
-public class Listeners implements Listener {
+class Listeners : Listener {
+    private fun playerIsNotMinecraftPlayer(player: Player): Boolean =
+        !player.javaClass.name.matches(Regex("org\\.bukkit\\.craftbukkit.*?\\.entity\\.CraftPlayer"))
 
-  private boolean playerIsNotMinecraftPlayer(Player p) {
-    return !p.getClass().getName().matches("org\\.bukkit\\.craftbukkit.*?\\.entity\\.CraftPlayer");
-  }
-
-  @EventHandler
-  public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
-    Player player = event.getPlayer();
-    if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.getName())) return;
-    String input = event.getMessage().toLowerCase();
-    // 两步验证指令必须始终可用：玩家卡在待验证状态时要能输验证码，
-    // 而指令白名单是可配置的，不能指望管理员记得把它加进去。
-    if (isTwoFactorCommand(input)) return;
-    for (Pattern regex : Config.Settings.CommandWhiteList) {
-      if (regex.matcher(input).matches()) return;
+    @EventHandler
+    fun onPlayerCommandPreprocess(event: PlayerCommandPreprocessEvent) {
+        val player = event.player
+        if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.name)) return
+        val input = event.message.lowercase()
+        if (isTwoFactorCommand(input)) return
+        for (regex: Pattern in Config.Settings.CommandWhiteList) {
+            if (regex.matcher(input).matches()) return
+        }
+        event.isCancelled = true
     }
-    event.setCancelled(true);
-  }
 
-  /** 两步验证指令（/2fa 及其别名）不参与白名单匹配。 */
-  private boolean isTwoFactorCommand(String input) {
-    return input.equals("/2fa")
-        || input.startsWith("/2fa ")
-        || input.equals("/twofa")
-        || input.startsWith("/twofa ");
-  }
+    private fun isTwoFactorCommand(input: String): Boolean =
+        input == "/2fa" || input.startsWith("/2fa ") || input == "/twofa" || input.startsWith("/twofa ")
 
-  @EventHandler
-  public void onPlayerLogin(AsyncPlayerPreLoginEvent event) {
-    if (!Cache.isLoaded) {
-      event.disallow(
-          AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.CACHE_NOT_INITIALIZED.get());
-      return;
-    }
-    String name = event.getName();
-    LoginPlayer lp = Cache.getIgnoreCase(name);
-    if (lp == null) return;
-    if (!lp.getName().equals(name)) {
-      event.disallow(
-          AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
-          MessageKey.NAME_CASE_MISMATCH.get(lp.getName()));
-      return;
-    }
-    if (LoginPlayerHelper.isLogin(name)) {
-      event.disallow(
-          AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
-          MessageKey.PLAYER_ALREADY_ONLINE_ONLINE.get(lp.getName()));
-      return;
-    }
-    String hostAddress = event.getAddress().getHostAddress();
-    long count =
-        Bukkit.getOnlinePlayers().stream()
-            .filter(p -> {
-              try {
-                return p.getAddress() != null
-                    && p.getAddress().getAddress().getHostAddress().equals(hostAddress);
-              } catch (Exception e) {
-                return false;
-              }
-            })
-            .count();
-    if (!event.getAddress().isLoopbackAddress() && count >= Config.Settings.IpCountLimit) {
-      event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.TOO_MANY_SAME_IP.get());
-    }
-  }
-
-  @EventHandler
-  public void onPlayerChat(AsyncPlayerChatEvent event) {
-    if (Config.Settings.BeforeLoginAllowChat) return;
-    Player player = event.getPlayer();
-    if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.getName())) return;
-    event.setCancelled(true);
-  }
-
-  @EventHandler
-  public void onPlayerInteract(PlayerInteractEvent event) {
-    Player player = event.getPlayer();
-    if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.getName())) return;
-    event.setCancelled(true);
-  }
-
-  @EventHandler
-  public void onInventoryOpen(InventoryOpenEvent event) {
-    if (LoginPlayerHelper.isLogin(event.getPlayer().getName())) return;
-    event.setCancelled(true);
-  }
-
-  @EventHandler
-  public void onInventoryClick(InventoryClickEvent event) {
-    if (!(event.getWhoClicked() instanceof Player)
-        || LoginPlayerHelper.isLogin(event.getWhoClicked().getName())) return;
-    event.setCancelled(true);
-  }
-
-  // 登陆之前不能攻击
-  @EventHandler
-  public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-    if (!(event.getDamager() instanceof Player)) return;
-    Player player = (Player) event.getDamager();
-    if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.getName())) return;
-    event.setCancelled(true);
-  }
-
-  // 登陆之前不会受到伤害
-  @EventHandler
-  public void onEntityDamage(EntityDamageEvent event) {
-    if (!Config.Settings.BeforeLoginNoDamage) return;
-    Entity entity = event.getEntity();
-    if (entity instanceof Player
-        && !playerIsNotMinecraftPlayer((Player) entity)
-        && !LoginPlayerHelper.isLogin(entity.getName())) {
-      event.setCancelled(true);
-    }
-  }
-
-  @EventHandler
-  public void onPlayerTeleport(PlayerTeleportEvent event) {
-    Player player = event.getPlayer();
-    if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.getName())) return;
-    if (event.getTo() == null) return;
-    if (Config.Settings.CanTpSpawnLocation && event.getTo().equals(Config.Settings.SpawnLocation))
-      return;
-    event.setCancelled(true);
-  }
-
-  // 登陆之前不能切换游戏模式 (防止使用 F3+F4 游戏模式切换器绕过限制)
-  @EventHandler(priority = EventPriority.LOWEST)
-  public void onPlayerGameModeChange(PlayerGameModeChangeEvent event) {
-    Player player = event.getPlayer();
-    if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.getName())) return;
-    event.setCancelled(true);
-  }
-
-  @EventHandler
-  public void onPlayerDropItem(PlayerDropItemEvent event) {
-    Player player = event.getPlayer();
-    if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.getName())) return;
-    event.setCancelled(true);
-  }
-
-  @EventHandler
-  public void onEntityPickupItem(EntityPickupItemEvent event) {
-    if (!(event.getEntity() instanceof Player)) return;
-    Player player = (Player) event.getEntity();
-    if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.getName())) return;
-    event.setCancelled(true);
-  }
-
-  @EventHandler
-  public void onPlayerMove(PlayerMoveEvent event) {
-    Player player = event.getPlayer();
-    if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.getName())) return;
-    Location from = event.getFrom();
-    Location to = event.getTo();
-    if (to == null) {
-      event.setCancelled(true);
-      return;
-    }
-    if (from.getBlockX() == to.getBlockX()
-        && from.getBlockZ() == to.getBlockZ()
-        && from.getY() - to.getY() >= 0.0D) {
-      return;
-    }
-    if (Config.Settings.CanTpSpawnLocation) {
-      CatScheduler.teleport(player, Config.Settings.SpawnLocation);
-    } else {
-      event.setCancelled(true);
-    }
-  }
-
-  @EventHandler
-  public void onPlayerQuit(PlayerQuitEvent event) {
-    Player player = event.getPlayer();
-    if (LoginPlayerHelper.isLogin(player.getName())) {
-      saveOfflineLocation(player);
-      CatScheduler.runTaskLater(
-          () -> {
+    @EventHandler
+    fun onPlayerLogin(event: AsyncPlayerPreLoginEvent) {
+        if (!Cache.isLoaded) {
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.CACHE_NOT_INITIALIZED.get())
+            return
+        }
+        val name = event.name
+        val loginPlayer: LoginPlayer = Cache.getIgnoreCase(name) ?: return
+        if (loginPlayer.name != name) {
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.NAME_CASE_MISMATCH.get(loginPlayer.name))
+            return
+        }
+        if (LoginPlayerHelper.isLogin(name)) {
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.PLAYER_ALREADY_ONLINE_ONLINE.get(loginPlayer.name))
+            return
+        }
+        val address = event.address
+        val hostAddress = address.hostAddress
+        val count = Bukkit.getOnlinePlayers().count { onlinePlayer ->
             try {
-              LoginPlayerHelper.remove(player.getName());
-            } catch (Exception e) {
-              player
-                  .getServer()
-                  .getLogger()
-                  .warning("Failed to remove player on quit: " + player.getName());
+                onlinePlayer.address?.address?.hostAddress == hostAddress
+            } catch (_: Exception) {
+                false
             }
-          },
-          Config.Settings.ReenterInterval);
+        }
+        if (!address.isLoopbackAddress && count >= Config.Settings.IpCountLimit) {
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.TOO_MANY_SAME_IP.get())
+        }
     }
-    try {
-      TaskAutoKick task = Task.getTaskAutoKick();
-      if (task != null) {
-        task.removePlayer(player.getName());
-      }
-    } catch (Exception e) {
-      player
-          .getServer()
-          .getLogger()
-          .warning("Failed to remove player from auto-kick list: " + player.getName());
-    }
-  }
 
-  private void saveOfflineLocation(Player player) {
-    try {
-      if (!player.isDead() || Config.Settings.DeathStateQuitRecordLocation) {
-        Config.setOfflineLocation(player);
-      }
-    } catch (Exception e) {
-      player.getServer().getLogger().warning("保存玩家离线位置失败: " + player.getName());
+    @EventHandler
+    fun onPlayerChat(event: AsyncPlayerChatEvent) {
+        if (Config.Settings.BeforeLoginAllowChat) return
+        val player = event.player
+        if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.name)) return
+        event.isCancelled = true
     }
-  }
 
-  @EventHandler
-  public void onPlayerJoin(PlayerJoinEvent event) {
-    Player player = event.getPlayer();
-    if (TwoFactorState.isRebindRequired(player.getName())) {
-      // 用过恢复码之后两步验证是关闭状态，提醒玩家重新绑定
-      player.sendMessage(MessageKey.TWO_FACTOR_REBIND_REQUIRED.get());
+    @EventHandler
+    fun onPlayerInteract(event: PlayerInteractEvent) {
+        val player = event.player
+        if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.name)) return
+        event.isCancelled = true
     }
-    if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player)) {
-      player.sendMessage(Config.Language.BEDROCK_LOGIN_BYPASS);
-      return;
-    }
-    if (Config.Settings.LoopbackLoginBypass && LoginPlayerHelper.isLoopbackPlayer(player)) {
-      LoginPlayer lp = Cache.getIgnoreCase(player.getName());
-      if (lp != null) {
-        LoginPlayerHelper.add(lp);
-      }
-      player.sendMessage(Config.Language.LOOPBACK_LOGIN_BYPASS);
-      teleportToLastLocation(player);
-      return;
-    }
-    if (Config.Settings.LoginwiththesameIP && LoginPlayerHelper.recordCurrentIP(player)) {
-      LoginPlayer lp = Cache.getIgnoreCase(player.getName());
-      if (lp != null) {
-        LoginPlayerHelper.add(lp);
-      }
-      player.sendMessage(Config.Language.LOGIN_WITH_THE_SAME_IP);
-      teleportToLastLocation(player);
-      return;
-    }
-    Cache.refresh(player.getName());
-    if (Config.Settings.CanTpSpawnLocation) {
-      CatScheduler.teleport(player, Config.Settings.SpawnLocation);
-    }
-  }
 
-  private void teleportToLastLocation(Player player) {
-    if (!Config.Settings.AfterLoginBack || !Config.Settings.CanTpSpawnLocation) return;
-    Config.getOfflineLocation(player)
-        .ifPresent(location ->
-            CatScheduler.runTaskLater(() -> CatScheduler.teleport(player, location), 1L));
-  }
+    @EventHandler
+    fun onInventoryOpen(event: InventoryOpenEvent) {
+        if (!LoginPlayerHelper.isLogin(event.player.name)) event.isCancelled = true
+    }
 
-  // id只能下划线字母数字
-  @EventHandler
-  public void onPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
-    String name = event.getName();
-    if (Config.Settings.LimitChineseID && !name.matches(Config.Settings.NamePattern)) {
-      event.disallow(
-          AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.INVALID_NAME_PATTERN.get());
-      return;
+    @EventHandler
+    fun onInventoryClick(event: InventoryClickEvent) {
+        val player = event.whoClicked as? Player ?: return
+        if (!LoginPlayerHelper.isLogin(player.name)) event.isCancelled = true
     }
-    if (checkFloodgatePrefixProtect(event, name)) return;
-    if (name.length() < Config.Settings.MinLengthID) {
-      event.disallow(
-          AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
-          MessageKey.NAME_TOO_SHORT.get(Config.Settings.MinLengthID));
-    } else if (name.length() > Config.Settings.MaxLengthID) {
-      event.disallow(
-          AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
-          MessageKey.NAME_TOO_LONG.get(Config.Settings.MaxLengthID));
-    }
-  }
 
-  private boolean checkFloodgatePrefixProtect(AsyncPlayerPreLoginEvent event, String name) {
-    if (!Config.Settings.FloodgatePrefixProtect
-        || Bukkit.getPluginManager().getPlugin("floodgate") == null) {
-      return false;
+    @EventHandler
+    fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {
+        val player = event.damager as? Player ?: return
+        if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.name)) return
+        event.isCancelled = true
     }
-    try {
-      String prefix = FloodgateApi.getInstance().getPlayerPrefix();
-      if (name.toLowerCase().startsWith(prefix.toLowerCase())
-          && !FloodgateApi.getInstance().isFloodgatePlayer(event.getUniqueId())) {
-        event.disallow(
-            AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
-            MessageKey.ILLEGAL_BEDROCK_NAME.get(prefix));
-        return true;
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
+
+    @EventHandler
+    fun onEntityDamage(event: EntityDamageEvent) {
+        if (!Config.Settings.BeforeLoginNoDamage) return
+        val entity: Entity = event.entity
+        val player = entity as? Player ?: return
+        if (!playerIsNotMinecraftPlayer(player) && !LoginPlayerHelper.isLogin(entity.name)) {
+            event.isCancelled = true
+        }
     }
-    return false;
-  }
+
+    @EventHandler
+    fun onPlayerTeleport(event: PlayerTeleportEvent) {
+        val player = event.player
+        if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.name)) return
+        val target = event.to ?: return
+        if (Config.Settings.CanTpSpawnLocation && target == Config.Settings.SpawnLocation) return
+        event.isCancelled = true
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    fun onPlayerGameModeChange(event: PlayerGameModeChangeEvent) {
+        val player = event.player
+        if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.name)) return
+        event.isCancelled = true
+    }
+
+    @EventHandler
+    fun onPlayerDropItem(event: PlayerDropItemEvent) {
+        val player = event.player
+        if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.name)) return
+        event.isCancelled = true
+    }
+
+    @EventHandler
+    fun onEntityPickupItem(event: EntityPickupItemEvent) {
+        val player = event.entity as? Player ?: return
+        if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.name)) return
+        event.isCancelled = true
+    }
+
+    @EventHandler
+    fun onPlayerMove(event: PlayerMoveEvent) {
+        val player = event.player
+        if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.name)) return
+        val from = event.from
+        val to = event.to
+        if (to == null) {
+            event.isCancelled = true
+            return
+        }
+        if (from.blockX == to.blockX && from.blockZ == to.blockZ && from.y - to.y >= 0.0) return
+        if (Config.Settings.CanTpSpawnLocation) {
+            CatScheduler.teleport(player, Config.Settings.SpawnLocation)
+        } else {
+            event.isCancelled = true
+        }
+    }
+
+    @EventHandler
+    fun onPlayerQuit(event: PlayerQuitEvent) {
+        val player = event.player
+        if (LoginPlayerHelper.isLogin(player.name)) {
+            saveOfflineLocation(player)
+            CatScheduler.runTaskLater(Runnable {
+                try {
+                    LoginPlayerHelper.remove(player.name)
+                } catch (_: Exception) {
+                    player.server.logger.warning("Failed to remove player on quit: ${player.name}")
+                }
+            }, Config.Settings.ReenterInterval)
+        }
+        try {
+            (Task.getTaskAutoKick() as? TaskAutoKick)?.removePlayer(player.name)
+        } catch (_: Exception) {
+            player.server.logger.warning("Failed to remove player from auto-kick list: ${player.name}")
+        }
+    }
+
+    private fun saveOfflineLocation(player: Player) {
+        try {
+            if (!player.isDead || Config.Settings.DeathStateQuitRecordLocation) Config.setOfflineLocation(player)
+        } catch (_: Exception) {
+            player.server.logger.warning("保存玩家离线位置失败: ${player.name}")
+        }
+    }
+
+    @EventHandler
+    fun onPlayerJoin(event: PlayerJoinEvent) {
+        val player = event.player
+        if (TwoFactorState.isRebindRequired(player.name)) {
+            player.sendMessage(MessageKey.TWO_FACTOR_REBIND_REQUIRED.get())
+        }
+        if (Config.Settings.BedrockLoginBypass && LoginPlayerHelper.isFloodgatePlayer(player)) {
+            player.sendMessage(Config.Language.BEDROCK_LOGIN_BYPASS)
+            return
+        }
+        if (Config.Settings.LoopbackLoginBypass && LoginPlayerHelper.isLoopbackPlayer(player)) {
+            Cache.getIgnoreCase(player.name)?.let { LoginPlayerHelper.add(it) }
+            player.sendMessage(Config.Language.LOOPBACK_LOGIN_BYPASS)
+            teleportToLastLocation(player)
+            return
+        }
+        if (Config.Settings.LoginwiththesameIP && LoginPlayerHelper.recordCurrentIP(player)) {
+            Cache.getIgnoreCase(player.name)?.let { LoginPlayerHelper.add(it) }
+            player.sendMessage(Config.Language.LOGIN_WITH_THE_SAME_IP)
+            teleportToLastLocation(player)
+            return
+        }
+        Cache.refresh(player.name)
+        if (Config.Settings.CanTpSpawnLocation) CatScheduler.teleport(player, Config.Settings.SpawnLocation)
+    }
+
+    private fun teleportToLastLocation(player: Player) {
+        if (!Config.Settings.AfterLoginBack || !Config.Settings.CanTpSpawnLocation) return
+        Config.getOfflineLocation(player).ifPresent { location ->
+            CatScheduler.runTaskLater(Runnable { CatScheduler.teleport(player, location) }, 1L)
+        }
+    }
+
+    @EventHandler
+    fun onPlayerPreLogin(event: AsyncPlayerPreLoginEvent) {
+        val name = event.name
+        if (Config.Settings.LimitChineseID && !name.matches(Regex(Config.Settings.NamePattern))) {
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.INVALID_NAME_PATTERN.get())
+            return
+        }
+        if (checkFloodgatePrefixProtect(event, name)) return
+        if (name.length < Config.Settings.MinLengthID) {
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.NAME_TOO_SHORT.get(Config.Settings.MinLengthID))
+        } else if (name.length > Config.Settings.MaxLengthID) {
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.NAME_TOO_LONG.get(Config.Settings.MaxLengthID))
+        }
+    }
+
+    private fun checkFloodgatePrefixProtect(event: AsyncPlayerPreLoginEvent, name: String): Boolean {
+        if (!Config.Settings.FloodgatePrefixProtect || Bukkit.getPluginManager().getPlugin("floodgate") == null) return false
+        return try {
+            val prefix = FloodgateApi.getInstance().playerPrefix
+            if (name.startsWith(prefix, ignoreCase = true) && !FloodgateApi.getInstance().isFloodgatePlayer(event.uniqueId)) {
+                event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.ILLEGAL_BEDROCK_NAME.get(prefix))
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
 }

@@ -1,5 +1,6 @@
 plugins {
     java
+    kotlin("jvm") version "2.2.20"
     id("com.gradleup.shadow") version "9.2.2"
 }
 
@@ -18,9 +19,7 @@ dependencies {
     compileOnly("net.dmulloy2:ProtocolLib:5.4.0")
     compileOnly("net.md-5:bungeecord-api:1.21-R0.4")
     compileOnly("com.velocitypowered:velocity-api:4.3.1")
-    compileOnly("org.projectlombok:lombok:1.18.48")
     compileOnly("org.geysermc.floodgate:api:2.2.5-SNAPSHOT")
-    annotationProcessor("org.projectlombok:lombok:1.18.48")
 
     implementation("org.xerial:sqlite-jdbc:3.54.1.0")
     implementation("mysql:mysql-connector-java:8.0.33")
@@ -41,6 +40,10 @@ tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
     options.release.set(8)
     options.compilerArgs.addAll(listOf("-Xlint:deprecation", "-Xlint:unchecked"))
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
 }
 
 tasks.processResources {

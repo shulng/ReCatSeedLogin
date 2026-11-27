@@ -1,43 +1,42 @@
-package cc.baka9.catseedlogin.bukkit.task;
+package cc.baka9.catseedlogin.bukkit.task
 
-import cc.baka9.catseedlogin.bukkit.CatScheduler;
-import cc.baka9.catseedlogin.bukkit.CatSeedLogin;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import space.arim.morepaperlib.scheduling.ScheduledTask;
+import cc.baka9.catseedlogin.bukkit.CatScheduler
+import cc.baka9.catseedlogin.bukkit.CatSeedLogin
+import java.util.concurrent.CopyOnWriteArrayList
+import space.arim.morepaperlib.scheduling.ScheduledTask
 
-public abstract class Task implements Runnable {
-  private static final List<ScheduledTask> scheduledTasks = new CopyOnWriteArrayList<>();
-  private static TaskAutoKick taskAutoKick;
-  private static TaskSendLoginMessage taskSendLoginMessage;
+abstract class Task : Runnable {
+    companion object {
+        private val scheduledTasks = CopyOnWriteArrayList<ScheduledTask>()
+        private var taskAutoKick: TaskAutoKick? = null
+        private var taskSendLoginMessage: TaskSendLoginMessage? = null
 
-  protected Task() {}
+        @JvmStatic
+        fun getTaskAutoKick(): TaskAutoKick = taskAutoKick ?: TaskAutoKick().also { taskAutoKick = it }
 
-  public static TaskAutoKick getTaskAutoKick() {
-    return taskAutoKick == null ? (taskAutoKick = new TaskAutoKick()) : taskAutoKick;
-  }
+        @JvmStatic
+        fun getTaskSendLoginMessage(): TaskSendLoginMessage =
+            taskSendLoginMessage ?: TaskSendLoginMessage().also { taskSendLoginMessage = it }
 
-  public static TaskSendLoginMessage getTaskSendLoginMessage() {
-    return taskSendLoginMessage == null
-        ? (taskSendLoginMessage = new TaskSendLoginMessage())
-        : taskSendLoginMessage;
-  }
+        @JvmStatic
+        fun runAll() {
+            runTaskTimer(getTaskSendLoginMessage(), 20 * 5L)
+            runTaskTimer(getTaskAutoKick(), 20 * 5L)
+        }
 
-  public static void runAll() {
-    runTaskTimer(getTaskSendLoginMessage(), 20 * 5);
-    runTaskTimer(getTaskAutoKick(), 20 * 5);
-  }
+        @JvmStatic
+        fun cancelAll() {
+            scheduledTasks.forEach { it.cancel() }
+            scheduledTasks.clear()
+        }
 
-  public static void cancelAll() {
-    scheduledTasks.forEach(ScheduledTask::cancel);
-    scheduledTasks.clear();
-  }
-
-  public static void runTaskTimer(Runnable runnable, long delay) {
-    try {
-      scheduledTasks.add(CatScheduler.runTaskTimer(runnable, 0, delay));
-    } catch (Exception e) {
-      CatSeedLogin.instance.getLogger().severe(e.getMessage());
+        @JvmStatic
+        fun runTaskTimer(runnable: Runnable, delay: Long) {
+            try {
+                scheduledTasks.add(CatScheduler.runTaskTimer(runnable, 0, delay))
+            } catch (e: Exception) {
+                CatSeedLogin.instance.logger.severe(e.message)
+            }
+        }
     }
-  }
 }

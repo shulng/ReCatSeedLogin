@@ -1,254 +1,237 @@
-package cc.baka9.catseedlogin.bukkit;
+package cc.baka9.catseedlogin.bukkit
 
-import cc.baka9.catseedlogin.bukkit.command.*;
-import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
-import cc.baka9.catseedlogin.bukkit.config.BukkitPlatformAdapter;
-import cc.baka9.catseedlogin.bukkit.database.*;
-import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
-import cc.baka9.catseedlogin.bukkit.object.TwoFactorState;
-import cc.baka9.catseedlogin.bukkit.task.Task;
-import cc.baka9.catseedlogin.bukkit.util.TwoFactorMessageUtil;
-import cc.baka9.catseedlogin.common.i18n.I18n;
-import cc.baka9.catseedlogin.common.util.SecretCodec;
-import cc.baka9.catseedlogin.common.util.TabCompleteUtil;
-import java.util.Arrays;
-import java.util.Collections;
-import org.bukkit.Bukkit;
-import org.bukkit.command.PluginCommand;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.java.JavaPlugin;
-import space.arim.morepaperlib.MorePaperLib;
+import cc.baka9.catseedlogin.bukkit.command.CommandBindEmail
+import cc.baka9.catseedlogin.bukkit.command.CommandCatSeedLogin
+import cc.baka9.catseedlogin.bukkit.command.CommandChangePassword
+import cc.baka9.catseedlogin.bukkit.command.CommandLogin
+import cc.baka9.catseedlogin.bukkit.command.CommandRegister
+import cc.baka9.catseedlogin.bukkit.command.CommandResetPassword
+import cc.baka9.catseedlogin.bukkit.command.CommandTwoFactor
+import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager
+import cc.baka9.catseedlogin.bukkit.config.BukkitPlatformAdapter
+import cc.baka9.catseedlogin.bukkit.database.MySQL
+import cc.baka9.catseedlogin.bukkit.database.SQL
+import cc.baka9.catseedlogin.bukkit.database.SQLite
+import cc.baka9.catseedlogin.bukkit.`object`.LoginPlayerHelper
+import cc.baka9.catseedlogin.bukkit.`object`.TwoFactorState
+import cc.baka9.catseedlogin.bukkit.task.Task
+import cc.baka9.catseedlogin.bukkit.util.TwoFactorMessageUtil
+import cc.baka9.catseedlogin.common.i18n.I18n
+import cc.baka9.catseedlogin.common.util.SecretCodec
+import cc.baka9.catseedlogin.common.util.TabCompleteUtil
+import java.util.Collections
+import org.bukkit.Bukkit
+import org.bukkit.command.PluginCommand
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.plugin.java.JavaPlugin
+import space.arim.morepaperlib.MorePaperLib
 
-public class CatSeedLogin extends JavaPlugin implements Listener {
+class CatSeedLogin : JavaPlugin(), Listener {
+    companion object {
+        @Volatile
+        @JvmStatic
+        lateinit var instance: CatSeedLogin
 
-  public static volatile CatSeedLogin instance;
-  public static volatile SQL sql;
-  public static volatile boolean loadProtocolLib = false;
-  public static volatile MorePaperLib morePaperLib;
+        @Volatile
+        @JvmStatic
+        lateinit var sql: SQL
 
-  /** 旧版独立失明插件，功能已合并到本插件，同时安装会重复施加失明效果。 */
-  private static final String LEGACY_BLINDING_PLUGIN = "CatSeedLoginBlinding";
+        @Volatile
+        @JvmStatic
+        var loadProtocolLib: Boolean = false
 
-  private BukkitConfigManager configManager;
-  private BukkitPlatformAdapter platformAdapter;
+        @Volatile
+        @JvmStatic
+        lateinit var morePaperLib: MorePaperLib
 
-  @Override
-  public void onEnable() {
-    instance = this;
-    morePaperLib = new MorePaperLib(this);
-    CatScheduler.init(morePaperLib);
-    getServer().getPluginManager().registerEvents(this, this);
-
-    configManager = new BukkitConfigManager(this);
-    platformAdapter = new BukkitPlatformAdapter(this, configManager.getI18n());
-
-    try {
-      configManager.reload();
-      Config.load();
-    } catch (Exception e) {
-      e.printStackTrace();
-      getServer().getLogger().warning("加载配置文件时出错，请检查你的配置文件。");
+        private const val LEGACY_BLINDING_PLUGIN = "CatSeedLoginBlinding"
     }
 
-    initTwoFactorSupport();
+    private lateinit var configManager: BukkitConfigManager
+    private lateinit var platformAdapter: BukkitPlatformAdapter
 
-    sql = configManager.isMySQL() ? new MySQL(this) : new SQLite(this);
-    try {
-      sql.init();
-      Cache.refreshAll();
-    } catch (Exception e) {
-      getLogger().warning("§c加载数据库时出错");
-      e.printStackTrace();
-      getServer().getPluginManager().disablePlugin(this);
-      return;
-    }
+    override fun onEnable() {
+        instance = this
+        morePaperLib = MorePaperLib(this)
+        CatScheduler.init(morePaperLib)
+        server.pluginManager.registerEvents(this, this)
 
-    getServer().getPluginManager().registerEvents(new Listeners(), this);
-    checkBlindingPluginConflict();
-    getServer().getPluginManager().registerEvents(new BlindingListeners(), this);
-
-    if (configManager.isEmptyBackpack()) {
-      try {
-        Class.forName("com.comphenix.protocol.ProtocolLib");
-        ProtocolLibListeners.enable();
-        loadProtocolLib = true;
-      } catch (ClassNotFoundException e) {
-        getLogger().warning("服务器没有装载ProtocolLib插件，这将无法使用登录前隐藏背包");
-      }
-    }
-
-    PluginContext.init(this, sql, loadProtocolLib);
-
-    if (configManager.isEnable()) {
-      Communication.socketServerStartAsync();
-    }
-
-    if (Bukkit.getPluginManager().getPlugin("floodgate") != null
-        && configManager.isBedrockLoginBypass()) {
-      getLogger().info("检测到floodgate，基岩版兼容已装载");
-    }
-
-    registerCommands();
-
-    Task.runAll();
-  }
-
-  /** 两步验证的地基：探测 adventure 可用性，并准备好 TOTP 密钥文件。 */
-  private void initTwoFactorSupport() {
-    TwoFactorMessageUtil.probe();
-    try {
-      SecretCodec.init(getDataFolder());
-    } catch (Exception e) {
-      getLogger().warning("初始化两步验证密钥文件失败，两步验证将不可用: " + e.getMessage());
-    }
-  }
-
-  /** 登录前失明已内置，若服务器仍安装 CatSeedLoginBlinding 会重复施加失明效果，这里提示管理员移除。 */
-  private void checkBlindingPluginConflict() {
-    if (getServer().getPluginManager().getPlugin(LEGACY_BLINDING_PLUGIN) == null) return;
-    getLogger().warning("检测到 " + LEGACY_BLINDING_PLUGIN + " 插件，与内置的登录前失明功能冲突！");
-    getLogger()
-        .warning("请删除 " + LEGACY_BLINDING_PLUGIN + " 插件，改用 settings.before-login.blinding 控制该功能");
-  }
-
-  private void registerCommands() {
-    registerLoginCommand();
-    registerRegisterCommand();
-    registerChangePasswordCommand();
-    registerBindEmailCommand();
-    registerResetPasswordCommand();
-    registerTwoFactorCommand();
-    registerCatSeedLoginCommand();
-  }
-
-  private void registerTwoFactorCommand() {
-    PluginCommand cmd = getServer().getPluginCommand("2fa");
-    if (cmd == null) return;
-    CommandTwoFactor executor = new CommandTwoFactor();
-    cmd.setExecutor(executor);
-    cmd.setTabCompleter(executor);
-  }
-
-  private void registerLoginCommand() {
-    PluginCommand cmd = getServer().getPluginCommand("login");
-    if (cmd == null) return;
-    cmd.setExecutor(new CommandLogin());
-    cmd.setTabCompleter((commandSender, command, s, args) ->
-        args.length == 1
-            ? TabCompleteUtil.filter(Collections.singletonList("密码"), args[0])
-            : Collections.emptyList());
-  }
-
-  private void registerRegisterCommand() {
-    PluginCommand cmd = getServer().getPluginCommand("register");
-    if (cmd == null) return;
-    cmd.setExecutor(new CommandRegister());
-    cmd.setTabCompleter((commandSender, command, s, args) ->
-        args.length == 1
-            ? TabCompleteUtil.filter(Collections.singletonList("密码 重复密码"), args[0])
-            : Collections.emptyList());
-  }
-
-  private void registerChangePasswordCommand() {
-    PluginCommand cmd = getServer().getPluginCommand("changepassword");
-    if (cmd == null) return;
-    cmd.setExecutor(new CommandChangePassword());
-    cmd.setTabCompleter((commandSender, command, s, args) ->
-        args.length == 1
-            ? TabCompleteUtil.filter(Collections.singletonList("旧密码 新密码 重复新密码"), args[0])
-            : Collections.emptyList());
-  }
-
-  private void registerBindEmailCommand() {
-    PluginCommand bindemail = getServer().getPluginCommand("bindemail");
-    if (bindemail == null) return;
-    bindemail.setExecutor(new CommandBindEmail());
-    bindemail.setTabCompleter((commandSender, command, s, args) -> {
-      if (args.length == 1) {
-        return TabCompleteUtil.filter(Arrays.asList("set", "verify"), args[0]);
-      }
-      if (args.length == 2) {
-        if ("set".equalsIgnoreCase(args[0])) {
-          return TabCompleteUtil.filter(Collections.singletonList("需要绑定的邮箱"), args[1]);
+        configManager = BukkitConfigManager(this)
+        platformAdapter = BukkitPlatformAdapter(this, configManager.getI18n())
+        try {
+            configManager.reload()
+            Config.load()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            server.logger.warning("加载配置文件时出错，请检查你的配置文件。")
         }
-        if ("verify".equalsIgnoreCase(args[0])) {
-          return TabCompleteUtil.filter(Collections.singletonList("邮箱获取的验证码"), args[1]);
+
+        initTwoFactorSupport()
+        val database: SQL = if (configManager.isMySQL()) MySQL(this) else SQLite(this)
+        sql = database
+        try {
+            database.init()
+            Cache.refreshAll()
+        } catch (e: Exception) {
+            logger.warning("§c加载数据库时出错")
+            e.printStackTrace()
+            server.pluginManager.disablePlugin(this)
+            return
         }
-      }
-      return Collections.emptyList();
-    });
-  }
 
-  private void registerResetPasswordCommand() {
-    PluginCommand resetpassword = getServer().getPluginCommand("resetpassword");
-    if (resetpassword == null) return;
-    resetpassword.setExecutor(new CommandResetPassword());
-    resetpassword.setTabCompleter((commandSender, command, s, args) -> {
-      if (args.length == 1) {
-        return TabCompleteUtil.filter(Arrays.asList("forget", "re"), args[0]);
-      }
-      if (args.length == 2 && "re".equalsIgnoreCase(args[0])) {
-        return TabCompleteUtil.filter(Collections.singletonList("验证码"), args[1]);
-      }
-      if (args.length == 3 && "re".equalsIgnoreCase(args[0])) {
-        return TabCompleteUtil.filter(Collections.singletonList("新密码"), args[2]);
-      }
-      return Collections.emptyList();
-    });
-  }
+        server.pluginManager.registerEvents(Listeners(), this)
+        checkBlindingPluginConflict()
+        server.pluginManager.registerEvents(BlindingListeners(), this)
 
-  private void registerCatSeedLoginCommand() {
-    PluginCommand cmd = getServer().getPluginCommand("catseedlogin");
-    if (cmd == null) return;
-    CommandCatSeedLogin executor = new CommandCatSeedLogin();
-    cmd.setExecutor(executor);
-    cmd.setTabCompleter(executor);
-  }
+        if (configManager.isEmptyBackpack()) {
+            try {
+                Class.forName("com.comphenix.protocol.ProtocolLib")
+                ProtocolLibListeners.enable()
+                loadProtocolLib = true
+            } catch (_: ClassNotFoundException) {
+                logger.warning("服务器没有装载ProtocolLib插件，这将无法使用登录前隐藏背包")
+            }
+        }
 
-  @EventHandler
-  public void onPlayerQuit(PlayerQuitEvent event) {
-    LoginPlayerHelper.onPlayerQuit(event.getPlayer().getName());
-  }
+        PluginContext.init(this, database, loadProtocolLib)
+        if (configManager.isEnable()) Communication.socketServerStartAsync()
+        if (Bukkit.getPluginManager().getPlugin("floodgate") != null && configManager.isBedrockLoginBypass()) {
+            logger.info("检测到floodgate，基岩版兼容已装载")
+        }
 
-  @Override
-  public void onDisable() {
-    Task.cancelAll();
-    TwoFactorState.clear();
-    Bukkit.getOnlinePlayers()
-        .forEach(p -> {
-          if (LoginPlayerHelper.isLogin(p.getName())
-              && (!p.isDead() || configManager.isDeathStateQuitRecordLocation())) {
-            Config.setOfflineLocationSync(p);
-          }
-        });
-
-    try {
-      sql.closeConnection();
-    } catch (Exception e) {
-      getLogger().warning("关闭数据库连接时出错");
-      e.printStackTrace();
+        registerCommands()
+        Task.runAll()
     }
-    Communication.socketServerStop();
-    super.onDisable();
-  }
 
-  public void runTaskAsync(Runnable runnable) {
-    if (runnable != null) {
-      CatScheduler.runTaskAsync(runnable);
+    private fun initTwoFactorSupport() {
+        TwoFactorMessageUtil.probe()
+        try {
+            SecretCodec.init(dataFolder)
+        } catch (e: Exception) {
+            logger.warning("初始化两步验证密钥文件失败，两步验证将不可用: ${e.message}")
+        }
     }
-  }
 
-  public BukkitConfigManager getConfigManager() {
-    return configManager;
-  }
+    private fun checkBlindingPluginConflict() {
+        if (server.pluginManager.getPlugin(LEGACY_BLINDING_PLUGIN) == null) return
+        logger.warning("检测到 $LEGACY_BLINDING_PLUGIN 插件，与内置的登录前失明功能冲突！")
+        logger.warning("请删除 $LEGACY_BLINDING_PLUGIN 插件，改用 settings.before-login.blinding 控制该功能")
+    }
 
-  public BukkitPlatformAdapter getPlatformAdapter() {
-    return platformAdapter;
-  }
+    private fun registerCommands() {
+        registerLoginCommand()
+        registerRegisterCommand()
+        registerChangePasswordCommand()
+        registerBindEmailCommand()
+        registerResetPasswordCommand()
+        registerTwoFactorCommand()
+        registerCatSeedLoginCommand()
+    }
 
-  public I18n getI18n() {
-    return configManager.getI18n();
-  }
+    private fun registerTwoFactorCommand() {
+        val command = server.getPluginCommand("2fa") ?: return
+        val executor = CommandTwoFactor()
+        command.setExecutor(executor)
+        command.tabCompleter = executor
+    }
+
+    private fun registerLoginCommand() {
+        val command = server.getPluginCommand("login") ?: return
+        command.setExecutor(CommandLogin())
+        command.setTabCompleter { _, _, _, args ->
+            if (args.size == 1) TabCompleteUtil.filter(Collections.singletonList("密码"), args[0])
+            else emptyList()
+        }
+    }
+
+    private fun registerRegisterCommand() {
+        val command = server.getPluginCommand("register") ?: return
+        command.setExecutor(CommandRegister())
+        command.setTabCompleter { _, _, _, args ->
+            if (args.size == 1) TabCompleteUtil.filter(Collections.singletonList("密码 重复密码"), args[0])
+            else emptyList()
+        }
+    }
+
+    private fun registerChangePasswordCommand() {
+        val command = server.getPluginCommand("changepassword") ?: return
+        command.setExecutor(CommandChangePassword())
+        command.setTabCompleter { _, _, _, args ->
+            if (args.size == 1) TabCompleteUtil.filter(Collections.singletonList("旧密码 新密码 重复新密码"), args[0])
+            else emptyList()
+        }
+    }
+
+    private fun registerBindEmailCommand() {
+        val command = server.getPluginCommand("bindemail") ?: return
+        command.setExecutor(CommandBindEmail())
+        command.setTabCompleter { _, _, _, args ->
+            when {
+                args.size == 1 -> TabCompleteUtil.filter(listOf("set", "verify"), args[0])
+                args.size == 2 && args[0].equals("set", ignoreCase = true) ->
+                    TabCompleteUtil.filter(Collections.singletonList("需要绑定的邮箱"), args[1])
+                args.size == 2 && args[0].equals("verify", ignoreCase = true) ->
+                    TabCompleteUtil.filter(Collections.singletonList("邮箱获取的验证码"), args[1])
+                else -> emptyList()
+            }
+        }
+    }
+
+    private fun registerResetPasswordCommand() {
+        val command = server.getPluginCommand("resetpassword") ?: return
+        command.setExecutor(CommandResetPassword())
+        command.setTabCompleter { _, _, _, args ->
+            when {
+                args.size == 1 -> TabCompleteUtil.filter(listOf("forget", "re"), args[0])
+                args.size == 2 && args[0].equals("re", ignoreCase = true) ->
+                    TabCompleteUtil.filter(Collections.singletonList("验证码"), args[1])
+                args.size == 3 && args[0].equals("re", ignoreCase = true) ->
+                    TabCompleteUtil.filter(Collections.singletonList("新密码"), args[2])
+                else -> emptyList()
+            }
+        }
+    }
+
+    private fun registerCatSeedLoginCommand() {
+        val command = server.getPluginCommand("catseedlogin") ?: return
+        val executor = CommandCatSeedLogin()
+        command.setExecutor(executor)
+        command.tabCompleter = executor
+    }
+
+    @EventHandler
+    fun onPlayerQuit(event: PlayerQuitEvent) {
+        LoginPlayerHelper.onPlayerQuit(event.player.name)
+    }
+
+    override fun onDisable() {
+        Task.cancelAll()
+        TwoFactorState.clear()
+        Bukkit.getOnlinePlayers().forEach { player ->
+            if (LoginPlayerHelper.isLogin(player.name) && (!player.isDead || configManager.isDeathStateQuitRecordLocation())) {
+                Config.setOfflineLocationSync(player)
+            }
+        }
+
+        try {
+            sql.closeConnection()
+        } catch (e: Exception) {
+            logger.warning("关闭数据库连接时出错")
+            e.printStackTrace()
+        }
+        Communication.socketServerStop()
+        super.onDisable()
+    }
+
+    fun runTaskAsync(runnable: Runnable?) {
+        if (runnable != null) CatScheduler.runTaskAsync(runnable)
+    }
+
+    fun getConfigManager(): BukkitConfigManager = configManager
+
+    fun getPlatformAdapter(): BukkitPlatformAdapter = platformAdapter
+
+    fun getI18n(): I18n = configManager.getI18n()
 }

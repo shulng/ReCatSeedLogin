@@ -1,55 +1,45 @@
-package cc.baka9.catseedlogin.bukkit;
+package cc.baka9.catseedlogin.bukkit
 
-import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
-import cc.baka9.catseedlogin.bukkit.database.SQL;
-import java.util.logging.Logger;
+import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager
+import cc.baka9.catseedlogin.bukkit.database.SQL
+import java.util.logging.Logger
 
-public class PluginContext {
-  private static volatile PluginContext instance;
+class PluginContext private constructor(
+    private val pluginInstance: CatSeedLogin,
+    private var database: SQL,
+    private val protocolLibLoaded: Boolean
+) {
+    companion object {
+        @Volatile
+        private var instance: PluginContext? = null
 
-  private final CatSeedLogin plugin;
-  private SQL sql;
-  private boolean loadProtocolLib;
+        @JvmStatic
+        fun init(plugin: CatSeedLogin, sql: SQL, loadProtocolLib: Boolean) {
+            instance = PluginContext(plugin, sql, loadProtocolLib)
+        }
 
-  private PluginContext(CatSeedLogin plugin, SQL sql, boolean loadProtocolLib) {
-    this.plugin = plugin;
-    this.sql = sql;
-    this.loadProtocolLib = loadProtocolLib;
-  }
+        @JvmStatic
+        fun get(): PluginContext = instance ?: error("PluginContext has not been initialized")
 
-  public static void init(CatSeedLogin plugin, SQL sql, boolean loadProtocolLib) {
-    instance = new PluginContext(plugin, sql, loadProtocolLib);
-  }
+        @JvmStatic
+        fun getSql(): SQL = get().database
 
-  public static PluginContext get() {
-    if (instance == null) {
-      throw new IllegalStateException("PluginContext has not been initialized");
+        @JvmStatic
+        fun setSql(sql: SQL) {
+            get().database = sql
+            CatSeedLogin.sql = sql
+        }
+
+        @JvmStatic
+        fun isLoadProtocolLib(): Boolean = get().protocolLibLoaded
+
+        @JvmStatic
+        fun getLogger(): Logger = get().pluginInstance.logger
+
+        @JvmStatic
+        fun getConfigManager(): BukkitConfigManager = get().pluginInstance.getConfigManager()
+
+        @JvmStatic
+        fun getPlugin(): CatSeedLogin = get().pluginInstance
     }
-    return instance;
-  }
-
-  public static SQL getSql() {
-    return get().sql;
-  }
-
-  public static void setSql(SQL sql) {
-    get().sql = sql;
-    get().plugin.sql = sql;
-  }
-
-  public static boolean isLoadProtocolLib() {
-    return get().loadProtocolLib;
-  }
-
-  public static Logger getLogger() {
-    return get().plugin.getLogger();
-  }
-
-  public static BukkitConfigManager getConfigManager() {
-    return get().plugin.getConfigManager();
-  }
-
-  public static CatSeedLogin getPlugin() {
-    return get().plugin;
-  }
 }
