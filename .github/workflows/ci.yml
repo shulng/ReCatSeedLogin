@@ -26,14 +26,17 @@ jobs:
         with:
           distribution: temurin
           java-version: '25'
-          cache: maven
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build and test
-        run: mvn --batch-mode --no-transfer-progress clean verify
+        run: ./gradlew build
 
       - name: Upload plugin JAR
         uses: actions/upload-artifact@v7
         with:
           name: CatSeedLogin
+          if-no-files-found: error
           path: |
-            target/*.jar
+            build/libs/*.jar
