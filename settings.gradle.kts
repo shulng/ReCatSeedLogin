@@ -18,3 +18,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "CatSeedLogin"
+include("common", "bukkit", "bungee", "velocity")

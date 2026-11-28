@@ -78,49 +78,20 @@
 
 ## 🏗️ 项目架构
 
-插件采用单模块Gradle架构，编译为一个JAR包，同时支持Bukkit/BungeeCord/Velocity三个平台：
+项目分为四个 Gradle 子项目。三个平台模块各自依赖 `common`，平台之间无构建依赖。根项目将它们打包成一个 JAR，供三个平台部署。
 
 ```
 ReCatSeedLogin/
-├── build.gradle.kts             (Gradle Kotlin DSL 构建配置)
-├── settings.gradle.kts          (Gradle 项目和仓库配置)
-├── src/main/java/cc/baka9/catseedlogin/
-│   ├── bukkit/                  → Bukkit/Spigot/Paper/Folia 服务端实现
-│   │   ├── CatSeedLogin.java    → 服务端插件主类
-│   │   ├── CatSeedLoginAPI.java → 开发者API
-│   │   ├── command/             → 指令实现（登录/注册/改密/邮箱/管理）
-│   │   ├── config/              → Bukkit配置管理
-│   │   ├── database/            → 数据库实现（SQLite/MySQL）
-│   │   ├── event/               → 自定义事件
-│   │   ├── object/              → 登录状态管理、邮箱验证码
-│   │   ├── task/                → 定时任务（自动踢出、登录提示）
-│   │   └── util/                → 邮件发送工具
-│   ├── bungee/                  → BungeeCord 代理端实现
-│   │   ├── PluginMain.java      → BungeeCord插件主类
-│   │   ├── BungeeCommunication.java → Socket通信客户端
-│   │   ├── BungeeCommands.java  → 代理端指令
-│   │   ├── Listeners.java       → 代理端事件监听
-│   │   └── config/              → BungeeCord配置管理
-│   ├── velocity/                → Velocity 代理端实现
-│   │   ├── PluginMain.java      → Velocity插件主类
-│   │   ├── VelocityCommunication.java → Socket通信客户端
-│   │   ├── Commands.java        → 代理端指令
-│   │   ├── Listeners.java       → 代理端事件监听
-│   │   └── config/              → Velocity配置管理
-│   └── common/                  → 跨平台共享代码
-│       ├── api/                 → 平台抽象接口（PlatformAdapter、配置接口）
-│       ├── communication/       → Socket通信基类
-│       ├── config/              → 配置管理基类、YAML解析
-│       ├── database/            → 数据库连接抽象
-│       ├── i18n/                → 国际化引擎（I18n、MessageKey）
-│       ├── model/               → 数据模型（LoginPlayer）
-│       └── util/                → 加密、验证、日期工具类
-└── src/main/resources/
-    ├── plugin.yml               → Bukkit插件描述文件
-    ├── bungee.yml               → BungeeCord插件描述文件
-    ├── velocity-plugin.json     → Velocity插件描述文件
-    ├── config.yml               → 统一配置文件（所有平台共享）
-    └── languages/               → 语言文件（zh-CN.yml、en-US.yml）
+├── build.gradle.kts      → 公共编译设置与单 JAR 打包
+├── settings.gradle.kts   → 子项目和仓库配置
+├── common/              → 平台接口、配置、国际化、通信和加密工具
+│   └── src/main/resources/   → config.yml、languages/
+├── bukkit/              → 服务端认证、数据库、事件和生命周期模块
+│   └── src/main/resources/   → plugin.yml
+├── bungee/              → BungeeCord 指令、事件和代理通信
+│   └── src/main/resources/   → bungee.yml
+└── velocity/            → Velocity 指令、事件和代理通信
+    └── src/main/resources/   → velocity-plugin.json
 ```
 
 ### 本地构建
@@ -129,6 +100,8 @@ ReCatSeedLogin/
 在 Windows 上运行 `.\gradlew.bat build`，在 Linux 或 macOS 上运行 `./gradlew build`。
 产物为 `build/libs/CatSeedLogin-<版本>.jar`。
 
+可用 `./gradlew :common:compileJava` 单独编译共享模块，或用 `./gradlew :bukkit:compileJava`、`./gradlew :bungee:compileJava`、`./gradlew :velocity:compileJava` 单独编译对应平台及其共享依赖。Windows 使用 `gradlew.bat` 执行相同任务。
+
 项目使用 JDK 25 编译，并输出 Java 8 字节码。Paper 和 Velocity API 需要较新的 JDK，因此编译类路径按 JDK 25 解析；实际运行环境仍需满足所使用服务端 API 的 Java 要求。
 
 ### 架构说明
@@ -136,7 +109,7 @@ ReCatSeedLogin/
 - **Bukkit端** - 服务端插件，实现注册/登录/管理等核心功能，同时运行Socket服务器供代理端查询登录状态
 - **BungeeCord端** - 代理端插件，通过TCP Socket与Bukkit端通信，实现跨服登录状态同步
 - **Velocity端** - 代理端插件，通过TCP Socket与Bukkit端通信，实现跨服登录状态同步
-- **common包** - 跨平台共享代码，提供 `PlatformAdapter`、`CoreConfig` 等平台无关接口
+- **common 模块** - 跨平台共享代码，提供 `PlatformAdapter`、`CoreConfig` 等平台无关接口
 
 ## 📥 下载安装
 
@@ -383,7 +356,7 @@ proxy:
 - 中文：`zh-CN.yml`
 - 英文：`en-US.yml`
 
-配置文件中的 `language` 选项使用下划线格式（如 `zh_CN`），对应语言文件使用标准格式（如 `zh-CN.yml`）。支持自定义语言覆盖。
+配置文件中的 `language` 选项直接对应语言文件名（不含 `.yml`），例如 `zh-CN`、`en-US` 或 `猫猫`。系统会直接加载 `languages/<language>.yml`，不进行下划线/连字符转换或 Locale 编码；服务器 `languages/` 目录中的文件会覆盖 JAR 内置翻译。
 
 ## 🔗 代理端配置
 
