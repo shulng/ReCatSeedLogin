@@ -11,10 +11,14 @@ import org.bukkit.entity.Player
 class TaskAutoKick : Task() {
     private val playerJoinTime = ConcurrentHashMap<String, Long>()
     override fun run() {
-        if (!Cache.isLoaded || Config.Settings.AutoKick < 1) return
+        if (!Cache.isLoaded) return
         val autoKickMs = Config.Settings.AutoKick * 1000L
         val now = System.currentTimeMillis()
-        Bukkit.getOnlinePlayers().forEach { checkAndKickPlayer(it, now, autoKickMs) }
+        Bukkit.getOnlinePlayers().forEach { player ->
+            cc.baka9.catseedlogin.bukkit.CatScheduler.runTask(player) {
+                if (player.isOnline) checkAndKickPlayer(player, now, autoKickMs)
+            }
+        }
     }
     fun removePlayer(playerName: String) { playerJoinTime.remove(playerName) }
     private fun checkAndKickPlayer(player: Player, now: Long, autoKickMs: Long) {
@@ -24,10 +28,15 @@ class TaskAutoKick : Task() {
             val pending = TwoFactorState.getPendingLogin(playerName)
             if (pending != null) {
                 val pendingSeconds = Config.Settings.TwoFactorPendingTimeout
-                val pendingMs = if (pendingSeconds > 0) pendingSeconds * 1000L else autoKickMs
-                if (now - pending.timestamp <= pendingMs) return
-                kickPlayer(player, if (pendingSeconds > 0) pendingSeconds else Config.Settings.AutoKick); return
+                if (pendingSeconds > 0) {
+                    val pendingMs = pendingSeconds * 1000L
+                    if (now - pending.timestamp > pendingMs) {
+                        kickPlayer(player, pendingSeconds)
+                    }
+                    return
+                }
             }
+            if (Config.Settings.AutoKick < 1) return
             checkAndKickTimeoutPlayer(player, now, autoKickMs)
         } catch (e: Exception) { playerJoinTime.remove(playerName); e.printStackTrace() }
     }

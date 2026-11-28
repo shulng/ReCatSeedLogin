@@ -30,12 +30,14 @@ object SecretCodec {
         if (dataFolder == null) throw IOException("插件数据目录为空，无法初始化 $KEY_FILE_NAME")
         if (!dataFolder.exists() && !dataFolder.mkdirs()) throw IOException("无法创建插件数据目录: $dataFolder")
         val file = File(dataFolder, KEY_FILE_NAME)
-        var loaded = if (file.isFile) readKey(file) else null
-        if (loaded == null) {
-            loaded = generateKey()
-            Files.write(file.toPath(), Base64.getEncoder().encodeToString(loaded.encoded).toByteArray(StandardCharsets.UTF_8))
+        val loaded = if (file.isFile) readKey(file) else null
+        if (file.isFile && loaded == null) throw IOException("2FA 密钥文件损坏或格式无效: $file")
+        var initialized = loaded
+        if (initialized == null) {
+            initialized = generateKey()
+            Files.write(file.toPath(), Base64.getEncoder().encodeToString(initialized.encoded).toByteArray(StandardCharsets.UTF_8))
         }
-        key = loaded
+        key = initialized
     }
 
     @JvmStatic fun isReady(): Boolean = key != null
@@ -71,6 +73,6 @@ object SecretCodec {
 
     private fun readKey(file: File): SecretKey? = try {
         val decoded = Base64.getDecoder().decode(String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8).trim())
-        if (decoded.isEmpty()) null else SecretKeySpec(decoded, ALGORITHM)
+        if (decoded.size != KEY_BITS / 8) null else SecretKeySpec(decoded, ALGORITHM)
     } catch (_: Exception) { null }
 }

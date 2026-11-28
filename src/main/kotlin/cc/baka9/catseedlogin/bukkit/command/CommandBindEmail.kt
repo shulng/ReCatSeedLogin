@@ -64,8 +64,8 @@ class CommandBindEmail : CommandExecutor {
     private fun sendEmailCode(sender: CommandSender, name: String, mail: String, bindEmail: EmailCode) {
         CatScheduler.runTaskAsync {
             try {
-                EmailSender.sendEmail(mail, MessageKey.EMAIL_SUBJECT_BIND_EMAIL.get(), buildBindEmailContent(name, bindEmail))
-                notifyBindEmailSent(sender, mail)
+                if (EmailSender.sendEmail(mail, MessageKey.EMAIL_SUBJECT_BIND_EMAIL.get(), buildBindEmailContent(name, bindEmail))) notifyBindEmailSent(sender, mail)
+                else notifyBindEmailFailed(sender)
             } catch (e: Exception) { notifyBindEmailFailed(sender); e.printStackTrace() }
         }
     }
@@ -83,8 +83,11 @@ class CommandBindEmail : CommandExecutor {
             lp.email = bindEmail.email
             PluginContext.getSql().edit(lp)
             Cache.refresh(lp.name)
-            notifyBindSuccess(sender, bindEmail)
-        } catch (e: Exception) { e.printStackTrace(); sender.sendMessage(MessageKey.INTERNAL_ERROR.get()) }
+            CatScheduler.runTask { notifyBindSuccess(sender, bindEmail) }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            CatScheduler.runTask { sender.sendMessage(MessageKey.INTERNAL_ERROR.get()) }
+        }
     }
     private fun notifyBindSuccess(sender: CommandSender, bindEmail: EmailCode) {
         val syncPlayer = Bukkit.getPlayer((sender as Player).uniqueId)

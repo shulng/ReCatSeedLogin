@@ -164,10 +164,13 @@ ReCatSeedLogin/
 
 > **注意**: Bukkit端和代理端使用的是同一个JAR包，插件会根据运行环境自动加载对应平台的实现。
 
+> **代理切服行为**: 代理不会在连接事件线程中同步等待Bukkit端Socket响应。未命中代理侧登录缓存时，连接会先导向登录服，同时后台刷新登录状态；这是故障安全行为，首次切服可能需要再次发起连接。
+
 ### 📋 系统要求
-- **Java**: 8+
-- **服务端**: Bukkit/Spigot/Paper/Folia（API版本1.13+）
-- **代理端**: BungeeCord 或 Velocity
+- **构建环境**: JDK 25（使用仓库自带 Gradle Wrapper）
+- **运行环境**: 请按所选 Paper、Folia、BungeeCord 或 Velocity 版本安装其要求的 JDK；Java 8 字节码输出不代表服务端可在 Java 8 上运行
+- **服务端 API**: 当前构建针对 Paper API 26.3；旧版 Bukkit/Spigot 及 Folia 仅在实际运行验证通过后视为兼容
+- **代理端**: BungeeCord 或 Velocity 4.3.1 兼容 API
 
 ## 🎯 快速开始
 
@@ -223,6 +226,11 @@ ReCatSeedLogin/
 - 用恢复码登录后，两步验证会被关闭并引导你重新执行 `/2fa enable` 绑定
 - 密钥与恢复码都存在数据库里，其中密钥使用 AES-GCM 加密（密钥文件在 `plugins/CatSeedLogin/2fa.key`），恢复码只存哈希
 - 连续输错达到 `two-factor.max-attempts` 次会被踢出，失败计数在 `two-factor.attempt-window` 秒后重置
+
+### 数据库升级说明
+- 首次启动或升级时，插件会为 `accounts` 表补充规范化账号键并创建唯一索引，防止大小写变体重复注册。
+- 如果历史数据库已经存在仅大小写不同的重复账号，初始化会拒绝继续运行；请先人工合并或删除重复记录，再重新启动。
+- 启用 MySQL 时，跨实例的同 IP 注册限制使用数据库锁保证原子性；数据库不可用时注册会失败，不会放宽限制。
 
 > ⚠️ 基岩版绕过、同 IP 免登录、回环地址绕过这三条路径不走密码校验，因此不会经过两步验证。
 > 同时开启「同 IP 免登录」和「两步验证」时，后者对同 IP 进服的玩家不起作用。

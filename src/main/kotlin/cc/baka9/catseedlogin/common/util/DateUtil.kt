@@ -1,8 +1,9 @@
 package cc.baka9.catseedlogin.common.util
 
-import java.util.concurrent.ThreadLocalRandom
+import java.security.SecureRandom
 
 object DateUtil {
+    private val RANDOM = SecureRandom()
     private const val VERIFICATION_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
     private const val DEFAULT_CODE_LENGTH = 10
 
@@ -11,8 +12,7 @@ object DateUtil {
     @JvmStatic fun generateVerificationCode(length: Int): String {
         val actualLength = if (length <= 0) DEFAULT_CODE_LENGTH else length
         val result = StringBuilder(actualLength)
-        val random = ThreadLocalRandom.current()
-        repeat(actualLength) { result.append(VERIFICATION_CODE_CHARS[random.nextInt(VERIFICATION_CODE_CHARS.length)]) }
+        repeat(actualLength) { result.append(VERIFICATION_CODE_CHARS[RANDOM.nextInt(VERIFICATION_CODE_CHARS.length)]) }
         return result.toString()
     }
 

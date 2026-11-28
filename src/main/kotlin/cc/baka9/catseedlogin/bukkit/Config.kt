@@ -150,12 +150,10 @@ object Config {
                 manager.set(ConfigConstants.Path.TWO_FACTOR_ATTEMPT_WINDOW, TwoFactorAttemptWindow)
                 manager.set(ConfigConstants.Path.TWO_FACTOR_PENDING_TIMEOUT, TwoFactorPendingTimeout)
 
-                if (CommandWhiteList.isNotEmpty()) {
-                    manager.getMainConfig().set(
-                        ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_COMMAND_WHITELIST,
-                        CommandWhiteList.map(Pattern::toString)
-                    )
-                }
+                manager.getMainConfig().set(
+                    ConfigConstants.Path.SETTINGS_BEFORE_LOGIN_COMMAND_WHITELIST,
+                    CommandWhiteList.map(Pattern::toString)
+                )
                 SpawnLocation?.let(manager::setSpawnLocation)
             }
         }
@@ -273,22 +271,25 @@ object Config {
         load()
     }
 
-    @JvmStatic fun getOfflineLocation(player: Player): Optional<Location> = try {
-        val location = CatSeedLogin.sql.getLocation(player.name)
+    @JvmStatic fun getOfflineLocation(player: Player): Optional<Location> = getOfflineLocation(player.name)
+
+    @JvmStatic fun getOfflineLocation(playerName: String): Optional<Location> = try {
+        val location = CatSeedLogin.sql.getLocation(playerName)
         if (!location.isNullOrEmpty()) Optional.of(parseLocation(location)) else Optional.empty()
     } catch (exception: Exception) {
-        plugin.logger.warning("获取玩家离线位置失败: ${player.name}")
+        plugin.logger.warning("获取玩家离线位置失败: $playerName")
         exception.printStackTrace()
         Optional.empty()
     }
 
     @JvmStatic fun setOfflineLocation(player: Player) {
         val location = locationToString(player.location)
+        val playerName = player.name
         plugin.runTaskAsync {
             try {
-                CatSeedLogin.sql.updateLocation(player.name, location)
+                CatSeedLogin.sql.updateLocation(playerName, location)
             } catch (exception: Exception) {
-                plugin.logger.warning("保存玩家离线位置失败: ${player.name}")
+                plugin.logger.warning("保存玩家离线位置失败: $playerName")
                 exception.printStackTrace()
             }
         }

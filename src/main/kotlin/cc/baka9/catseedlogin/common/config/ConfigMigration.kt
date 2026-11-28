@@ -35,7 +35,9 @@ object ConfigMigration {
         legacyValues.keys.forEach { config.set(it, null) }
         var moved = 0
         LEGACY_PATHS.forEach { (oldPath, newPath) ->
-            if (legacyValues.containsKey(oldPath)) { config.set(newPath, legacyValues[oldPath]); moved++ }
+            if (legacyValues.containsKey(oldPath) && !config.contains(newPath)) {
+                config.set(newPath, legacyValues[oldPath]); moved++
+            }
         }
         val changed = removeEmptySections(config) || moved > 0
         LOGGER.log(Level.INFO, "已将 {0} 个旧配置路径迁移到新结构，旧路径已自动移除。", moved)

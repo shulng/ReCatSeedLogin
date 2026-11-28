@@ -66,6 +66,8 @@ class CatSeedLogin : JavaPlugin(), Listener {
         } catch (e: Exception) {
             e.printStackTrace()
             server.logger.warning("加载配置文件时出错，请检查你的配置文件。")
+            server.pluginManager.disablePlugin(this)
+            return
         }
 
         initTwoFactorSupport()

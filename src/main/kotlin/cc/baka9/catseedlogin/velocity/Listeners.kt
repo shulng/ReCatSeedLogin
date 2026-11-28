@@ -11,7 +11,7 @@ import com.velocitypowered.api.event.player.ServerPreConnectEvent
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import com.velocitypowered.api.proxy.server.RegisteredServer
-import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import net.kyori.adventure.text.Component
 import org.slf4j.Logger
@@ -22,10 +22,11 @@ class Listeners(
     private val proxyServer: ProxyServer,
     private val logger: Logger
 ) {
-    private val loggedInPlayerList = CopyOnWriteArrayList<String>()
+    private val loggedInPlayerList = ConcurrentHashMap.newKeySet<String>()
 
     @Subscribe
     fun onChat(event: PlayerChatEvent) {
+        if (!configManager.isEnable()) return
         val player = event.player
         val message = event.message
         if (message.startsWith("/") && isNotLoggedIn(player)) {
@@ -36,6 +37,7 @@ class Listeners(
 
     @Subscribe
     fun onCommandExecute(event: com.velocitypowered.api.event.command.CommandExecuteEvent) {
+        if (!configManager.isEnable()) return
         val source = event.commandSource
         if (source !is Player) return
         val command = event.command
@@ -50,6 +52,7 @@ class Listeners(
 
     @Subscribe
     fun onServerPreConnect(event: ServerPreConnectEvent) {
+        if (!configManager.isEnable()) return
         val player = event.player
         val target: RegisteredServer = event.result.server.orElse(null) ?: return
         val playerName = player.username
@@ -59,24 +62,11 @@ class Listeners(
             handleLogin(player, null)
             return
         }
-        checkLoginSync(player, playerName, loginServerName, event)
-    }
-
-    private fun checkLoginSync(
-        player: Player,
-        playerName: String,
-        loginServerName: String,
-        event: ServerPreConnectEvent
-    ) {
-        try {
-            if (communication.sendConnectRequest(playerName) == 1) {
-                loggedInPlayerList.add(playerName)
-            } else {
-                redirectToLoginServer(loginServerName, event)
-            }
-        } catch (e: Exception) {
-            logger.error("Error checking login status for player: $playerName", e)
-        }
+        redirectToLoginServer(loginServerName, event)
+        PluginMain.runAsync(Runnable {
+            try { if (communication.sendConnectRequest(playerName) == 1) loggedInPlayerList.add(playerName) }
+            catch (e: Exception) { logger.debug("Login status refresh failed for player: $playerName", e) }
+        })
     }
 
     private fun redirectToLoginServer(loginServerName: String, event: ServerPreConnectEvent) {
@@ -87,6 +77,7 @@ class Listeners(
 
     @Subscribe
     fun onServerConnected(event: ServerConnectedEvent) {
+        if (!configManager.isEnable()) return
         val player = event.player
         val serverName = event.server.serverInfo.name
         val loginServerName = configManager.getLoginServerName()
@@ -111,9 +102,10 @@ class Listeners(
 
     @Subscribe
     fun onPreLogin(event: PreLoginEvent) {
+        if (!configManager.isEnable()) return
         val playerName = event.username
         try {
-            if (loggedInPlayerList.contains(playerName) && communication.sendConnectRequest(playerName) == 1) {
+            if (loggedInPlayerList.contains(playerName)) {
                 event.result = PreLoginEvent.PreLoginComponentResult.denied(
                     Component.text(MessageKey.ALREADY_LOGGED_IN_PROXY.get())
                 )
@@ -128,6 +120,7 @@ class Listeners(
     private fun isNotLoggedIn(player: Player): Boolean = !loggedInPlayerList.contains(player.username)
 
     private fun handleLogin(player: Player, message: String?) {
+        if (!configManager.isEnable()) return
         val playerName = player.username
         PluginMain.runAsync(Runnable { handleLoginAsync(player, playerName, message) })
     }
@@ -135,7 +128,7 @@ class Listeners(
     private fun handleLoginAsync(player: Player, playerName: String, message: String?) {
         try {
             if (communication.sendConnectRequest(playerName) != 1) return
-            loggedInPlayerList.add(playerName)
+            if (!loggedInPlayerList.add(playerName)) return
             executeQueuedCommand(player, message)
         } catch (e: Exception) {
             logger.error("Error handling login for player: $playerName", e)
@@ -147,5 +140,5 @@ class Listeners(
         proxyServer.commandManager.executeAsync(player, message.substring(1))
     }
 
-    fun getLoggedInPlayers(): List<String> = loggedInPlayerList
+    fun getLoggedInPlayers(): List<String> = loggedInPlayerList.toList()
 }

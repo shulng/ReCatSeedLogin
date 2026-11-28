@@ -64,6 +64,10 @@ object CatScheduler {
     fun runTask(runnable: Runnable): ScheduledTask = morePaperLib.scheduling().globalRegionalScheduler().run(runnable)
 
     @JvmStatic
+    fun runTask(player: Player, runnable: Runnable): ScheduledTask? =
+        morePaperLib.scheduling().entitySpecificScheduler(player).run(runnable, null)
+
+    @JvmStatic
     fun runTaskLater(runnable: Runnable, delay: Long): ScheduledTask =
         morePaperLib.scheduling().globalRegionalScheduler().runDelayed(runnable, delay)
 

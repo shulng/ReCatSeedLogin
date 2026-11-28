@@ -39,9 +39,9 @@ class I18n(private val dataFolder: File, private val resourceProvider: ResourceP
         val fileName = "${locale.toLanguageTag()}.yml"
         val languagesFolder = File(dataFolder, LANGUAGES_FOLDER)
         val customFile = File(languagesFolder, fileName)
-        if (customFile.exists()) loadFromFile(customFile, localeMessages)
         val resourcePath = "$LANGUAGES_FOLDER/$fileName"
         try { resourceProvider.getResource(resourcePath)?.use { loadFromStream(it, localeMessages) } } catch (e: Exception) { e.printStackTrace() }
+        if (customFile.exists()) loadFromFile(customFile, localeMessages)
         if (localeMessages.isEmpty()) {
             try { resourceProvider.getResource("languages/zh-CN.yml")?.use { loadFromStream(it, localeMessages) } } catch (e: Exception) { e.printStackTrace() }
         }

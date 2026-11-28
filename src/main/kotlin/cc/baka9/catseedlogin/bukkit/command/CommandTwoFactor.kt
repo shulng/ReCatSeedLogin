@@ -20,8 +20,11 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 class CommandTwoFactor : CommandExecutor, TabCompleter {
+    private val recoveryInFlight = ConcurrentHashMap.newKeySet<UUID>()
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
         if (sender !is Player) { sender.sendMessage(MessageKey.TWO_FACTOR_PLAYER_ONLY.get()); return true }
         if (args.isEmpty()) { sender.sendMessage(MessageKey.TWO_FACTOR_USAGE.get()); return true }
@@ -64,6 +67,16 @@ class CommandTwoFactor : CommandExecutor, TabCompleter {
     }
     private fun verifyLogin(player: Player, pending: TwoFactorState.PendingLogin, code: String): Boolean {
         val lp = pending.loginPlayer
+        if (!player.isOnline || TwoFactorState.getPendingLogin(player.name) !== pending) {
+            TwoFactorState.removePendingLogin(player.name)
+            return true
+        }
+        val timeoutSeconds = Config.Settings.TwoFactorPendingTimeout
+        if (timeoutSeconds > 0 && System.currentTimeMillis() - pending.timestamp > timeoutSeconds * 1000L) {
+            TwoFactorState.removePendingLogin(player.name)
+            player.sendMessage(MessageKey.TWO_FACTOR_NO_PENDING.get())
+            return true
+        }
         val secret = SecretCodec.decrypt(lp.totpSecret)
         if (secret == null) { TwoFactorState.removePendingLogin(lp.name); player.sendMessage(MessageKey.TWO_FACTOR_SECRET_BROKEN.get()); return true }
         if (!TotpUtil.verify(secret, code, System.currentTimeMillis(), digits(), period(), 1)) { handleVerifyFailure(player); return true }
@@ -77,20 +90,29 @@ class CommandTwoFactor : CommandExecutor, TabCompleter {
         val name = player.name
         val pending = TwoFactorState.getPendingLogin(name)
         if (pending == null) { player.sendMessage(MessageKey.TWO_FACTOR_RECOVER_NOT_PENDING.get()); return true }
+        if (!recoveryInFlight.add(player.uniqueId)) {
+            player.sendMessage(MessageKey.TWO_FACTOR_RECOVER_INVALID.get())
+            return true
+        }
         CatScheduler.runTaskAsync {
-            val matched = PluginContext.getSql().findUnusedRecoveryCode(name, args[1])
-            CatScheduler.runTask {
-                if (matched == null) handleVerifyFailure(player) else finishRecover(player, pending, matched)
+            try {
+                val matched = PluginContext.getSql().consumeRecoveryCode(name, args[1])
+                CatScheduler.runTask {
+                    recoveryInFlight.remove(player.uniqueId)
+                    if (!player.isOnline || TwoFactorState.getPendingLogin(player.name) !== pending) return@runTask
+                    if (matched == null) handleVerifyFailure(player) else finishRecover(player, pending, matched)
+                }
+            } catch (exception: Exception) {
+                recoveryInFlight.remove(player.uniqueId)
+                PluginContext.getLogger().warning("恢复码校验失败: ${exception.message}")
             }
         }
         return true
     }
     private fun finishRecover(player: Player, pending: TwoFactorState.PendingLogin, matched: TotpRecoveryCode) {
         val name = pending.loginPlayer.name
-        PluginContext.getSql().markRecoveryCodeUsed(name, matched.codeHash)
-        PluginContext.getSql().invalidateRecoveryCodes(name)
-        PluginContext.getSql().updateTotpSecret(name, null)
-        PluginContext.getSql().updateTotpEnabled(name, false)
+        if (!player.isOnline || TwoFactorState.getPendingLogin(player.name) !== pending) return
+        if (!PluginContext.getSql().recoverTwoFactorState(name)) return
         Cache.refresh(name)
         TwoFactorLimiter.recordSuccess(player.uniqueId)
         TwoFactorState.removePendingLogin(name)
@@ -114,9 +136,7 @@ class CommandTwoFactor : CommandExecutor, TabCompleter {
         if (secret == null) { player.sendMessage(MessageKey.TWO_FACTOR_SECRET_BROKEN.get()); return true }
         if (!TotpUtil.verify(secret, args[1], System.currentTimeMillis(), digits(), period(), 1)) { handleVerifyFailure(player); return true }
         TwoFactorLimiter.recordSuccess(player.uniqueId)
-        PluginContext.getSql().updateTotpSecret(name, null)
-        PluginContext.getSql().updateTotpEnabled(name, false)
-        PluginContext.getSql().invalidateRecoveryCodes(name)
+        if (!PluginContext.getSql().disableTwoFactorState(name)) return true
         Cache.refresh(name)
         player.sendMessage(MessageKey.TWO_FACTOR_DISABLED.get())
         return true
@@ -124,14 +144,12 @@ class CommandTwoFactor : CommandExecutor, TabCompleter {
     private fun enableTwoFactor(player: Player, name: String, secret: String) {
         val encrypted = try { SecretCodec.encrypt(secret) }
         catch (_: Exception) { player.sendMessage(MessageKey.TWO_FACTOR_SECRET_BROKEN.get()); return }
-        PluginContext.getSql().updateTotpSecret(name, encrypted)
-        PluginContext.getSql().updateTotpEnabled(name, true)
-        Cache.refresh(name)
-        TwoFactorState.removeRebindRequired(name)
-        player.sendMessage(MessageKey.TWO_FACTOR_ENABLED.get())
         CatScheduler.runTaskAsync {
             val generated = RecoveryCodeGenerator.generate(name, Config.Settings.TwoFactorRecoveryCodeCount)
-            PluginContext.getSql().saveRecoveryCodes(name, generated.getEntries())
+            if (!PluginContext.getSql().saveTwoFactorState(name, encrypted, generated.getEntries())) return@runTaskAsync
+            Cache.refresh(name)
+            TwoFactorState.removeRebindRequired(name)
+            CatScheduler.runTask { player.sendMessage(MessageKey.TWO_FACTOR_ENABLED.get()) }
             CatScheduler.runTask { showRecoveryCodes(player, generated.getRawCodes()) }
         }
     }

@@ -41,28 +41,36 @@ class CommandRegister : CommandExecutor {
         val currentIp = address.hostAddress
         val isLoopback = address.isLoopbackAddress
         CatScheduler.runTaskAsync {
-            try { processRegistration(player, name, password, currentIp, isLoopback) }
-            catch (e: Exception) { e.printStackTrace(); player.sendMessage(MessageKey.INTERNAL_ERROR.get()) }
+            try { processRegistration(player.uniqueId, name, password, currentIp, isLoopback) }
+            catch (e: Exception) {
+                e.printStackTrace()
+                CatScheduler.runTask { if (player.isOnline) player.sendMessage(MessageKey.INTERNAL_ERROR.get()) }
+            }
         }
     }
     @Throws(Exception::class)
-    private fun processRegistration(player: Player, name: String, password: String, currentIp: String, isLoopback: Boolean) {
-        val loginPlayersByIp = PluginContext.getSql().getLikeByIp(currentIp)
-        if (!isLoopback && loginPlayersByIp.size >= Config.Settings.IpRegisterCountLimit) {
+    @Synchronized
+    private fun processRegistration(playerId: java.util.UUID, name: String, password: String, currentIp: String, isLoopback: Boolean) {
+        val lp = PasswordHelper.registerNewPlayer(name, password)
+        val loginPlayersByIp = PluginContext.getSql().addWithIpLimit(lp, currentIp, Config.Settings.IpRegisterCountLimit, !isLoopback)
+        if (loginPlayersByIp != null) {
             val accounts = loginPlayersByIp.joinToString(", ") { it.name }
-            player.sendMessage(Config.Language.REGISTER_MORE.replace("{count}", loginPlayersByIp.size.toString()).replace("{accounts}", accounts))
+            CatScheduler.runTask {
+                val player = Bukkit.getPlayer(playerId)
+                if (player != null && player.isOnline) player.sendMessage(Config.Language.REGISTER_MORE.replace("{count}", loginPlayersByIp.size.toString()).replace("{accounts}", accounts))
+            }
             return
         }
-        val lp = PasswordHelper.registerNewPlayer(name, password)
-        PluginContext.getSql().add(lp)
         Cache.refresh(lp.name)
-        LoginPlayerHelper.add(lp)
         CatScheduler.runTask {
+            val player = Bukkit.getPlayer(playerId)
+            if (player == null || !player.isOnline) return@runTask
+            LoginPlayerHelper.add(lp)
             val registeredPlayer = Bukkit.getPlayer(name) ?: return@runTask
             Bukkit.getServer().pluginManager.callEvent(CatSeedPlayerRegisterEvent(registeredPlayer))
+            player.sendMessage(Config.Language.REGISTER_SUCCESS)
+            CatScheduler.updateInventory(player)
+            LoginPlayerHelper.recordCurrentIP(player, lp)
         }
-        player.sendMessage(Config.Language.REGISTER_SUCCESS)
-        CatScheduler.updateInventory(player)
-        LoginPlayerHelper.recordCurrentIP(player, lp)
     }
 }

@@ -6,8 +6,10 @@ import java.io.BufferedWriter
 import java.io.IOException
 import java.io.OutputStreamWriter
 import java.net.Socket
+import java.net.InetSocketAddress
 
 abstract class BaseCommunication {
+    private companion object { const val SOCKET_TIMEOUT_MS = 5000 }
     protected abstract fun getProxyHost(): String
     protected abstract fun getProxyPort(): Int
     protected abstract fun logError(message: String, e: Exception)
@@ -44,7 +46,12 @@ abstract class BaseCommunication {
     }
 
     @Throws(IOException::class)
-    protected fun createSocket(): Socket = try { Socket(getProxyHost(), getProxyPort()) } catch (e: IOException) {
+    protected fun createSocket(): Socket = try {
+        Socket().apply {
+            connect(InetSocketAddress(getProxyHost(), getProxyPort()), SOCKET_TIMEOUT_MS)
+            soTimeout = SOCKET_TIMEOUT_MS
+        }
+    } catch (e: IOException) {
         logWarning(MessageKey.CHECK_PROXY_CONFIG.get())
         throw IOException(e)
     }

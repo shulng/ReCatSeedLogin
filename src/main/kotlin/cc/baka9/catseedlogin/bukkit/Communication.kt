@@ -10,12 +10,18 @@ import java.io.InputStreamReader
 import java.io.OutputStream
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.InetAddress
+import java.util.concurrent.Executors
+import java.util.concurrent.ConcurrentHashMap
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 
 object Communication : BaseCommunication() {
     @Volatile
     private var serverSocket: ServerSocket? = null
+    private val clientExecutor = Executors.newCachedThreadPool()
+    private val recentKeepSignatures = ConcurrentHashMap<String, Long>()
+    private const val SOCKET_TIMEOUT_MS = 5000
 
     @JvmStatic
     fun socketServerStopAsync() {
@@ -40,9 +46,24 @@ object Communication : BaseCommunication() {
     }
 
     @JvmStatic
+    fun socketServerRestartAsync() {
+        CatScheduler.runTaskAsync {
+            socketServerStop()
+            val deadline = System.currentTimeMillis() + 5000L
+            while (serverSocket != null && System.currentTimeMillis() < deadline) {
+                Thread.sleep(25L)
+            }
+            if (serverSocket == null) socketServerStart()
+        }
+    }
+
+    @JvmStatic
     fun socketServerStart() {
         try {
-            ServerSocket(PluginContext.getConfigManager().getProxyPort(), 50).use { socket ->
+            val manager = PluginContext.getConfigManager()
+            require(manager.getAuthKey().isNotBlank()) { "代理认证密钥不能为空" }
+            val bindAddress = InetAddress.getByName(manager.getProxyHost())
+            ServerSocket(manager.getProxyPort(), 50, bindAddress).use { socket ->
                 serverSocket = socket
                 while (!socket.isClosed) acceptAndHandle(socket)
             }
@@ -56,8 +77,14 @@ object Communication : BaseCommunication() {
 
     private fun acceptAndHandle(server: ServerSocket) {
         try {
-            server.accept().use(::handleRequest)
-        } catch (e: IOException) {
+            val client = server.accept()
+            clientExecutor.submit {
+                client.use {
+                    it.soTimeout = SOCKET_TIMEOUT_MS
+                    handleRequest(it)
+                }
+            }
+        } catch (e: Exception) {
             if (!server.isClosed) {
                 PluginContext.getLogger().warning("Socket连接处理异常: ${e.message}")
             }
@@ -83,18 +110,23 @@ object Communication : BaseCommunication() {
 
     private fun handleKeepLoggedInRequest(playerName: String?, time: String?, sign: String?) {
         if (playerName == null || time == null || sign == null) return
+        val requestTime = time.toLongOrNull() ?: return
+        val now = System.currentTimeMillis()
+        if (kotlin.math.abs(now - requestTime) > 30_000L) return
         val expectedSign = CommunicationAuth.encryption(
             PluginContext.getConfigManager().getAuthKey(),
             playerName,
             time
         )
         if (sign != expectedSign) return
+        recentKeepSignatures.entries.removeIf { now - it.value > 30_000L }
+        if (recentKeepSignatures.putIfAbsent(sign, now) != null) return
 
         CatScheduler.runTask(Runnable {
             val loginPlayer: LoginPlayer = Cache.getIgnoreCase(playerName) ?: return@Runnable
             LoginPlayerHelper.add(loginPlayer)
             val player: Player? = Bukkit.getPlayerExact(playerName)
-            player?.updateInventory()
+            if (player != null && player.isOnline) CatScheduler.updateInventory(player)
         })
     }
 

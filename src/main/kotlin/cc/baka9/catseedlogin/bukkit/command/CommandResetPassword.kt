@@ -46,8 +46,8 @@ class CommandResetPassword : CommandExecutor {
     private fun sendResetEmailAsync(sender: CommandSender, name: String, emailCode: EmailCode) {
         CatScheduler.runTaskAsync {
             try {
-                EmailSender.sendEmail(emailCode.email, MessageKey.EMAIL_SUBJECT_RESET_PASSWORD.get(), buildResetEmailContent(name, emailCode))
-                notifyEmailSent(sender, emailCode.email)
+                if (EmailSender.sendEmail(emailCode.email, MessageKey.EMAIL_SUBJECT_RESET_PASSWORD.get(), buildResetEmailContent(name, emailCode))) notifyEmailSent(sender, emailCode.email)
+                else notifyEmailFailed(sender)
             } catch (e: Exception) { notifyEmailFailed(sender); e.printStackTrace() }
         }
     }
@@ -83,8 +83,11 @@ class CommandResetPassword : CommandExecutor {
             Cache.refresh(name)
             LoginPlayerHelper.remove(lp)
             EmailCode.removeByName(name, EmailCode.Type.ResetPassword)
-            notifyResetSuccess(name, Bukkit.getPlayer(name))
-        } catch (e: Exception) { sender.sendMessage(MessageKey.DATABASE_ERROR.get()); e.printStackTrace() }
+            CatScheduler.runTask { notifyResetSuccess(name, Bukkit.getPlayer(name)) }
+        } catch (e: Exception) {
+            CatScheduler.runTask { sender.sendMessage(MessageKey.DATABASE_ERROR.get()) }
+            e.printStackTrace()
+        }
     }
     private fun notifyResetSuccess(name: String, player: Player?) {
         val p = Bukkit.getPlayer(name)

@@ -100,7 +100,10 @@ class CommandCatSeedLogin : CommandExecutor, TabCompleter {
     }
     private fun commandWhiteListAdd(sender: CommandSender, args: Array<String>): Boolean {
         if (args.size < 2 || !args[0].equals("commandWhiteListAdd", true)) return false
-        val regex = args.drop(1).joinToString(" "); val pattern = Pattern.compile(regex)
+        val regex = args.drop(1).joinToString(" ")
+        val pattern = try { Pattern.compile(regex) } catch (_: java.util.regex.PatternSyntaxException) {
+            sender.sendMessage(MessageKey.ADMIN_SET_FAILED.get("非法正则: $regex")); return true
+        }
         if (containsRegex(regex)) sender.sendMessage(MessageKey.ADMIN_COMMAND_WHITELIST_ALREADY_EXISTS.get(regex))
         else { Config.Settings.CommandWhiteList = Config.Settings.CommandWhiteList + pattern; Config.Settings.save(); sender.sendMessage(MessageKey.ADMIN_COMMAND_WHITELIST_ADDED.get(regex)) }
         return true
@@ -125,8 +128,8 @@ class CommandCatSeedLogin : CommandExecutor, TabCompleter {
         try { PluginContext.getSql().closeConnection() } catch (e: Exception) { PluginContext.getLogger().warning("§c关闭旧数据库连接时出错"); e.printStackTrace() }
         PluginContext.setSql(if (Config.MySQL.Enable) MySQL(PluginContext.getPlugin()) else SQLite(PluginContext.getPlugin()))
         try { PluginContext.getSql().init(); Cache.refreshAllSync() } catch (e: Exception) { PluginContext.getLogger().warning("§c加载数据库时出错"); e.printStackTrace() }
-        try { Communication.socketServerStopAsync() } catch (e: Exception) { PluginContext.getLogger().warning("§c停止通信服务时出错"); e.printStackTrace() }
-        if (Config.BungeeCord.Enable) try { Communication.socketServerStartAsync() } catch (e: Exception) { PluginContext.getLogger().warning("§c启动通信服务时出错"); e.printStackTrace() }
+        if (Config.BungeeCord.Enable) try { Communication.socketServerRestartAsync() } catch (e: Exception) { PluginContext.getLogger().warning("§c重启通信服务时出错"); e.printStackTrace() }
+        else try { Communication.socketServerStopAsync() } catch (e: Exception) { PluginContext.getLogger().warning("§c停止通信服务时出错"); e.printStackTrace() }
         sender.sendMessage(MessageKey.CONFIG_RELOADED_MSG.get()); return true
     }
     private fun delPlayer(sender: CommandSender, args: Array<String>): Boolean {
@@ -137,8 +140,13 @@ class CommandCatSeedLogin : CommandExecutor, TabCompleter {
     }
     private fun delPlayerAsync(sender: CommandSender, lp: LoginPlayer) {
         CatScheduler.runTaskAsync {
-            try { PluginContext.getSql().del(lp.name); Cache.refresh(lp.name); LoginPlayerHelper.remove(lp); sender.sendMessage(MessageKey.ACCOUNT_DELETED.get(lp.name)); kickPlayerIfOnline(lp.name) }
-            catch (e: Exception) { sender.sendMessage(MessageKey.DATABASE_ERROR.get()); e.printStackTrace() }
+            try {
+                PluginContext.getSql().del(lp.name); Cache.refresh(lp.name); LoginPlayerHelper.remove(lp)
+                CatScheduler.runTask { sender.sendMessage(MessageKey.ACCOUNT_DELETED.get(lp.name)); kickPlayerIfOnline(lp.name) }
+            } catch (e: Exception) {
+                CatScheduler.runTask { sender.sendMessage(MessageKey.DATABASE_ERROR.get()) }
+                e.printStackTrace()
+            }
         }
     }
     private fun kickPlayerIfOnline(name: String) {
@@ -149,7 +157,7 @@ class CommandCatSeedLogin : CommandExecutor, TabCompleter {
         val name = args[1]; val lp = Cache.getIgnoreCase(name)
         if (lp == null) { sender.sendMessage(MessageKey.ACCOUNT_NOT_EXISTS.get(name)); return true }
         if (!lp.totpEnabled) { sender.sendMessage(MessageKey.ADMIN_2FA_NOT_ENABLED.get(name)); return true }
-        PluginContext.getSql().updateTotpSecret(name, null); PluginContext.getSql().updateTotpEnabled(name, false); PluginContext.getSql().invalidateRecoveryCodes(name)
+        if (!PluginContext.getSql().disableTwoFactorState(name)) { sender.sendMessage(MessageKey.DATABASE_ERROR.get()); return true }
         Cache.refresh(name); TwoFactorState.removePendingLogin(name); sender.sendMessage(MessageKey.ADMIN_2FA_DISABLED.get(name))
         Bukkit.getPlayerExact(name)?.takeIf { it.isOnline }?.sendMessage(MessageKey.TWO_FACTOR_DISABLED_BY_ADMIN.get())
         return true
@@ -165,12 +173,20 @@ class CommandCatSeedLogin : CommandExecutor, TabCompleter {
         if (lp == null) setPwdRegisterNew(sender, name, pwd) else setPwdUpdateExisting(sender, lp, pwd)
     }
     private fun setPwdRegisterNew(sender: CommandSender, name: String, pwd: String) {
-        try { val lp = PasswordHelper.registerNewPlayer(name, pwd); PluginContext.getSql().add(lp); Cache.refresh(lp.name); sender.sendMessage(MessageKey.ACCOUNT_NOT_EXISTS_REGISTERED.get()) }
-        catch (e: Exception) { sender.sendMessage(MessageKey.DATABASE_ERROR.get()); e.printStackTrace() }
+        try {
+            val lp = PasswordHelper.registerNewPlayer(name, pwd); PluginContext.getSql().add(lp); Cache.refresh(lp.name)
+            CatScheduler.runTask { sender.sendMessage(MessageKey.ACCOUNT_NOT_EXISTS_REGISTERED.get()) }
+        } catch (e: Exception) {
+            CatScheduler.runTask { sender.sendMessage(MessageKey.DATABASE_ERROR.get()) }; e.printStackTrace()
+        }
     }
     private fun setPwdUpdateExisting(sender: CommandSender, lp: LoginPlayer, pwd: String) {
-        try { val copy = PasswordHelper.updatePassword(lp, pwd); PluginContext.getSql().edit(copy); Cache.refresh(copy.name); LoginPlayerHelper.remove(lp); sender.sendMessage(MessageKey.PASSWORD_SET_MSG.get(lp.name)); notifyPlayerPasswordChanged(lp) }
-        catch (e: Exception) { sender.sendMessage(MessageKey.DATABASE_ERROR.get()); e.printStackTrace() }
+        try {
+            val copy = PasswordHelper.updatePassword(lp, pwd); PluginContext.getSql().edit(copy); Cache.refresh(copy.name); LoginPlayerHelper.remove(lp)
+            CatScheduler.runTask { sender.sendMessage(MessageKey.PASSWORD_SET_MSG.get(lp.name)); notifyPlayerPasswordChanged(lp) }
+        } catch (e: Exception) {
+            CatScheduler.runTask { sender.sendMessage(MessageKey.DATABASE_ERROR.get()) }; e.printStackTrace()
+        }
     }
     private fun notifyPlayerPasswordChanged(lp: LoginPlayer) {
         CatScheduler.runTask {

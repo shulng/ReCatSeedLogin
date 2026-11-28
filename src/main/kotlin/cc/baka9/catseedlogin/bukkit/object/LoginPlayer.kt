@@ -9,7 +9,11 @@ class LoginPlayer(var name: String, var password: String) {
     var lastAction: Long = 0
     var location: String? = null
     var totpSecret: String? = null
+    @get:JvmName("isTotpEnabled")
     var totpEnabled: Boolean = false
+
+    @JvmName("getTotpEnabled")
+    fun getTotpEnabled(): Boolean = totpEnabled
 
     fun getIpsList(): MutableList<String> = ips?.split(';')?.toMutableList() ?: mutableListOf()
     fun crypt() { password = Crypt.encrypt(name, password) }

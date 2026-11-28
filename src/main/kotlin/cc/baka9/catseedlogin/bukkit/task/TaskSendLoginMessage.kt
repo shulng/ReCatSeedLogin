@@ -13,7 +13,11 @@ class TaskSendLoginMessage : Task() {
     override fun run() {
         if (!Cache.isLoaded) return
         TwoFactorLimiter.sweep(Config.Settings.TwoFactorAttemptWindow * 1000L)
-        Bukkit.getOnlinePlayers().forEach { sendLoginMessage(it) }
+        Bukkit.getOnlinePlayers().forEach { player ->
+            cc.baka9.catseedlogin.bukkit.CatScheduler.runTask(player) {
+                if (player.isOnline) sendLoginMessage(player)
+            }
+        }
     }
     private fun sendLoginMessage(player: Player) {
         try {

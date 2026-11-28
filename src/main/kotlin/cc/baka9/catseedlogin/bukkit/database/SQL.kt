@@ -31,7 +31,48 @@ abstract class SQL(protected val logger: Logger) {
         addColumnIfMissing("location")
         addColumnIfMissing("totp_secret")
         addColumnIfMissing("totp_enabled")
+        addColumnIfMissing("name_key", "CHAR(64)")
+        ensureNameKeyConstraint()
         createRecoveryCodeTable()
+        validateAccountNames()
+    }
+
+    private fun ensureNameKeyConstraint() {
+        try {
+            flush(BufferStatement("UPDATE accounts SET name_key = LOWER(name) WHERE name_key IS NULL OR name_key = ''"))
+            if (!indexExists("accounts", "accounts_name_key_uq")) {
+                flush(BufferStatement("CREATE UNIQUE INDEX accounts_name_key_uq ON accounts (name_key)"))
+            }
+        } catch (exception: SQLException) {
+            logger.severe("Failed to enforce unique account names: ${exception.message}")
+            throw exception
+        }
+    }
+
+    private fun indexExists(tableName: String, indexName: String): Boolean = try {
+        getConnection().metaData.getIndexInfo(null, null, tableName, true, false).use { resultSet ->
+            generateSequence { if (resultSet.next()) resultSet.getString("INDEX_NAME") else null }
+                .any { it.equals(indexName, ignoreCase = true) }
+        }
+    } catch (_: SQLException) {
+        false
+    }
+
+    /** Cache lookup is case-insensitive, so duplicate names would make authentication ambiguous. */
+    private fun validateAccountNames() {
+        try {
+            BufferStatement("SELECT LOWER(name) FROM accounts GROUP BY LOWER(name) HAVING COUNT(*) > 1")
+                .prepareStatement(getConnection()).use { statement ->
+                    statement.executeQuery().use { resultSet ->
+                        if (resultSet.next()) {
+                            throw SQLException("accounts contains duplicate names differing only by case")
+                        }
+                    }
+                }
+        } catch (exception: SQLException) {
+            logger.severe("Account name validation failed: ${exception.message}")
+            throw exception
+        }
     }
 
     private fun createRecoveryCodeTable() {
@@ -43,15 +84,15 @@ abstract class SQL(protected val logger: Logger) {
                 )
             )
         } catch (exception: SQLException) {
-            // Two-factor authentication is optional, so failure to create this table is non-fatal.
             logger.severe("Failed to create recovery-code table: ${exception.message}")
+            throw exception
         }
     }
 
-    private fun addColumnIfMissing(columnName: String) {
+    private fun addColumnIfMissing(columnName: String, columnType: String = "CHAR(255)") {
         if (columnExists("accounts", columnName)) return
         try {
-            flush(BufferStatement("ALTER TABLE accounts ADD $columnName CHAR(255)"))
+            flush(BufferStatement("ALTER TABLE accounts ADD $columnName $columnType"))
         } catch (exception: SQLException) {
             logger.warning("Failed to add column $columnName: ${exception.message}")
         }
@@ -66,10 +107,17 @@ abstract class SQL(protected val logger: Logger) {
     @Synchronized
     fun add(player: LoginPlayer) {
         try {
+            BufferStatement("SELECT 1 FROM accounts WHERE LOWER(name) = LOWER(?) LIMIT 1", player.name)
+                .prepareStatement(getConnection()).use { statement ->
+                    statement.executeQuery().use { resultSet ->
+                        if (resultSet.next()) throw SQLException("account name already exists: ${player.name}")
+                    }
+                }
             flush(
                 BufferStatement(
-                    "INSERT INTO accounts (name, password, lastAction, email, ips, location) VALUES (?, ?, ?, ?, ?, ?)",
+                    "INSERT INTO accounts (name, name_key, password, lastAction, email, ips, location) VALUES (?, ?, ?, ?, ?, ?, ?)",
                     player.name,
+                    player.name.lowercase(),
                     player.password,
                     Date(),
                     player.email,
@@ -80,6 +128,43 @@ abstract class SQL(protected val logger: Logger) {
         } catch (exception: SQLException) {
             logger.severe("Failed to add player: ${player.name} - ${exception.message}")
             throw RuntimeException(exception)
+        }
+    }
+
+    /** Atomically checks the per-IP limit and inserts an account. Returns matching accounts when limited. */
+    @Synchronized
+    fun addWithIpLimit(player: LoginPlayer, ip: String, limit: Int, enforceLimit: Boolean): List<LoginPlayer>? {
+        val connection = getConnection()
+        val previousAutoCommit = connection.autoCommit
+        val lockName = "catseedlogin:ip:$ip"
+        var mysqlLock = false
+        try {
+            if (connection.metaData.databaseProductName.contains("mysql", ignoreCase = true)) {
+                connection.prepareStatement("SELECT GET_LOCK(?, 10)").use {
+                    it.setString(1, lockName)
+                    it.executeQuery().use { result ->
+                        if (!result.next() || result.getInt(1) != 1) throw SQLException("unable to acquire registration lock")
+                    }
+                }
+                mysqlLock = true
+            }
+            connection.autoCommit = false
+            val matches = if (enforceLimit) getLikeByIp(ip) else emptyList()
+            if (enforceLimit && matches.size >= limit) {
+                connection.rollback()
+                return matches
+            }
+            add(player)
+            connection.commit()
+            return null
+        } catch (exception: Exception) {
+            try { connection.rollback() } catch (_: SQLException) { }
+            throw if (exception is RuntimeException) exception else RuntimeException(exception)
+        } finally {
+            try { connection.autoCommit = previousAutoCommit } catch (_: SQLException) { }
+            if (mysqlLock) {
+                try { connection.prepareStatement("SELECT RELEASE_LOCK(?)").use { it.setString(1, lockName); it.executeQuery().use { } } } catch (_: SQLException) { }
+            }
         }
     }
 
@@ -110,6 +195,20 @@ abstract class SQL(protected val logger: Logger) {
         } catch (exception: SQLException) {
             logger.severe("Failed to edit player: ${player.name} - ${exception.message}")
             throw RuntimeException(exception)
+        }
+    }
+
+    /** Upgrade a legacy hash only if no concurrent password change replaced it. */
+    @Synchronized
+    fun updatePasswordIfCurrent(name: String, oldPassword: String, newPassword: String): Boolean {
+        return try {
+            BufferStatement(
+                "UPDATE accounts SET password = ?, lastAction = ? WHERE name = ? AND password = ?",
+                newPassword, Date(), name, oldPassword
+            ).prepareStatement(getConnection()).use { it.executeUpdate() == 1 }
+        } catch (exception: SQLException) {
+            logger.warning("Failed to upgrade password hash for player: $name - ${exception.message}")
+            false
         }
     }
 
@@ -171,6 +270,7 @@ abstract class SQL(protected val logger: Logger) {
             }
         } catch (exception: SQLException) {
             logger.severe("Failed to get all players: ${exception.message}")
+            throw IllegalStateException("无法读取账号数据", exception)
         }
         return players
     }
@@ -179,7 +279,10 @@ abstract class SQL(protected val logger: Logger) {
     fun getLikeByIp(ip: String): List<LoginPlayer> {
         val players = mutableListOf<LoginPlayer>()
         try {
-            BufferStatement("SELECT * FROM accounts WHERE ips LIKE ?", "%$ip%")
+            BufferStatement(
+                "SELECT * FROM accounts WHERE ips = ? OR ips LIKE ? OR ips LIKE ? OR ips LIKE ?",
+                ip, "$ip;%", "%;$ip", "%;$ip;%"
+            )
                 .prepareStatement(getConnection()).use { statement ->
                     statement.executeQuery().use { resultSet ->
                         while (resultSet.next()) players += mapLoginPlayer(resultSet)
@@ -187,6 +290,7 @@ abstract class SQL(protected val logger: Logger) {
                 }
         } catch (exception: SQLException) {
             logger.severe("Failed to query players by IP: $ip - ${exception.message}")
+            throw IllegalStateException("无法查询IP注册限制", exception)
         }
         return players
     }
@@ -219,6 +323,57 @@ abstract class SQL(protected val logger: Logger) {
         } catch (exception: SQLException) {
             logger.severe("Failed to update totp state for player: $name - ${exception.message}")
             throw RuntimeException(exception)
+        }
+    }
+
+    @Synchronized
+    fun saveTwoFactorState(name: String, encryptedSecret: String, codes: List<TotpRecoveryCode>): Boolean =
+        withTransaction { connection ->
+            connection.prepareStatement("UPDATE accounts SET totp_secret = ?, totp_enabled = ? WHERE name = ?").use {
+                it.setString(1, encryptedSecret); it.setString(2, "1"); it.setString(3, name)
+                if (it.executeUpdate() != 1) return@withTransaction false
+            }
+            connection.prepareStatement("DELETE FROM totp_recovery_codes WHERE name = ?").use {
+                it.setString(1, name); it.executeUpdate()
+            }
+            connection.prepareStatement("INSERT INTO totp_recovery_codes (name, code_hash) VALUES (?, ?)").use { statement ->
+                codes.forEach { code -> statement.setString(1, name); statement.setString(2, code.codeHash); statement.addBatch() }
+                statement.executeBatch()
+            }
+            true
+        }
+
+    @Synchronized
+    fun disableTwoFactorState(name: String): Boolean =
+        withTransaction { connection ->
+            connection.prepareStatement("UPDATE accounts SET totp_secret = NULL, totp_enabled = ? WHERE name = ?").use {
+                it.setString(1, "0"); it.setString(2, name)
+                if (it.executeUpdate() != 1) return@withTransaction false
+            }
+            connection.prepareStatement("UPDATE totp_recovery_codes SET used_at = ? WHERE name = ? AND used_at IS NULL").use {
+                it.setTimestamp(1, java.sql.Timestamp(System.currentTimeMillis())); it.setString(2, name); it.executeUpdate()
+            }
+            true
+        }
+
+    @Synchronized
+    fun recoverTwoFactorState(name: String): Boolean = disableTwoFactorState(name)
+
+    private fun <T> withTransaction(block: (Connection) -> T): T {
+        val connection = getConnection()
+        val previousAutoCommit = connection.autoCommit
+        try {
+            connection.autoCommit = false
+            val result = block(connection)
+            connection.commit()
+            return result
+        } catch (exception: SQLException) {
+            try { connection.rollback() } catch (_: SQLException) { }
+            logger.severe("Failed to update two-factor state: ${exception.message}")
+            @Suppress("UNCHECKED_CAST")
+            return false as T
+        } finally {
+            try { connection.autoCommit = previousAutoCommit } catch (_: SQLException) { }
         }
     }
 
@@ -268,6 +423,23 @@ abstract class SQL(protected val logger: Logger) {
     @Synchronized
     fun findUnusedRecoveryCode(name: String, rawCode: String): TotpRecoveryCode? =
         getRecoveryCodes(name).firstOrNull { !it.isUsed() && TotpRecoveryCode.matches(name, rawCode, it.codeHash) }
+
+    @Synchronized
+    fun consumeRecoveryCode(name: String, rawCode: String): TotpRecoveryCode? {
+        return try {
+            val matched = getRecoveryCodes(name).firstOrNull {
+                !it.isUsed() && TotpRecoveryCode.matches(name, rawCode, it.codeHash)
+            } ?: return null
+            val updated = BufferStatement(
+                "UPDATE totp_recovery_codes SET used_at = ? WHERE name = ? AND code_hash = ? AND used_at IS NULL",
+                Date(), name, matched.codeHash
+            ).prepareStatement(getConnection()).use { it.executeUpdate() }
+            if (updated == 1) matched else null
+        } catch (exception: SQLException) {
+            logger.severe("Failed to consume recovery code for player: $name - ${exception.message}")
+            throw RuntimeException(exception)
+        }
+    }
 
     @Synchronized
     fun markRecoveryCodeUsed(name: String, codeHash: String) {

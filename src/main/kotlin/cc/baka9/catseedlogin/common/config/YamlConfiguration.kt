@@ -60,7 +60,11 @@ class YamlConfiguration(private val configFile: File?) : Configuration {
 
     override fun getBoolean(path: String, defaultValue: Boolean): Boolean = when (val value = get(path)) {
         is Boolean -> value
-        is String -> value.toBoolean()
+        is String -> when (value.trim().lowercase()) {
+            "true" -> true
+            "false" -> false
+            else -> defaultValue
+        }
         else -> defaultValue
     }
 

@@ -6,11 +6,11 @@ import org.apache.commons.mail.EmailException
 import org.apache.commons.mail.HtmlEmail
 
 object EmailSender {
-    @JvmStatic fun sendEmail(receiveMailAccount: String?, subject: String, content: String) {
-        if (receiveMailAccount.isNullOrEmpty()) return
+    @JvmStatic fun sendEmail(receiveMailAccount: String?, subject: String, content: String): Boolean {
+        if (receiveMailAccount.isNullOrEmpty()) return false
         val email = HtmlEmail()
         email.setHostName(Config.EmailVerify.EmailSmtpHost)
-        try { email.setSmtpPort(Config.EmailVerify.EmailSmtpPort.toInt()) } catch (_: NumberFormatException) { return }
+        try { email.setSmtpPort(Config.EmailVerify.EmailSmtpPort.toInt()) } catch (_: NumberFormatException) { return false }
         email.setAuthenticator(DefaultAuthenticator(Config.EmailVerify.EmailAccount, Config.EmailVerify.EmailPassword))
         configureSecurity(email)
         try {
@@ -20,12 +20,16 @@ object EmailSender {
             email.addTo(receiveMailAccount)
             email.setCharset("UTF-8")
             email.send()
-        } catch (e: EmailException) { e.printStackTrace() }
+            return true
+        } catch (e: EmailException) { e.printStackTrace(); return false }
     }
     private fun configureSecurity(email: HtmlEmail) {
         if (Config.EmailVerify.SSLAuthVerify) {
             email.setSSLOnConnect(true)
             email.setSSLCheckServerIdentity(true)
-        } else email.setStartTLSEnabled(true)
+        } else {
+            email.setStartTLSEnabled(true)
+            email.setStartTLSRequired(true)
+        }
     }
 }

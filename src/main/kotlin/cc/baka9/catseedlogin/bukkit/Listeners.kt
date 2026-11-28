@@ -159,10 +159,6 @@ class Listeners : Listener {
         if (playerIsNotMinecraftPlayer(player) || LoginPlayerHelper.isLogin(player.name)) return
         val from = event.from
         val to = event.to
-        if (to == null) {
-            event.isCancelled = true
-            return
-        }
         if (from.blockX == to.blockX && from.blockZ == to.blockZ && from.y - to.y >= 0.0) return
         if (Config.Settings.CanTpSpawnLocation) {
             CatScheduler.teleport(player, Config.Settings.SpawnLocation)
@@ -227,15 +223,21 @@ class Listeners : Listener {
 
     private fun teleportToLastLocation(player: Player) {
         if (!Config.Settings.AfterLoginBack || !Config.Settings.CanTpSpawnLocation) return
-        Config.getOfflineLocation(player).ifPresent { location ->
-            CatScheduler.runTaskLater(Runnable { CatScheduler.teleport(player, location) }, 1L)
+        val playerId = player.uniqueId
+        CatScheduler.runTaskAsync {
+            val location = Config.getOfflineLocation(player.name)
+            if (location.isPresent) CatScheduler.runTaskLater(Runnable {
+                val online = Bukkit.getPlayer(playerId)
+                if (online != null && online.isOnline) CatScheduler.teleport(online, location.get())
+            }, 1L)
         }
     }
 
     @EventHandler
     fun onPlayerPreLogin(event: AsyncPlayerPreLoginEvent) {
         val name = event.name
-        if (Config.Settings.LimitChineseID && !name.matches(Regex(Config.Settings.NamePattern))) {
+        val validName = try { name.matches(Regex(Config.Settings.NamePattern)) } catch (_: Exception) { false }
+        if (Config.Settings.LimitChineseID && !validName) {
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageKey.INVALID_NAME_PATTERN.get())
             return
         }

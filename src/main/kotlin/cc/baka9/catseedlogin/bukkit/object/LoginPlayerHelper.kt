@@ -93,7 +93,16 @@ object LoginPlayerHelper {
         CatScheduler.updateInventory(player)
         recordCurrentIP(player, lp)
         if (Config.Settings.AfterLoginBack && Config.Settings.CanTpSpawnLocation) {
-            Config.getOfflineLocation(player).ifPresent { location -> CatScheduler.teleport(player, location) }
+            val playerId = player.uniqueId
+            CatScheduler.runTaskAsync {
+                val location = Config.getOfflineLocation(lp.name)
+                if (location.isPresent) {
+                    CatScheduler.runTask {
+                        val online = Bukkit.getPlayer(playerId)
+                        if (online != null && online.isOnline) CatScheduler.teleport(online, location.get())
+                    }
+                }
+            }
         }
     }
 

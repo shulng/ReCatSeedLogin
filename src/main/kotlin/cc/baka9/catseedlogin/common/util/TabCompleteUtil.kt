@@ -7,7 +7,7 @@ object TabCompleteUtil {
         if (candidates.isNullOrEmpty()) return emptyList()
         val input = prefix?.lowercase(Locale.ROOT) ?: ""
         if (input.isEmpty()) return candidates.toList()
-        return candidates.filter { it != null && it.lowercase(Locale.ROOT).startsWith(input) }
+        return candidates.filter { it.lowercase(Locale.ROOT).startsWith(input) }
     }
 
     @JvmStatic fun filter(candidates: Array<String>?, prefix: String?): List<String> = filter(candidates?.toList(), prefix)
