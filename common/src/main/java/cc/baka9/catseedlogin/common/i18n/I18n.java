@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,7 +18,8 @@ public class I18n {
 
   private final File dataFolder;
   private final ResourceProvider resourceProvider;
-  private Locale currentLocale = Locale.SIMPLIFIED_CHINESE;
+  private volatile Locale currentLocale = Locale.SIMPLIFIED_CHINESE;
+  private volatile String currentBundleName = Locale.SIMPLIFIED_CHINESE.toLanguageTag();
   private final Map<Locale, Map<String, String>> messages = new ConcurrentHashMap<>();
   private final Map<String, Object> placeholders = new ConcurrentHashMap<>();
   private char colorChar = '&';
@@ -38,12 +39,22 @@ public class I18n {
   }
 
   public void setLocale(Locale locale) {
-    this.currentLocale = locale;
-    loadMessages(locale);
+    Locale normalized = normalize(locale);
+    this.currentLocale = normalized;
+    this.currentBundleName = normalized.toLanguageTag();
+    loadMessages(normalized);
   }
 
   public void setLocale(String languageTag) {
-    setLocale(Locale.forLanguageTag(languageTag));
+    if (languageTag == null || languageTag.trim().isEmpty()) {
+      setLocale(Locale.SIMPLIFIED_CHINESE);
+      return;
+    }
+    String bundleName = languageTag.trim();
+    // String configuration is a bundle filename, never a transformed Locale tag.
+    this.currentLocale = Locale.ROOT;
+    this.currentBundleName = bundleName;
+    loadMessages(bundleName);
   }
 
   public Locale getLocale() {
@@ -51,39 +62,59 @@ public class I18n {
   }
 
   public void loadMessages(Locale locale) {
-    Map<String, String> localeMessages = new HashMap<>();
-    String fileName = locale.toLanguageTag() + ".yml";
+    Locale normalized = normalize(locale);
+    loadMessages(normalized.toLanguageTag(), normalized);
+  }
+
+  private void loadMessages(String bundleName) {
+    loadMessages(bundleName, Locale.ROOT);
+  }
+
+  private void loadMessages(String bundleName, Locale locale) {
+    Map<String, String> localeMessages = new LinkedHashMap<>();
     File languagesFolder = new File(dataFolder, LANGUAGES_FOLDER);
 
-    File customFile = new File(languagesFolder, fileName);
-    if (customFile.exists()) {
-      loadFromFile(customFile, localeMessages);
-    }
-
-    String resourcePath = LANGUAGES_FOLDER + "/" + fileName;
-    try (InputStream defaultStream = resourceProvider.getResource(resourcePath)) {
-      if (defaultStream != null) {
-        loadFromStream(defaultStream, localeMessages);
+    if (locale == Locale.ROOT) {
+      loadBundle(bundleName, languagesFolder, localeMessages, false);
+      loadBundle(bundleName, languagesFolder, localeMessages, true);
+    } else {
+      // Load the standard Locale fallback chain first; later, more specific bundles override it.
+      for (Locale candidate : fallbackLocales(locale)) {
+        loadBundle(candidate.toLanguageTag(), languagesFolder, localeMessages, false);
       }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    if (localeMessages.isEmpty()) {
-      try (InputStream fallbackStream = resourceProvider.getResource("languages/zh-CN.yml")) {
-        if (fallbackStream != null) {
-          loadFromStream(fallbackStream, localeMessages);
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
+      // Server-local files are overrides and must win over bundled defaults.
+      for (Locale candidate : fallbackLocales(locale)) {
+        loadBundle(candidate.toLanguageTag(), languagesFolder, localeMessages, true);
       }
     }
+    messages.put(locale, localeMessages);
+  }
 
-    try {
-      messages.put(locale, localeMessages);
-    } catch (Exception e) {
-      e.printStackTrace();
+  private void loadBundle(String bundleName, File languagesFolder, Map<String, String> target, boolean custom) {
+    String fileName = bundleName + ".yml";
+    if (custom) {
+      File file = new File(languagesFolder, fileName);
+      if (file.exists()) loadFromFile(file, target);
+      return;
     }
+    try (InputStream stream = resourceProvider.getResource(LANGUAGES_FOLDER + "/" + fileName)) {
+      if (stream != null) loadFromStream(stream, target);
+    } catch (Exception error) {
+      throw new IllegalStateException("Unable to load language bundle " + fileName, error);
+    }
+  }
+
+  private static Locale normalize(Locale locale) {
+    if (locale == null || locale.getLanguage().isEmpty()) return Locale.SIMPLIFIED_CHINESE;
+    return Locale.forLanguageTag(locale.toLanguageTag());
+  }
+
+  private static Iterable<Locale> fallbackLocales(Locale locale) {
+    Map<String, Locale> chain = new LinkedHashMap<>();
+    chain.put(Locale.SIMPLIFIED_CHINESE.toLanguageTag(), Locale.SIMPLIFIED_CHINESE);
+    if (!locale.getLanguage().isEmpty()) chain.put(locale.getLanguage(), new Locale(locale.getLanguage()));
+    if (!locale.getCountry().isEmpty()) chain.put(locale.toLanguageTag(), locale);
+    return chain.values();
   }
 
   private void loadYaml(Reader reader, Map<String, String> messages) {
@@ -172,7 +203,7 @@ public class I18n {
     try {
       String message = get(key);
       if (args != null && args.length > 0) {
-        return MessageFormat.format(message, args);
+        return new MessageFormat(message, currentLocale).format(args);
       }
       return message;
     } catch (Exception e) {
@@ -222,7 +253,8 @@ public class I18n {
 
   public void reload() {
     messages.clear();
-    loadMessages(currentLocale);
+    if (currentLocale == Locale.ROOT) loadMessages(currentBundleName);
+    else loadMessages(currentLocale);
   }
 
   public static String tr(String key) {

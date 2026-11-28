@@ -4,7 +4,7 @@
 # 语言设置 (使用下划线格式，如 zh_CN, en_US)
 # 对应的语言文件存放在 languages/ 文件夹中
 # 文件名使用标准格式，如 zh-CN.yml, en-US.yml
-language: "zh_CN"
+language: "zh-CN"
 
 # 核心设置
 settings:

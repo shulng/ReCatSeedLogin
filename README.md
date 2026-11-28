@@ -356,7 +356,7 @@ proxy:
 - 中文：`zh-CN.yml`
 - 英文：`en-US.yml`
 
-配置文件中的 `language` 选项使用下划线格式（如 `zh_CN`），对应语言文件使用标准格式（如 `zh-CN.yml`）。支持自定义语言覆盖。
+配置文件中的 `language` 选项直接对应语言文件名（不含 `.yml`），例如 `zh-CN`、`en-US` 或 `猫猫`。系统会直接加载 `languages/<language>.yml`，不进行下划线/连字符转换或 Locale 编码；服务器 `languages/` 目录中的文件会覆盖 JAR 内置翻译。
 
 ## 🔗 代理端配置
 
