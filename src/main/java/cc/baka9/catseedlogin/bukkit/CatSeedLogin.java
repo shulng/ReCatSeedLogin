@@ -1,18 +1,17 @@
 package cc.baka9.catseedlogin.bukkit;
 
-import cc.baka9.catseedlogin.bukkit.command.*;
 import cc.baka9.catseedlogin.bukkit.config.BukkitConfigManager;
 import cc.baka9.catseedlogin.bukkit.config.BukkitPlatformAdapter;
 import cc.baka9.catseedlogin.bukkit.database.*;
+import cc.baka9.catseedlogin.bukkit.module.BukkitModuleManager;
+import cc.baka9.catseedlogin.bukkit.module.CommandModule;
+import cc.baka9.catseedlogin.bukkit.module.ListenerModule;
+import cc.baka9.catseedlogin.bukkit.module.RuntimeModule;
 import cc.baka9.catseedlogin.bukkit.object.LoginPlayerHelper;
 import cc.baka9.catseedlogin.bukkit.object.TwoFactorState;
-import cc.baka9.catseedlogin.bukkit.task.Task;
 import cc.baka9.catseedlogin.bukkit.util.TwoFactorMessageUtil;
 import cc.baka9.catseedlogin.common.i18n.I18n;
 import cc.baka9.catseedlogin.common.util.SecretCodec;
-import cc.baka9.catseedlogin.common.util.TabCompleteUtil;
-import java.util.Arrays;
-import java.util.Collections;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.EventHandler;
@@ -33,6 +32,7 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
 
   private BukkitConfigManager configManager;
   private BukkitPlatformAdapter platformAdapter;
+  private BukkitModuleManager moduleManager;
 
   @Override
   public void onEnable() {
@@ -65,9 +65,7 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
       return;
     }
 
-    getServer().getPluginManager().registerEvents(new Listeners(), this);
     checkBlindingPluginConflict();
-    getServer().getPluginManager().registerEvents(new BlindingListeners(), this);
 
     if (configManager.isEmptyBackpack()) {
       try {
@@ -81,18 +79,24 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
 
     PluginContext.init(this, sql, loadProtocolLib);
 
-    if (configManager.isEnable()) {
-      Communication.socketServerStartAsync();
-    }
 
     if (Bukkit.getPluginManager().getPlugin("floodgate") != null
         && configManager.isBedrockLoginBypass()) {
       getLogger().info("检测到floodgate，基岩版兼容已装载");
     }
 
-    registerCommands();
+    moduleManager = new BukkitModuleManager(this);
+    moduleManager.register(new ListenerModule());
+    moduleManager.register(new CommandModule());
+    moduleManager.register(new RuntimeModule());
+    try {
+      moduleManager.enableAll();
+    } catch (Exception e) {
+      getLogger().severe("加载功能模块失败: " + e.getMessage());
+      getServer().getPluginManager().disablePlugin(this);
+      return;
+    }
 
-    Task.runAll();
   }
 
   /** 两步验证的地基：探测 adventure 可用性，并准备好 TOTP 密钥文件。 */
@@ -113,100 +117,6 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
         .warning("请删除 " + LEGACY_BLINDING_PLUGIN + " 插件，改用 settings.before-login.blinding 控制该功能");
   }
 
-  private void registerCommands() {
-    registerLoginCommand();
-    registerRegisterCommand();
-    registerChangePasswordCommand();
-    registerBindEmailCommand();
-    registerResetPasswordCommand();
-    registerTwoFactorCommand();
-    registerCatSeedLoginCommand();
-  }
-
-  private void registerTwoFactorCommand() {
-    PluginCommand cmd = getServer().getPluginCommand("2fa");
-    if (cmd == null) return;
-    CommandTwoFactor executor = new CommandTwoFactor();
-    cmd.setExecutor(executor);
-    cmd.setTabCompleter(executor);
-  }
-
-  private void registerLoginCommand() {
-    PluginCommand cmd = getServer().getPluginCommand("login");
-    if (cmd == null) return;
-    cmd.setExecutor(new CommandLogin());
-    cmd.setTabCompleter((commandSender, command, s, args) ->
-        args.length == 1
-            ? TabCompleteUtil.filter(Collections.singletonList("密码"), args[0])
-            : Collections.emptyList());
-  }
-
-  private void registerRegisterCommand() {
-    PluginCommand cmd = getServer().getPluginCommand("register");
-    if (cmd == null) return;
-    cmd.setExecutor(new CommandRegister());
-    cmd.setTabCompleter((commandSender, command, s, args) ->
-        args.length == 1
-            ? TabCompleteUtil.filter(Collections.singletonList("密码 重复密码"), args[0])
-            : Collections.emptyList());
-  }
-
-  private void registerChangePasswordCommand() {
-    PluginCommand cmd = getServer().getPluginCommand("changepassword");
-    if (cmd == null) return;
-    cmd.setExecutor(new CommandChangePassword());
-    cmd.setTabCompleter((commandSender, command, s, args) ->
-        args.length == 1
-            ? TabCompleteUtil.filter(Collections.singletonList("旧密码 新密码 重复新密码"), args[0])
-            : Collections.emptyList());
-  }
-
-  private void registerBindEmailCommand() {
-    PluginCommand bindemail = getServer().getPluginCommand("bindemail");
-    if (bindemail == null) return;
-    bindemail.setExecutor(new CommandBindEmail());
-    bindemail.setTabCompleter((commandSender, command, s, args) -> {
-      if (args.length == 1) {
-        return TabCompleteUtil.filter(Arrays.asList("set", "verify"), args[0]);
-      }
-      if (args.length == 2) {
-        if ("set".equalsIgnoreCase(args[0])) {
-          return TabCompleteUtil.filter(Collections.singletonList("需要绑定的邮箱"), args[1]);
-        }
-        if ("verify".equalsIgnoreCase(args[0])) {
-          return TabCompleteUtil.filter(Collections.singletonList("邮箱获取的验证码"), args[1]);
-        }
-      }
-      return Collections.emptyList();
-    });
-  }
-
-  private void registerResetPasswordCommand() {
-    PluginCommand resetpassword = getServer().getPluginCommand("resetpassword");
-    if (resetpassword == null) return;
-    resetpassword.setExecutor(new CommandResetPassword());
-    resetpassword.setTabCompleter((commandSender, command, s, args) -> {
-      if (args.length == 1) {
-        return TabCompleteUtil.filter(Arrays.asList("forget", "re"), args[0]);
-      }
-      if (args.length == 2 && "re".equalsIgnoreCase(args[0])) {
-        return TabCompleteUtil.filter(Collections.singletonList("验证码"), args[1]);
-      }
-      if (args.length == 3 && "re".equalsIgnoreCase(args[0])) {
-        return TabCompleteUtil.filter(Collections.singletonList("新密码"), args[2]);
-      }
-      return Collections.emptyList();
-    });
-  }
-
-  private void registerCatSeedLoginCommand() {
-    PluginCommand cmd = getServer().getPluginCommand("catseedlogin");
-    if (cmd == null) return;
-    CommandCatSeedLogin executor = new CommandCatSeedLogin();
-    cmd.setExecutor(executor);
-    cmd.setTabCompleter(executor);
-  }
-
   @EventHandler
   public void onPlayerQuit(PlayerQuitEvent event) {
     LoginPlayerHelper.onPlayerQuit(event.getPlayer().getName());
@@ -214,7 +124,7 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
 
   @Override
   public void onDisable() {
-    Task.cancelAll();
+    if (moduleManager != null) moduleManager.disableAll();
     TwoFactorState.clear();
     Bukkit.getOnlinePlayers()
         .forEach(p -> {
@@ -230,7 +140,6 @@ public class CatSeedLogin extends JavaPlugin implements Listener {
       getLogger().warning("关闭数据库连接时出错");
       e.printStackTrace();
     }
-    Communication.socketServerStop();
     super.onDisable();
   }
 
