@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "cc.baka9"
-version = "2.1.1"
+version = providers.gradleProperty("releaseVersion").getOrElse("2.1.1")
 description = "A comprehensive login plugin for Minecraft servers supporting Bukkit, BungeeCord, and Velocity"
 
 java {

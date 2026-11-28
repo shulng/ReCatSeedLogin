@@ -4,6 +4,10 @@ on:
   push:
     branches: [ "main" ]
 
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
@@ -26,6 +30,31 @@ jobs:
 
       - name: 设置Gradle环境
         uses: gradle/actions/setup-gradle@v6
+
+      - name: 计算发布版本
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags origin
+          stable_version='^(0|[1-9][0-9]*)[.](0|[1-9][0-9]*)[.](0|[1-9][0-9]*)$'
+          version=$(git tag --points-at HEAD | awk -v pattern="$stable_version" '$0 ~ pattern' | sort -V | tail -n 1)
+
+          if [[ -z "$version" ]]; then
+            base_version=$(./gradlew -q --no-daemon --console=plain printProjectInfo | sed -n 's/^version=//p')
+            if [[ ! "$base_version" =~ $stable_version ]]; then
+              echo "::error::Gradle 基础版本必须使用 x.y.z 格式"
+              exit 1
+            fi
+
+            latest_version=$({ git tag; printf '%s\n' "$base_version"; } | awk -v pattern="$stable_version" '$0 ~ pattern' | sort -V | tail -n 1)
+            if [[ "$latest_version" == "$base_version" ]] && ! git show-ref --verify --quiet "refs/tags/$base_version"; then
+              version=$base_version
+            else
+              version="${latest_version%.*}.$(( ${latest_version##*.} + 1 ))"
+            fi
+          fi
+
+          echo "ORG_GRADLE_PROJECT_releaseVersion=$version" >> "$GITHUB_ENV"
 
       - name: 获取项目信息
         id: project-info
@@ -118,6 +147,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.project-info.outputs.version }}
+          target_commitish: ${{ github.sha }}
           name: ${{ steps.project-info.outputs.name }}-v${{ steps.project-info.outputs.version }}
           body_path: changelog.md
           files: |
