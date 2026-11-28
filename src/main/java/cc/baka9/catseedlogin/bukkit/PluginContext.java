@@ -41,6 +41,10 @@ public class PluginContext {
     return get().loadProtocolLib;
   }
 
+  public static void setLoadProtocolLib(boolean enabled) {
+    get().loadProtocolLib = enabled;
+  }
+
   public static Logger getLogger() {
     return get().plugin.getLogger();
   }
